@@ -1,7 +1,7 @@
 # Личный проект «Большое путешествие» [![Build status][travis-image]][travis-url]
 
 * Студент: [Юрий](https://up.htmlacademy.ru/ecmascript/12/user/1339161).
-* Наставник: `Неизвестно`.
+* Наставник: [Артём Мязитов](https://htmlacademy.ru/profile/id1164307).
 
 ---
 
