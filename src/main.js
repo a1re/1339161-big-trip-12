@@ -53,7 +53,7 @@ const makeFiltersTemplate = () => {
 
               <button class="visually-hidden" type="submit">Accept filter</button>
             </form>`;
-}
+};
 
 const makeSortingTemplate = () => {
   return `<form class="trip-events__trip-sort  trip-sort" action="#" method="get">
@@ -86,7 +86,7 @@ const makeSortingTemplate = () => {
 
             <span class="trip-sort__item  trip-sort__item--offers">Offers</span>
           </form>`;
-}
+};
 
 const makeDayTemplate = () => {
   return `<ul class="trip-days">
@@ -101,12 +101,12 @@ const makeDayTemplate = () => {
               </ul>
             </li>
           </ul>`;
-}
+};
 
 const makeEventItemTemplate = () => {
   return `<li class="trip-events__item">
           </li>`;
-}
+};
 
 const makeEventInfoTemplate = () => {
   return `<div class="event">
@@ -146,7 +146,7 @@ const makeEventInfoTemplate = () => {
               <span class="visually-hidden">Open event</span>
             </button>
           </div>`;
-}
+};
 
 const makeEventEditTemplate = () => {
   return `<form class="event  event--edit" action="#" method="post">
@@ -320,14 +320,14 @@ const makeEventEditTemplate = () => {
               </section>
             </section>
           </form>`;
-}
+};
 
 const renderEvent = (container, template) => {
   render(container, makeEventItemTemplate(), `beforeend`);
 
   const lastEventBlock = container.querySelector(`.trip-events__item:last-child`);
   render(lastEventBlock, template, `beforeend`);
-}
+};
 
 render(headerBlock, makeTripInfoBlockTemplate(), `afterbegin`);
 
@@ -351,4 +351,3 @@ renderEvent(dailyEventsLastBlock, makeEventEditTemplate());
 for (let i = 0; i < EVENTS_AMOUNT; i++) {
   renderEvent(dailyEventsLastBlock, makeEventInfoTemplate());
 }
-
