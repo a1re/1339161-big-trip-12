@@ -1,4 +1,4 @@
-import {CITIES, STOPS, TRANSPORTS, TRANSPORT_OFFERS_MAP, STOP_OFFERS_MAP} from "./const.js";
+import {CITIES, STOPS, TRANSPORTS, TRANSPORT_OFFERS_MAP, STOP_OFFERS_MAP} from "../const.js";
 import {getRandomInt} from "../utils.js";
 
 // Отклоенение дня начала путешествия
@@ -27,6 +27,10 @@ const EVENT_OFFERS_MAX = 5;
 const EVENT_BASIC_PRICE_MIN = 30;
 const EVENT_BASIC_PRICE_MAX = 120;
 const EVENT_BASIC_PRICE_DIV = 5;
+
+// Мин. и макс. кол-во фотографий
+const TRIP_DESC_PHOTOS_MIN = 1;
+const TRIP_DESC_PHOTOS_MAX = 5;
 
 // Мин. и макс. кол-во предложений в описании
 const TRIP_DESC_SENTENCES_MIN = 1;
@@ -169,6 +173,12 @@ export const generateEvents = () => {
         transfersLeft--;
       } else {
         type = STOPS[getRandomInt(0, STOPS.length - 1)];
+      }
+
+      const photosAmount = getRandomInt(TRIP_DESC_PHOTOS_MIN, TRIP_DESC_PHOTOS_MAX);
+      const photos = [];
+      for (let i = 0; i < photosAmount; i++) {
+        photos.push(`http://picsum.photos/248/152?r=` + getRandomInt(10, 100));
       }
 
       // Рандомизация базовой стоимости
