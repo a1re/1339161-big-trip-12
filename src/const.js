@@ -4,7 +4,7 @@ export const STOPS = [`Check-in`, `Sightseeing`, `Restaurant`];
 
 export const TRANSPORT_OFFERS_MAP = new Map([
   [`luggage`, {title: `Add luggage`, price: `30`}],
-  [`comfort`, {title: `Switch to comfort class`, price: `100`}],
+  [`comfort`, {title: `Comfort class`, price: `100`}],
   [`meal`, {title: `Add meal`, price: `15`}],
   [`seats`, {title: `Choose seats`, price: `5`}],
   [`train`, {title: `Travel by train`, price: `40`}]
@@ -15,3 +15,5 @@ export const STOP_OFFERS_MAP = new Map([
   [`tickets`, {title: `Book tickets`, price: `40`}],
   [`lunch`, {title: `Lunch in the city`, price: `50`}]
 ]);
+
+export const MAX_OFFERS_TO_SHOW = 3;
