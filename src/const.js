@@ -15,5 +15,3 @@ export const STOP_OFFERS_MAP = new Map([
   [`tickets`, {title: `Book tickets`, price: `40`}],
   [`lunch`, {title: `Lunch in the city`, price: `50`}]
 ]);
-
-export const MAX_OFFERS_TO_SHOW = 3;
