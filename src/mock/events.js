@@ -126,6 +126,7 @@ export const generateEvents = () => {
 
   const events = [];
   let eventsLeft = eventsAmount;
+  let id = 1;
   for (let day = 0; day < tripDuration; day++) {
     // Расчет количества событий в день. Если это последний день, то в него переносятся все
     // оставшиеся события, если любой дрeгой, то берется среднее кол-во событий в день,
@@ -186,6 +187,7 @@ export const generateEvents = () => {
 
       // Итоговый объект
       const eventInfo = {
+        id,
         city: currentCity,
         type,
         beginTime,
@@ -198,6 +200,7 @@ export const generateEvents = () => {
       };
 
       events.push(eventInfo);
+      id++;
     }
 
     eventsLeft -= dayEvents;

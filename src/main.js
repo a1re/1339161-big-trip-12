@@ -1,28 +1,75 @@
-// import {CITIES, STOPS, TRANSPORTS, TRANSPORT_OFFERS_MAP, STOP_OFFERS_MAP} from "../const.js";
+const EVENTS_MIN = 15;
+const EVENTS_MAX = 20;
 
-const headerBlock = document.querySelector(`.trip-main`);
-const eventListBlock = document.querySelector(`.trip-events`);
+import {render, RenderPosition, organizeEventsByDays, getRandomInt} from "./utils.js";
 
-const render = (container, template, place) => {
-  container.insertAdjacentHTML(place, template);
-};
-
-import {makeTripHeadingTemplate} from "./view/heading.js";
-import {makeMenuTemplate} from "./view/menu.js";
-import {makeFiltersTemplate} from "./view/filters.js";
-import {makeSortingTemplate} from "./view/sorting.js";
-import {makeEventListTemplate} from "./view/event-list.js";
+import HeadingView from "./view/heading.js";
+import MenuView from "./view/menu.js";
+import FiltersView from "./view/filters.js";
+import SortingView from "./view/sorting.js";
+import DayListView from "./view/day-list.js";
+import DayView from "./view/day.js";
+import EventSummaryView from "./view/event-summary.js";
+import EventEditView from "./view/event-edit.js";
 
 import {generateEvents} from "./mock/events.js";
 
-const events = generateEvents();
+const renderEvent = (container, event) => {
+  const makeSummaryElement = (eventData) => {
+    const eventSummary = new EventSummaryView(eventData);
+    eventSummary.element.querySelector(`.event__rollup-btn`).addEventListener(`click`, () => {
+      container.replaceChild(makeEditFormElemen(eventData), eventSummary.element);
+      eventSummary.element.remove();
+      eventSummary.removeElement();
+    });
 
-render(headerBlock, makeTripHeadingTemplate(events), `afterbegin`);
-const menuHeadingBlock = headerBlock.querySelector(`.trip-controls h2:first-child`);
-render(menuHeadingBlock, makeMenuTemplate(), `afterend`);
+    return eventSummary.element;
+  };
 
-const filterHeadingBlock = headerBlock.querySelector(`.trip-controls h2:last-child`);
-render(filterHeadingBlock, makeFiltersTemplate(), `afterend`);
+  const makeEditFormElemen = (eventData) => {
+    const eventEdit = new EventEditView(eventData);
+    const closeEventEdit = (evt) => {
+      evt.preventDefault();
+      container.replaceChild(makeSummaryElement(eventData), eventEdit.element);
+      eventEdit.element.remove();
+      eventEdit.removeElement();
+    };
+    eventEdit.element.addEventListener(`submit`, closeEventEdit);
+    eventEdit.element.querySelector(`.event__rollup-btn`).addEventListener(`click`, closeEventEdit);
 
-render(eventListBlock, makeSortingTemplate(), `beforeend`);
-render(eventListBlock, makeEventListTemplate(events), `beforeend`);
+    return eventEdit.element;
+  };
+
+  render(container, makeSummaryElement(event), RenderPosition.BEFOREEND);
+};
+
+const headerElement = document.querySelector(`.trip-main`);
+const eventListElement = document.querySelector(`.trip-events`);
+
+const events = generateEvents(getRandomInt(EVENTS_MIN, EVENTS_MAX));
+const eventsByDays = organizeEventsByDays(events);
+
+render(headerElement, new HeadingView(events).element, RenderPosition.AFTERBEGIN);
+
+const menuHeadingElement = headerElement.querySelector(`.trip-controls h2:first-child`);
+render(menuHeadingElement, new MenuView(events).element, RenderPosition.AFTEREND);
+
+const filtersHeadingElement = headerElement.querySelector(`.trip-controls h2:last-child`);
+render(filtersHeadingElement, new FiltersView(events).element, RenderPosition.AFTEREND);
+
+render(eventListElement, new SortingView().element, RenderPosition.BEFOREEND);
+
+const dayListElement = new DayListView().element;
+render(eventListElement, dayListElement, RenderPosition.BEFOREEND);
+
+let dayNumber = 1;
+for (const [dayDate, dayEvents] of eventsByDays) {
+  const dayElement = new DayView({dayNumber, dayDate}).element;
+  render(dayListElement, dayElement, RenderPosition.BEFOREEND);
+
+  const eventsOfDayElement = dayElement.querySelector(`.trip-events__list`);
+  for (const event of dayEvents) {
+    renderEvent(eventsOfDayElement, event);
+  }
+  dayNumber++;
+}

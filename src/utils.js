@@ -1,4 +1,68 @@
 /**
+ * Словарь позиций внутри элементов DOM для размещения потомков.
+ *
+ * @type {Object}
+ */
+export const RenderPosition = {
+  BEFOREBEGIN: `beforebegin`,
+  AFTERBEGIN: `afterbegin`,
+  BEFOREEND: `beforeend`,
+  AFTEREND: `afterend`
+};
+
+/**
+ * Добавление DOM-элемента в струкутру документа.
+ *
+ * @param  {Node} container - Узел для добавления нового элемента.
+ * @param  {Node} element   - Сам элемент, который будет добавляться.
+ * @param  {string} place   - Место добавления, должно соответствовать словарю
+ *                            RenderPosition
+ * @return {void}
+ */
+export const render = (container, element, place) => {
+  switch (place) {
+    case RenderPosition.BEFOREBEGIN:
+      container.bafore(element);
+      break;
+    case RenderPosition.AFTERBEGIN:
+      container.prepend(element);
+      break;
+    case RenderPosition.BEFOREEND:
+      container.append(element);
+      break;
+    case RenderPosition.AFTEREND:
+      container.after(element);
+      break;
+  }
+};
+
+/**
+ * Добавление элемента как строкового шаблона внутрь DOM-узла.
+ *
+ * @param  {Node} container  - Узел для добавления нового элемента.
+ * @param  {string} template - Строка с шаблона для добавления.
+ * @param  {string} place    - Место добавления, должно соответствовать значениям
+ *                             первого аргумента функции insertAdjacenHTML.
+ * @return {void}
+ */
+export const renderTemplate = (container, template, place) => {
+  container.insertAdjacentHTML(place, template);
+};
+
+/**
+ * Конвертация строкового шаблона в DOM-элемент.
+ *
+ * @param  {string} template - Строка с шаблона для добавления.
+ * @return {Node}            - DOM-элемент.
+ */
+export const createElement = (template) => {
+  const newElement = document.createElement(`div`);
+  newElement.innerHTML = template;
+
+  return newElement.firstChild;
+};
+
+/**
  * Генерация случайного целого числе с небольшой надстройкой — его можно сделать
  * кратным какому-то другому числу за счет указания третьего параметра divider
  * (по умолчанию 1).
@@ -53,4 +117,29 @@ export const getDuration = (beginTime, endTime) => {
   }
 
   return duration;
+};
+
+/**
+ * Распределяем события по дням. Для этого создаем объект Map, где ключом
+ * будет дата в формате yyyy-mm-dd, а значением — массив с событиями.
+ *
+ * @param  {array} events - Массив событий.
+ * @return {Map}          - Карта событий, где ключ — дата, а значение — массив
+ *                          событий в рамках дня.
+ */
+export const organizeEventsByDays = (events) => {
+  const eventsByDays = new Map();
+  events.forEach((event) => {
+    const eventDate = event.beginTime.toISOString().split(`T`)[0];
+
+    if (!eventsByDays.get(eventDate)) {
+      eventsByDays.set(eventDate, []);
+    }
+
+    const eventsInDate = eventsByDays.get(eventDate);
+    eventsInDate.push(event);
+    eventsByDays.set(eventDate, eventsInDate);
+  });
+
+  return eventsByDays;
 };
