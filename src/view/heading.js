@@ -26,6 +26,10 @@ const calcPrice = (eventList) => {
  * @return {string}          - Итоговый маршрут.
  */
 const getRoute = (eventList) => {
+  if (eventList.length === 0) {
+    return ``;
+  }
+
   const uniquePoints = eventList.filter((element, index, array) => {
     return index === 0 || element.city !== array[index - 1].city;
   });
@@ -55,6 +59,10 @@ const getRoute = (eventList) => {
  * @return {string}          - Строка с датами.
  */
 const getTiming = (eventList) => {
+  if (eventList.length === 0) {
+    return ``;
+  }
+
   const sortedEvents = eventList.sort((a, b) => a.beginTime.valueOf() - b.beginTime.valueOf());
   const dayStart = sortedEvents[0].beginTime.toLocaleString(`en-US`, {day: `numeric`});
   const monthStart = sortedEvents[0].beginTime.toLocaleString(`en-US`, {month: `short`});
