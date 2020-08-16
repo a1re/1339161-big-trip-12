@@ -143,3 +143,22 @@ export const organizeEventsByDays = (events) => {
 
   return eventsByDays;
 };
+
+/**
+ * Создание хэндлера для обработки нажатии клавиши Esc. Хэндлер должен
+ * быть добавлен как событие при помощи addEventListener(`key`).
+ *
+ * @param  {function} callback - Коллбек, который будет вызван при нажатии
+ *                               Esc.
+ * @return {function}          - Функция для закрепления.
+ */
+export const bindToEsc = (callback) => {
+  const onEscKeyDown = (keyEvent) => {
+    if (keyEvent.key === `Escape` || keyEvent.key === `Esc`) {
+      keyEvent.preventDefault();
+      callback();
+      document.removeEventListener(`keydown`, onEscKeyDown);
+    }
+  };
+  return onEscKeyDown;
+};

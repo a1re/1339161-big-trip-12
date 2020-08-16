@@ -1,7 +1,7 @@
 const EVENTS_MIN = 15;
 const EVENTS_MAX = 20;
 
-import {render, RenderPosition, organizeEventsByDays, getRandomInt} from "./utils.js";
+import {render, RenderPosition, organizeEventsByDays, getRandomInt, bindToEsc} from "./utils.js";
 
 import HeadingView from "./view/heading.js";
 import MenuView from "./view/menu.js";
@@ -11,6 +11,7 @@ import DayListView from "./view/day-list.js";
 import DayView from "./view/day.js";
 import EventSummaryView from "./view/event-summary.js";
 import EventEditView from "./view/event-edit.js";
+import NoEvents from "./view/no-events.js";
 
 import {generateEvents} from "./mock/events.js";
 
@@ -18,7 +19,7 @@ const renderEvent = (container, event) => {
   const makeSummaryElement = (eventData) => {
     const eventSummary = new EventSummaryView(eventData);
     eventSummary.element.querySelector(`.event__rollup-btn`).addEventListener(`click`, () => {
-      container.replaceChild(makeEditFormElemen(eventData), eventSummary.element);
+      container.replaceChild(makeEditFormElement(eventData), eventSummary.element);
       eventSummary.element.remove();
       eventSummary.removeElement();
     });
@@ -26,16 +27,26 @@ const renderEvent = (container, event) => {
     return eventSummary.element;
   };
 
-  const makeEditFormElemen = (eventData) => {
+  const makeEditFormElement = (eventData) => {
     const eventEdit = new EventEditView(eventData);
-    const closeEventEdit = (evt) => {
-      evt.preventDefault();
+    const closeEventEdit = () => {
       container.replaceChild(makeSummaryElement(eventData), eventEdit.element);
       eventEdit.element.remove();
       eventEdit.removeElement();
     };
-    eventEdit.element.addEventListener(`submit`, closeEventEdit);
-    eventEdit.element.querySelector(`.event__rollup-btn`).addEventListener(`click`, closeEventEdit);
+    const closeEventByEsc = bindToEsc(closeEventEdit);
+
+    const saveEvent = (evt) => {
+      evt.preventDefault();
+      closeEventEdit();
+    };
+
+    eventEdit.element.addEventListener(`submit`, saveEvent);
+    eventEdit.element.querySelector(`.event__rollup-btn`).addEventListener(`click`, () => {
+      closeEventEdit();
+      document.removeEventListener(`keydown`, closeEventByEsc);
+    });
+    document.addEventListener(`keydown`, closeEventByEsc);
 
     return eventEdit.element;
   };
@@ -43,11 +54,29 @@ const renderEvent = (container, event) => {
   render(container, makeSummaryElement(event), RenderPosition.BEFOREEND);
 };
 
+const renderDays = (daysContainer, daysList) => {
+  if (daysList.size === 0) {
+    render(daysContainer, new NoEvents().element, RenderPosition.BEFOREEND);
+    return;
+  }
+
+  let dayNumber = 1;
+  for (const [dayDate, dayEvents] of daysList) {
+    const dayElement = new DayView({dayNumber, dayDate}).element;
+    render(dayListElement, dayElement, RenderPosition.BEFOREEND);
+
+    const eventsOfDayElement = dayElement.querySelector(`.trip-events__list`);
+    for (const event of dayEvents) {
+      renderEvent(eventsOfDayElement, event);
+    }
+    dayNumber++;
+  }
+};
+
 const headerElement = document.querySelector(`.trip-main`);
 const eventListElement = document.querySelector(`.trip-events`);
 
 const events = generateEvents(getRandomInt(EVENTS_MIN, EVENTS_MAX));
-const eventsByDays = organizeEventsByDays(events);
 
 render(headerElement, new HeadingView(events).element, RenderPosition.AFTERBEGIN);
 
@@ -62,14 +91,4 @@ render(eventListElement, new SortingView().element, RenderPosition.BEFOREEND);
 const dayListElement = new DayListView().element;
 render(eventListElement, dayListElement, RenderPosition.BEFOREEND);
 
-let dayNumber = 1;
-for (const [dayDate, dayEvents] of eventsByDays) {
-  const dayElement = new DayView({dayNumber, dayDate}).element;
-  render(dayListElement, dayElement, RenderPosition.BEFOREEND);
-
-  const eventsOfDayElement = dayElement.querySelector(`.trip-events__list`);
-  for (const event of dayEvents) {
-    renderEvent(eventsOfDayElement, event);
-  }
-  dayNumber++;
-}
+renderDays(dayListElement, organizeEventsByDays(events));

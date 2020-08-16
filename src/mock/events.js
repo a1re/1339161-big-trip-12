@@ -8,10 +8,6 @@ const TRIP_START_DAYS_GAP = 2;
 const TRIP_DURATION_DAYS_MIN = 2;
 const TRIP_DURATION_DAYS_MAX = 5;
 
-// Мин. и макс. количество событий
-const TRIP_EVENTS_MIN = 15;
-const TRIP_EVENTS_MAX = 20;
-
 // Границы активного времени событий
 const EVENT_HOURS_MIN = 10;
 const EVENT_HOURS_MAX = 23;
@@ -114,8 +110,7 @@ const generateOffers = (isTransfer = false) => {
   return offers;
 };
 
-export const generateEvents = () => {
-  const eventsAmount = getRandomInt(TRIP_EVENTS_MIN, TRIP_EVENTS_MAX); // Общее количество событий
+export const generateEvents = (eventsAmount) => {
   const tripStart = generateBeginDate(); // Время начало путешествия
   const tripDuration = getRandomInt(TRIP_DURATION_DAYS_MIN, TRIP_DURATION_DAYS_MAX); // Длительность в днях
   const avgEventsPerDay = eventsAmount / tripDuration; // Среднее количество событий в день
@@ -128,6 +123,10 @@ export const generateEvents = () => {
   let eventsLeft = eventsAmount;
   let id = 1;
   for (let day = 0; day < tripDuration; day++) {
+    if (eventsLeft === 0) {
+      break;
+    }
+
     // Расчет количества событий в день. Если это последний день, то в него переносятся все
     // оставшиеся события, если любой дрeгой, то берется среднее кол-во событий в день,
     // округляется и немного рандомизируется (±1).
