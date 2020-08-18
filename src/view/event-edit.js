@@ -1,5 +1,6 @@
 import {CITIES, STOPS, TRANSPORTS, TRANSPORT_OFFERS_MAP, STOP_OFFERS_MAP} from "../const.js";
-import {createElement, getRandomInt} from "../utils.js";
+import {getRandomInt} from "../utils.js";
+import AbstractView from "./abstract.js";
 
 const DEFAULT_EVENT_VALUES = {
   id: 0,
@@ -13,10 +14,10 @@ const DEFAULT_EVENT_VALUES = {
   isFavorite: false
 };
 
-export default class EventSummary {
+export default class EventSummary extends AbstractView {
   constructor(event = DEFAULT_EVENT_VALUES) {
+    super();
     this._event = event;
-    this._element = null;
   }
 
   get template() {
@@ -126,17 +127,5 @@ export default class EventSummary {
     }
     template += `</form>`;
     return template;
-  }
-
-  get element() {
-    if (!this._element) {
-      this._element = createElement(this.template);
-    }
-
-    return this._element;
-  }
-
-  removeElement() {
-    this._element = null;
   }
 }

@@ -1,11 +1,12 @@
-import {createElement, getDuration} from "../utils.js";
+import {getDuration} from "../utils.js";
+import AbstractView from "./abstract.js";
 
-export default class EventSummary {
+export default class EventSummary extends AbstractView {
   constructor(event) {
-    this._MAX_OFFERS_TO_SHOW = 3;
+    super();
 
+    this._MAX_OFFERS_TO_SHOW = 3;
     this._event = event;
-    this._element = null;
   }
 
   get template() {
@@ -51,17 +52,5 @@ export default class EventSummary {
           </div>`;
 
     return template;
-  }
-
-  get element() {
-    if (!this._element) {
-      this._element = createElement(this.template);
-    }
-
-    return this._element;
-  }
-
-  removeElement() {
-    this._element = null;
   }
 }

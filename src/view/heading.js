@@ -1,4 +1,4 @@
-import {createElement} from "../utils.js";
+import AbstractView from "./abstract.js";
 
 /**
  * Подсчет стоимости поездки по списку событий (включая доп. опции).
@@ -72,10 +72,10 @@ const getTiming = (eventList) => {
   return `${dayStart}${(monthFinish !== monthStart) ? monthStart : ``}&nbsp;&mdash;&nbsp;${dayFinish} ${monthFinish}`;
 };
 
-export default class Heading {
+export default class Heading extends AbstractView {
   constructor(events) {
+    super();
     this._events = events;
-    this._element = null;
   }
 
   get template() {
@@ -88,17 +88,5 @@ export default class Heading {
                 Total: &euro;&nbsp;<span class="trip-info__cost-value">${calcPrice(this._events)}</span>
               </p>
             </section>`;
-  }
-
-  get element() {
-    if (!this._element) {
-      this._element = createElement(this.template);
-    }
-
-    return this._element;
-  }
-
-  removeElement() {
-    this._element = null;
   }
 }
