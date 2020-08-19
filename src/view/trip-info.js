@@ -1,7 +1,7 @@
 import AbstractView from "./abstract.js";
 import {Route} from "../utils/route.js";
 
-export default class Heading extends AbstractView {
+export default class TripInfo extends AbstractView {
   constructor(events) {
     super();
     this._events = events;
