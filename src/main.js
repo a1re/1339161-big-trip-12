@@ -1,7 +1,9 @@
 const EVENTS_MIN = 15;
 const EVENTS_MAX = 20;
 
-import {render, RenderPosition, organizeEventsByDays, getRandomInt, bindToEsc} from "./utils.js";
+import {render, RenderPosition} from "./utils/render.js";
+import {getRandomInt, bindToEsc} from "./utils/common.js";
+import {Route} from "./utils/route.js";
 
 import HeadingView from "./view/heading.js";
 import MenuView from "./view/menu.js";
@@ -76,19 +78,19 @@ const renderDays = (daysContainer, daysList) => {
 const headerElement = document.querySelector(`.trip-main`);
 const eventListElement = document.querySelector(`.trip-events`);
 
-const events = generateEvents(getRandomInt(EVENTS_MIN, EVENTS_MAX));
+const eventList = generateEvents(getRandomInt(EVENTS_MIN, EVENTS_MAX));
 
-render(headerElement, new HeadingView(events).element, RenderPosition.AFTERBEGIN);
+render(headerElement, new HeadingView(eventList).element, RenderPosition.AFTERBEGIN);
 
 const menuHeadingElement = headerElement.querySelector(`.trip-controls h2:first-child`);
-render(menuHeadingElement, new MenuView(events).element, RenderPosition.AFTEREND);
+render(menuHeadingElement, new MenuView(eventList).element, RenderPosition.AFTEREND);
 
 const filtersHeadingElement = headerElement.querySelector(`.trip-controls h2:last-child`);
-render(filtersHeadingElement, new FiltersView(events).element, RenderPosition.AFTEREND);
+render(filtersHeadingElement, new FiltersView(eventList).element, RenderPosition.AFTEREND);
 
 render(eventListElement, new SortingView().element, RenderPosition.BEFOREEND);
 
 const dayListElement = new DayListView().element;
 render(eventListElement, dayListElement, RenderPosition.BEFOREEND);
 
-renderDays(dayListElement, organizeEventsByDays(events));
+renderDays(dayListElement, Route.organizeByDays(eventList));

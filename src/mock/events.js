@@ -1,5 +1,5 @@
 import {CITIES, STOPS, TRANSPORTS, TRANSPORT_OFFERS_MAP, STOP_OFFERS_MAP} from "../const.js";
-import {getRandomInt} from "../utils.js";
+import {getRandomInt} from "../utils/common.js";
 
 // Отклоенение дня начала путешествия
 const TRIP_START_DAYS_GAP = 2;
