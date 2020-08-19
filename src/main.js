@@ -2,7 +2,7 @@ const EVENTS_MIN = 15;
 const EVENTS_MAX = 20;
 
 import {render, RenderPosition} from "./utils/render.js";
-import {getRandomInt, bindToEsc} from "./utils/common.js";
+import {getRandomInt, EscHandler} from "./utils/common.js";
 import {Route} from "./utils/route.js";
 
 import HeadingView from "./view/heading.js";
@@ -20,11 +20,11 @@ import {generateEvents} from "./mock/events.js";
 const renderEvent = (container, event) => {
   const makeSummaryElement = (eventData) => {
     const eventSummary = new EventSummaryView(eventData);
-    eventSummary.element.querySelector(`.event__rollup-btn`).addEventListener(`click`, () => {
+    eventSummary.openHandler = () => {
       container.replaceChild(makeEditFormElement(eventData), eventSummary.element);
       eventSummary.element.remove();
       eventSummary.removeElement();
-    });
+    };
 
     return eventSummary.element;
   };
@@ -35,20 +35,12 @@ const renderEvent = (container, event) => {
       container.replaceChild(makeSummaryElement(eventData), eventEdit.element);
       eventEdit.element.remove();
       eventEdit.removeElement();
-    };
-    const closeEventByEsc = bindToEsc(closeEventEdit);
-
-    const saveEvent = (evt) => {
-      evt.preventDefault();
-      closeEventEdit();
+      closeEventByEsc.unbind();
     };
 
-    eventEdit.element.addEventListener(`submit`, saveEvent);
-    eventEdit.element.querySelector(`.event__rollup-btn`).addEventListener(`click`, () => {
-      closeEventEdit();
-      document.removeEventListener(`keydown`, closeEventByEsc);
-    });
-    document.addEventListener(`keydown`, closeEventByEsc);
+    const closeEventByEsc = new EscHandler(closeEventEdit);
+    eventEdit.closeHandler = closeEventEdit;
+    eventEdit.submitHandler = closeEventEdit;
 
     return eventEdit.element;
   };

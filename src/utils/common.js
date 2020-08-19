@@ -17,20 +17,31 @@ export const getRandomInt = (a = 0, b = 1, divider = 1) => {
 };
 
 /**
- * Создание хэндлера для обработки нажатии клавиши Esc. Хэндлер должен
- * быть добавлен как событие при помощи addEventListener(`key`).
+ * Класс для создаение и удалениея обработчика нажатия на кнопку Esc. C помощью
+ * конструктора обработчик создается, с помощью метода unbbind() — удаляется.
  *
- * @param  {function} callback - Коллбек, который будет вызван при нажатии
+ * constructor:
+ * @param  {Function} callback - Функция, которая должна вызываться при нажатии на
  *                               Esc.
- * @return {function}          - Функция для закрепления.
  */
-export const bindToEsc = (callback) => {
-  const onEscKeyDown = (keyEvent) => {
-    if (keyEvent.key === `Escape` || keyEvent.key === `Esc`) {
-      keyEvent.preventDefault();
-      callback();
-      document.removeEventListener(`keydown`, onEscKeyDown);
-    }
-  };
-  return onEscKeyDown;
-};
+export class EscHandler {
+  constructor(callback) {
+    this._callback = this._bindToEsc(callback);
+    document.addEventListener(`keydown`, this._callback);
+  }
+
+  _bindToEsc(callback) {
+    const onEscKeyDown = (keyEvent) => {
+      if (keyEvent.key === `Escape` || keyEvent.key === `Esc`) {
+        keyEvent.preventDefault();
+        callback();
+        document.removeEventListener(`keydown`, onEscKeyDown);
+      }
+    };
+    return onEscKeyDown;
+  }
+
+  unbind() {
+    document.removeEventListener(`keydown`, this._callback);
+  }
+}

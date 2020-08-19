@@ -7,6 +7,8 @@ export default class EventSummary extends AbstractView {
 
     this._MAX_OFFERS_TO_SHOW = 3;
     this._event = event;
+
+    this._openHandler = this._openHandler.bind(this);
   }
 
   get template() {
@@ -52,5 +54,16 @@ export default class EventSummary extends AbstractView {
           </div>`;
 
     return template;
+  }
+
+  _openHandler(evt) {
+    evt.preventDefault();
+    this._callback.open();
+  }
+
+  set openHandler(callback) {
+    this._callback.open = callback;
+
+    this.element.querySelector(`.event__rollup-btn`).addEventListener(`click`, this._openHandler);
   }
 }

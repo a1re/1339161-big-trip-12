@@ -18,6 +18,9 @@ export default class EventSummary extends AbstractView {
   constructor(event = DEFAULT_EVENT_VALUES) {
     super();
     this._event = event;
+
+    this._closeHandler = this._closeHandler.bind(this);
+    this._submitHandler = this._submitHandler.bind(this);
   }
 
   get template() {
@@ -127,5 +130,27 @@ export default class EventSummary extends AbstractView {
     }
     template += `</form>`;
     return template;
+  }
+
+  _closeHandler(evt) {
+    evt.preventDefault();
+    this._callback.close();
+  }
+
+  _submitHandler(evt) {
+    evt.preventDefault();
+    this._callback.submit();
+  }
+
+  set closeHandler(callback) {
+    this._callback.close = callback;
+
+    this.element.querySelector(`.event__rollup-btn`).addEventListener(`click`, this._closeHandler);
+  }
+
+  set submitHandler(callback) {
+    this._callback.submit = callback;
+
+    this.element.addEventListener(`submit`, this._submitHandler);
   }
 }
