@@ -1,11 +1,14 @@
-import {createElement, getDuration} from "../utils.js";
+import AbstractView from "./abstract.js";
+import {Route} from "../utils/route.js";
 
-export default class EventSummary {
+export default class EventSummary extends AbstractView {
   constructor(event) {
-    this._MAX_OFFERS_TO_SHOW = 3;
+    super();
 
+    this._MAX_OFFERS_TO_SHOW = 3;
     this._event = event;
-    this._element = null;
+
+    this._openHandler = this._openHandler.bind(this);
   }
 
   get template() {
@@ -22,7 +25,7 @@ export default class EventSummary {
                 &mdash;
                 <time class="event__end-time" datetime="${endTime.toISOString()}">${endTime.toLocaleTimeString(`en-US`, {timeStyle: `short`, hour12: false})}</time>
               </p>
-              <p class="event__duration">${getDuration(beginTime, endTime)}</p>
+              <p class="event__duration">${Route.duration(beginTime, endTime)}</p>
             </div>
 
             <p class="event__price">
@@ -53,15 +56,14 @@ export default class EventSummary {
     return template;
   }
 
-  get element() {
-    if (!this._element) {
-      this._element = createElement(this.template);
-    }
-
-    return this._element;
+  _openHandler(evt) {
+    evt.preventDefault();
+    this._callback.open();
   }
 
-  removeElement() {
-    this._element = null;
+  set openHandler(callback) {
+    this._callback.open = callback;
+
+    this.element.querySelector(`.event__rollup-btn`).addEventListener(`click`, this._openHandler);
   }
 }

@@ -1,5 +1,6 @@
 import {CITIES, STOPS, TRANSPORTS, TRANSPORT_OFFERS_MAP, STOP_OFFERS_MAP} from "../const.js";
-import {createElement, getRandomInt} from "../utils.js";
+import {getRandomInt} from "../utils/common.js";
+import AbstractView from "./abstract.js";
 
 const DEFAULT_EVENT_VALUES = {
   id: 0,
@@ -13,10 +14,13 @@ const DEFAULT_EVENT_VALUES = {
   isFavorite: false
 };
 
-export default class EventSummary {
+export default class EventSummary extends AbstractView {
   constructor(event = DEFAULT_EVENT_VALUES) {
+    super();
     this._event = event;
-    this._element = null;
+
+    this._closeHandler = this._closeHandler.bind(this);
+    this._submitHandler = this._submitHandler.bind(this);
   }
 
   get template() {
@@ -128,15 +132,25 @@ export default class EventSummary {
     return template;
   }
 
-  get element() {
-    if (!this._element) {
-      this._element = createElement(this.template);
-    }
-
-    return this._element;
+  _closeHandler(evt) {
+    evt.preventDefault();
+    this._callback.close();
   }
 
-  removeElement() {
-    this._element = null;
+  _submitHandler(evt) {
+    evt.preventDefault();
+    this._callback.submit();
+  }
+
+  set closeHandler(callback) {
+    this._callback.close = callback;
+
+    this.element.querySelector(`.event__rollup-btn`).addEventListener(`click`, this._closeHandler);
+  }
+
+  set submitHandler(callback) {
+    this._callback.submit = callback;
+
+    this.element.addEventListener(`submit`, this._submitHandler);
   }
 }
