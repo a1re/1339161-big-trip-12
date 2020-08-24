@@ -7,7 +7,7 @@ import DayView from "../view/day.js";
 
 import {render, RenderPosition} from "../utils/render.js";
 import {EscHandler} from "../utils/common.js";
-import {Route} from "../utils/route.js";
+import {Itinerary} from "../utils/itinerary.js";
 
 export default class Trip {
   /**
@@ -51,7 +51,7 @@ export default class Trip {
    * @return {void}
    */
   _renderEventsByDay(eventList) {
-    const dayList = Route.organizeByDays(eventList);
+    const dayList = Itinerary.organizeByDays(eventList);
 
     if (dayList.size === 0) {
       this._renderFallback();
