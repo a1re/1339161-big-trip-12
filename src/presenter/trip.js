@@ -9,6 +9,8 @@ import {render, RenderPosition} from "../utils/render.js";
 import {EscHandler} from "../utils/common.js";
 import {Itinerary} from "../utils/itinerary.js";
 
+import {SortingMethod} from "../const.js";
+
 export default class Trip {
   /**
    * Конструктор презентера. Заведение экземпляров отображений и установка
@@ -18,10 +20,13 @@ export default class Trip {
    */
   constructor(container) {
     this._container = container;
+    this._currentSortingMethod = SortingMethod.EVENT;
 
     this._dayListComponent = new DayListView();
     this._noEventsComponent = new NoEventsView();
-    this._sortingComponent = new SortingView();
+    this._sortingComponent = new SortingView(this._currentSortingMethod);
+
+    this._handleSortEvents = this._handleSortEvents.bind(this);
   }
 
   /**
@@ -32,11 +37,11 @@ export default class Trip {
    */
   init(eventList) {
     this._eventList = eventList.slice();
+    this._sortingComponent.sortEventsHandler = this._handleSortEvents;
 
     render(this._container, this._sortingComponent, RenderPosition.BEFOREEND);
     render(this._container, this._dayListComponent, RenderPosition.BEFOREEND);
-
-    this._renderEventsByDay(this._eventList);
+    this._renderSortedEvents(this._currentSortingMethod);
   }
 
   /**
@@ -47,11 +52,10 @@ export default class Trip {
    * отрисовывает сами события. Если в списке нет событий, то вызывается метод
    * this._renderFallback, который отрисовывает заглушку.
    *
-   * @param  {array} eventList - Список событий.
    * @return {void}
    */
-  _renderEventsByDay(eventList) {
-    const dayList = Itinerary.organizeByDays(eventList);
+  _renderEventsByDay() {
+    const dayList = Itinerary.organizeByDays(this._eventList);
 
     if (dayList.size === 0) {
       this._renderFallback();
@@ -65,7 +69,7 @@ export default class Trip {
   }
 
   /**
-   * Рендеринг событий внутри одного дня. Может также испольльзоваться для
+   * Рендеринг событий внутри одного дня. Может также использоваться для
    * вывода отсортированных событий (параметры dayDate и dayNumber не
    * обязательны).
    *
@@ -90,6 +94,31 @@ export default class Trip {
   }
 
   /**
+   * Вывод отсортированных событий. В зависимости от метода сортировки выбирает
+   * нужную функцию для сортировки, а также метод вывода (если события
+   * выводятся по дням, то нужно выводит методом _renderEventsByDay).
+   *
+   * @return {void}
+   */
+  _renderSortedEvents() {
+    this._sortingComponent.sortingMethod = this._currentSortingMethod;
+
+    switch (this._currentSortingMethod) {
+      case SortingMethod.TIME:
+        this._eventList.sort(Itinerary.sortByDuration);
+        this._renderEventList(this._eventList);
+        break;
+      case SortingMethod.PRICE:
+        this._eventList.sort(Itinerary.sortByPrice);
+        this._renderEventList(this._eventList);
+        break;
+      default:
+        this._eventList.sort(Itinerary.sortByEvents);
+        this._renderEventsByDay(this._eventList);
+    }
+  }
+
+  /**
    * Создание шаблона отображения сводки о событии для демонстрации в общем
    * списке. Вместе с шаблоном создается также и обработчик открытия события
    * (замена шаблона сводки формой редактирования).
@@ -108,7 +137,6 @@ export default class Trip {
 
     return eventSummary.element;
   }
-
 
   /**
    * Создание формы редактрирован события в общем списке. Вместе с формой
@@ -136,11 +164,38 @@ export default class Trip {
   }
 
   /**
-   * Рендеринг шаблона заглушки для состояния списка без событий
+   * Рендеринг шаблона заглушки для состояния списка без событий.
    *
    * @return {void}
    */
   _renderFallback() {
     render(this._container, this._noEventsComponent, RenderPosition.BEFOREEND);
+  }
+
+  /**
+   * Очистка контейнера с событиями.
+   *
+   * @return {void}
+   */
+  _clearEventList() {
+    this._dayListComponent.element.innerHTML = ``;
+  }
+
+  /**
+   * Хендлер для метода сортировки событий. Перед применением очищает список.
+   *
+   * @param  {String} sortingMethod - Метод сортировки согласно перечислению
+   *                                  SortingMethod.
+   * @return {void}
+   */
+  _handleSortEvents(sortingMethod) {
+    if (this._currentSortingMethod === sortingMethod) {
+      return;
+    }
+
+    this._currentSortingMethod = sortingMethod;
+
+    this._clearEventList();
+    this._renderSortedEvents(sortingMethod);
   }
 }

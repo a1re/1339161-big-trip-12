@@ -15,3 +15,9 @@ export const STOP_OFFERS_MAP = new Map([
   [`tickets`, {title: `Book tickets`, price: `40`}],
   [`lunch`, {title: `Lunch in the city`, price: `50`}]
 ]);
+
+export const SortingMethod = {
+  EVENT: `sort-event`,
+  TIME: `sort-time`,
+  PRICE: `sort-price`
+};

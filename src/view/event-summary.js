@@ -25,7 +25,7 @@ export default class EventSummary extends AbstractView {
                 &mdash;
                 <time class="event__end-time" datetime="${endTime.toISOString()}">${endTime.toLocaleTimeString(`en-US`, {timeStyle: `short`, hour12: false})}</time>
               </p>
-              <p class="event__duration">${Itinerary.duration(beginTime, endTime)}</p>
+              <p class="event__duration">${Itinerary.getDuration(beginTime, endTime)}</p>
             </div>
 
             <p class="event__price">
