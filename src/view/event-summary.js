@@ -1,5 +1,5 @@
 import AbstractView from "./abstract.js";
-import {Route} from "../utils/route.js";
+import {Itinerary} from "../utils/itinerary.js";
 
 export default class EventSummary extends AbstractView {
   constructor(event) {
@@ -25,7 +25,7 @@ export default class EventSummary extends AbstractView {
                 &mdash;
                 <time class="event__end-time" datetime="${endTime.toISOString()}">${endTime.toLocaleTimeString(`en-US`, {timeStyle: `short`, hour12: false})}</time>
               </p>
-              <p class="event__duration">${Route.duration(beginTime, endTime)}</p>
+              <p class="event__duration">${Itinerary.getDuration(beginTime, endTime)}</p>
             </div>
 
             <p class="event__price">

@@ -1,4 +1,4 @@
-export class Route {
+export class Itinerary {
   /**
    * Вычисление длительности события по времени начала и конца. Чтобы не
    * потеряться в часовых поясах, вычисление примитивно-математическое —
@@ -10,7 +10,7 @@ export class Route {
    * @return {string}         - Длительность события в формате строки вида
    *                            `01D 02H 03M`
    */
-  static duration(beginTime, endTime) {
+  static getDuration(beginTime, endTime) {
     const MIN_IN_MS = 1000 * 60;
     const HOUR_IN_MS = 60 * MIN_IN_MS;
     const DAY_IN_MS = 24 * HOUR_IN_MS;
@@ -132,6 +132,20 @@ export class Route {
     const monthFinish = sortedEvents[sortedEvents.length - 1].endTime.toLocaleString(`en-US`, {month: `short`});
 
     return `${dayStart}${(monthFinish !== monthStart) ? monthStart : ``}&nbsp;&mdash;&nbsp;${dayFinish} ${monthFinish}`;
+  }
+
+  static sortByEvents(eventA, eventB) {
+    return eventA.beginTime.valueOf() - eventB.beginTime.valueOf();
+  }
+
+  static sortByDuration(eventA, eventB) {
+    const durationA = eventA.endTime.valueOf() - eventA.beginTime.valueOf();
+    const durationB = eventB.endTime.valueOf() - eventB.beginTime.valueOf();
+    return durationB - durationA;
+  }
+
+  static sortByPrice(eventA, eventB) {
+    return eventB.price - eventA.price;
   }
 
 }
