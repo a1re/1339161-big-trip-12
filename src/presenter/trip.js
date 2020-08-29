@@ -41,7 +41,7 @@ export default class Trip {
 
     render(this._container, this._sortingComponent, RenderPosition.BEFOREEND);
     render(this._container, this._dayListComponent, RenderPosition.BEFOREEND);
-    this._renderSortedEvents(this._currentSortingMethod);
+    this._renderSortedEvents();
   }
 
   /**
@@ -196,6 +196,6 @@ export default class Trip {
     this._currentSortingMethod = sortingMethod;
 
     this._clearEventList();
-    this._renderSortedEvents(sortingMethod);
+    this._renderSortedEvents();
   }
 }
