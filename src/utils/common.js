@@ -3,10 +3,10 @@
  * кратным какому-то другому числу за счет указания третьего параметра divider
  * (по умолчанию 1).
  *
- * @param  {Int} a       - Граница диапазона.
- * @param  {Int} b       - Граница диапазона.
- * @param  {Int} divider - Делитель (по умолчанию 1).
- * @return {Int}         - Случайное число.
+ * @param  {Number} a       - Граница диапазона.
+ * @param  {Number} b       - Граница диапазона.
+ * @param  {Number} divider - Делитель (по умолчанию 1).
+ * @return {Number}         - Случайное число.
  */
 export const getRandomInt = (a = 0, b = 1, divider = 1) => {
   const lower = Math.floor(Math.min(a, b));
