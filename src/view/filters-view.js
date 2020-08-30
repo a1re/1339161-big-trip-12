@@ -1,6 +1,6 @@
-import AbstractView from "./abstract.js";
+import {AbstractView} from "./abstract-view.js";
 
-export default class Filters extends AbstractView {
+export class FiltersView extends AbstractView {
   get template() {
     return `<form class="trip-filters" action="#" method="get">
               <div class="trip-filters__filter">

@@ -1,6 +1,6 @@
 import {CITIES, STOPS, TRANSPORTS, TRANSPORT_OFFERS_MAP, STOP_OFFERS_MAP} from "../const.js";
 import {getRandomInt} from "../utils/common.js";
-import AbstractView from "./abstract.js";
+import {AbstractView} from "./abstract-view.js";
 
 const DEFAULT_EVENT_VALUES = {
   id: 0,
@@ -14,7 +14,7 @@ const DEFAULT_EVENT_VALUES = {
   isFavorite: false
 };
 
-export default class EventSummary extends AbstractView {
+export class EventEditView extends AbstractView {
   constructor(event = DEFAULT_EVENT_VALUES) {
     super();
     this._event = event;

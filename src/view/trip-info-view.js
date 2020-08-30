@@ -1,7 +1,7 @@
-import AbstractView from "./abstract.js";
+import {AbstractView} from "./abstract-view.js";
 import {Itinerary} from "../utils/itinerary.js";
 
-export default class TripInfo extends AbstractView {
+export class TripInfoView extends AbstractView {
   constructor(events) {
     super();
     this._events = events;

@@ -1,9 +1,9 @@
 import {createElement} from "../utils/render.js";
 
-export default class Abstract {
+export class AbstractView {
   constructor() {
-    if (new.target === Abstract) {
-      throw new Error(`Can't instantiate Abstract, only concrete one.`);
+    if (new.target === AbstractView) {
+      throw new Error(`Can't instantiate AbstractView, only concrete one.`);
     }
 
     this._element = null;
@@ -11,7 +11,7 @@ export default class Abstract {
   }
 
   get template() {
-    throw new Error(`Abstract method not implemented: get template.`);
+    throw new Error(`AbstractView method not implemented: get template.`);
   }
 
   get element() {

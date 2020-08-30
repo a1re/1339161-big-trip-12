@@ -1,7 +1,7 @@
-import AbstractView from "./abstract.js";
+import {AbstractView} from "./abstract-view.js";
 import {SortingMethod} from "../const.js";
 
-export default class Sorting extends AbstractView {
+export class SortingView extends AbstractView {
   constructor(sortingMethod) {
     super();
 
