@@ -1,12 +1,11 @@
 import {SortingView} from "../view/sorting-view.js";
-import {EventSummaryView} from "../view/event-summary-view.js";
-import {EventEditView} from "../view/event-edit-view.js";
 import {NoEventsView} from "../view/no-events-view.js";
 import {DayListView} from "../view/day-list-view.js";
 import {DayView} from "../view/day-view.js";
 
+import {EventPresenter} from "./event-presenter.js";
+
 import {render, RenderPosition} from "../utils/render.js";
-import {EscHandler} from "../utils/common.js";
 import {Itinerary} from "../utils/itinerary.js";
 
 import {SortingMethod} from "../const.js";
@@ -21,6 +20,8 @@ export class TripPresenter {
   constructor(container) {
     this._container = container;
     this._currentSortingMethod = SortingMethod.EVENT;
+    this._eventPresenter = new Map();
+    this._dayComponent = new Map();
 
     this._dayListComponent = new DayListView();
     this._noEventsComponent = new NoEventsView();
@@ -82,13 +83,13 @@ export class TripPresenter {
    */
   _renderEventList(eventList, dayDate = null, dayNumber = null) {
     const dayComponent = new DayView({dayNumber, dayDate});
+    this._dayComponent.set(dayDate, dayComponent);
     render(this._dayListComponent, dayComponent, RenderPosition.BEFOREEND);
 
     for (const event of eventList) {
-      render(
-          dayComponent.eventsContainer,
-          this._createEventSummaryElement(dayComponent.eventsContainer, event),
-          RenderPosition.BEFOREEND
+      this._eventPresenter.set(
+          event.id,
+          new EventPresenter(dayComponent.eventsContainer, event)
       );
     }
   }
@@ -119,51 +120,6 @@ export class TripPresenter {
   }
 
   /**
-   * Создание шаблона отображения сводки о событии для демонстрации в общем
-   * списке. Вместе с шаблоном создается также и обработчик открытия события
-   * (замена шаблона сводки формой редактирования).
-   *
-   * @param  {Node} container - DOM-узел для размещения отобажения.
-   * @param  {Object} event   - Объект с данными события.
-   * @return {Node}           - Шаблон в виде DOM-элемента для размещения.
-   */
-  _createEventSummaryElement(container, event) {
-    const eventSummary = new EventSummaryView(event);
-    eventSummary.openHandler = () => {
-      container.replaceChild(this._createEventEditElement(container, event), eventSummary.element);
-      eventSummary.element.remove();
-      eventSummary.removeElement();
-    };
-
-    return eventSummary.element;
-  }
-
-  /**
-   * Создание формы редактрирован события в общем списке. Вместе с формой
-   * создаются также обработчики закрытия формы (замена формы шаблономм
-   * сводки) и сохранения данных.
-   *
-   * @param  {Node} container - DOM-узел для размещения отобажения.
-   * @param  {Object} event   - Объект с данными события.
-   * @return {Node}           - Шаблон в виде DOM-элемента для размещения.
-   */
-  _createEventEditElement(container, event) {
-    const eventEdit = new EventEditView(event);
-    const closeEventEdit = () => {
-      container.replaceChild(this._createEventSummaryElement(container, event), eventEdit.element);
-      eventEdit.element.remove();
-      eventEdit.removeElement();
-      closeEventByEsc.unbind();
-    };
-
-    const closeEventByEsc = new EscHandler(closeEventEdit);
-    eventEdit.closeHandler = closeEventEdit;
-    eventEdit.submitHandler = closeEventEdit;
-
-    return eventEdit.element;
-  }
-
-  /**
    * Рендеринг шаблона заглушки для состояния списка без событий.
    *
    * @return {void}
@@ -178,7 +134,10 @@ export class TripPresenter {
    * @return {void}
    */
   _clearEventList() {
-    this._dayListComponent.element.innerHTML = ``;
+    this._eventPresenter.forEach((event) => event.destroy());
+    this._eventPresenter.clear();
+    this._dayComponent.forEach((day) => day.remove());
+    this._dayComponent.clear();
   }
 
   /**

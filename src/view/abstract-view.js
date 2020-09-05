@@ -22,7 +22,16 @@ export class AbstractView {
     return this._element;
   }
 
-  removeElement() {
+  unset() {
     this._element = null;
+  }
+
+  remove() {
+    if (!this._element) {
+      return;
+    }
+
+    this._element.remove();
+    this.unset();
   }
 }
