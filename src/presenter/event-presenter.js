@@ -5,18 +5,48 @@ import {render, RenderPosition} from "../utils/render.js";
 import {EscHandler} from "../utils/common.js";
 
 export class EventPresenter {
-  constructor(eventListContainer, event) {
+  constructor(eventListContainer, event, updateEventData) {
     this._eventListContainer = eventListContainer;
     this._event = event;
+    this._updateEventData = updateEventData;
 
     this._eventSummaryComponent = null;
     this._eventEditComponent = null;
+    this._closeEventByEsc = null;
+
+    this._handleFavoriteClick = this._handleFavoriteClick.bind(this);
 
     render(
         this._eventListContainer,
         this._createEventSummaryElement(event),
         RenderPosition.BEFOREEND
     );
+  }
+
+  reset(event) {
+    this._event = event;
+
+    if (this._eventListContainer.contains(this._eventSummaryComponent.element)) {
+      const previousEventSummaryComponent = this._eventSummaryComponent;
+      this._eventListContainer.replaceChild(
+          this._createEventSummaryElement(event),
+          previousEventSummaryComponent.element
+      );
+      previousEventSummaryComponent.remove();
+    }
+
+    if (this._eventListContainer.contains(this._eventEditComponent.element)) {
+      if (this._closeEventByEsc) {
+        this._closeEventByEsc.unbind();
+        this._closeEventByEsc = null;
+      }
+      const previousEventEditComponent = this._eventEditComponent;
+      this._eventListContainer.replaceChild(
+          this._createEventEditElement(event),
+          previousEventEditComponent.element
+      );
+      previousEventEditComponent.remove();
+    }
   }
 
   /**
@@ -28,9 +58,7 @@ export class EventPresenter {
    * @return {Node}           - Шаблон в виде DOM-элемента для размещения.
    */
   _createEventSummaryElement(event) {
-    if (this._eventSummaryComponent === null) {
-      this._eventSummaryComponent = new EventSummaryView(event);
-    }
+    this._eventSummaryComponent = new EventSummaryView(event);
 
     this._eventSummaryComponent.openHandler = () => {
       this._eventListContainer.replaceChild(
@@ -52,9 +80,7 @@ export class EventPresenter {
    * @return {Node}           - Шаблон в виде DOM-элемента для размещения.
    */
   _createEventEditElement(event) {
-    if (this._eventEditComponent === null) {
-      this._eventEditComponent = new EventEditView(event);
-    }
+    this._eventEditComponent = new EventEditView(event);
 
     const closeEventEdit = () => {
       this._eventListContainer.replaceChild(
@@ -62,14 +88,22 @@ export class EventPresenter {
           this._eventEditComponent.element
       );
       this._eventEditComponent.remove();
-      closeEventByEsc.unbind();
+      this._closeEventByEsc.unbind();
+      this._closeEventByEsc = null;
     };
 
-    const closeEventByEsc = new EscHandler(closeEventEdit);
+    this._closeEventByEsc = new EscHandler(closeEventEdit);
     this._eventEditComponent.closeHandler = closeEventEdit;
     this._eventEditComponent.submitHandler = closeEventEdit;
+    this._eventEditComponent.toggleFavoriteHandler = this._handleFavoriteClick;
 
     return this._eventEditComponent.element;
+  }
+
+  _handleFavoriteClick() {
+    this._updateEventData(
+        Object.assign({}, this._event, {isFavorite: !this._event.isFavorite})
+    );
   }
 
   /**

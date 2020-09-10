@@ -7,6 +7,7 @@ import {EventPresenter} from "./event-presenter.js";
 
 import {render, RenderPosition} from "../utils/render.js";
 import {Itinerary} from "../utils/itinerary.js";
+import {updateItem} from "../utils/common.js";
 
 import {SortingMethod} from "../const.js";
 
@@ -27,6 +28,7 @@ export class TripPresenter {
     this._noEventsComponent = new NoEventsView();
     this._sortingComponent = new SortingView(this._currentSortingMethod);
 
+    this._handleUpdateEvent = this._handleUpdateEvent.bind(this);
     this._handleSortEvents = this._handleSortEvents.bind(this);
   }
 
@@ -69,6 +71,11 @@ export class TripPresenter {
     }
   }
 
+  _handleUpdateEvent(eventUpdatedData) {
+    this._eventList = updateItem(this._eventList, eventUpdatedData);
+    this._eventPresenter.get(eventUpdatedData.id).reset(eventUpdatedData);
+  }
+
   /**
    * Рендеринг событий внутри одного дня. Может также использоваться для
    * вывода отсортированных событий (параметры dayDate и dayNumber не
@@ -89,7 +96,7 @@ export class TripPresenter {
     for (const event of eventList) {
       this._eventPresenter.set(
           event.id,
-          new EventPresenter(dayComponent.eventsContainer, event)
+          new EventPresenter(dayComponent.eventsContainer, event, this._handleUpdateEvent)
       );
     }
   }

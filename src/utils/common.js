@@ -17,7 +17,7 @@ export const getRandomInt = (a = 0, b = 1, divider = 1) => {
 };
 
 /**
- * Класс для создаение и удалениея обработчика нажатия на кнопку Esc. C помощью
+ * Класс для создаения и удалениея обработчика нажатия на кнопку Esc. C помощью
  * конструктора обработчик создается, с помощью метода unbbind() — удаляется.
  *
  * constructor:
@@ -45,3 +45,26 @@ export class EscHandler {
     document.removeEventListener(`keydown`, this._callback);
   }
 }
+
+/**
+ * Обновление элемента в массиве с объектами. Объект сверяется по свойству
+ * id. Если элемент для обновления не найден, возвращается исходный массив
+ * по ссылке, если найден — копию с обновленным объектом.
+ *
+ * @param  {Array} items   - Исходный массив с объектами.
+ * @param  {Object} update - Объект с обновленными данными.
+ * @return {Array}         - Массив с обновленными данными.
+ */
+export const updateItem = (items, update) => {
+  const index = items.findIndex((item) => item.id === update.id);
+
+  if (index === -1) {
+    return items;
+  }
+
+  return [
+    ...items.slice(0, index),
+    update,
+    ...items.slice(index + 1)
+  ];
+};
