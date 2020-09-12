@@ -15,6 +15,8 @@ export class EventPresenter {
     this._closeEventByEsc = null;
 
     this._handleFavoriteClick = this._handleFavoriteClick.bind(this);
+    this._handleEventEditClose = this._handleEventEditClose.bind(this);
+    this._handleFormSubmit = this._handleFormSubmit.bind(this);
 
     render(
         this._eventListContainer,
@@ -23,6 +25,12 @@ export class EventPresenter {
     );
   }
 
+  /**
+   * Перерисовка карточки с новыми данными
+   *
+   * @param  {Object} event - Объект с новыми данными.
+   * @return {void}
+   */
   reset(event) {
     this._event = event;
 
@@ -54,15 +62,14 @@ export class EventPresenter {
    * списке. Вместе с шаблоном создается также и обработчик открытия события
    * (замена шаблона сводки формой редактирования).
    *
-   * @param  {Object} event   - Объект с данными события.
    * @return {Node}           - Шаблон в виде DOM-элемента для размещения.
    */
-  _createEventSummaryElement(event) {
-    this._eventSummaryComponent = new EventSummaryView(event);
+  _createEventSummaryElement() {
+    this._eventSummaryComponent = new EventSummaryView(this._event);
 
     this._eventSummaryComponent.openHandler = () => {
       this._eventListContainer.replaceChild(
-          this._createEventEditElement(event),
+          this._createEventEditElement(this._event),
           this._eventSummaryComponent.element
       );
       this._eventSummaryComponent.remove();
@@ -72,38 +79,59 @@ export class EventPresenter {
   }
 
   /**
-   * Создание формы редактрирования события в общем списке. Вместе с формой
-   * создаются также обработчики закрытия формы (замена формы шаблономм
-   * сводки) и сохранения данных.
+   * Создание формы редактрирования события на основе отоббражения. Вместе
+   * с формой создаются также обработчики закрытия формы (замена формы
+   * шаблоном сводки) и сохранения данных.
    *
-   * @param  {Object} event   - Объект с данными события.
    * @return {Node}           - Шаблон в виде DOM-элемента для размещения.
    */
-  _createEventEditElement(event) {
-    this._eventEditComponent = new EventEditView(event);
+  _createEventEditElement() {
+    this._eventEditComponent = new EventEditView(this._event);
 
-    const closeEventEdit = () => {
-      this._eventListContainer.replaceChild(
-          this._createEventSummaryElement(event),
-          this._eventEditComponent.element
-      );
-      this._eventEditComponent.remove();
-      this._closeEventByEsc.unbind();
-      this._closeEventByEsc = null;
-    };
-
-    this._closeEventByEsc = new EscHandler(closeEventEdit);
-    this._eventEditComponent.closeHandler = closeEventEdit;
-    this._eventEditComponent.submitHandler = closeEventEdit;
+    this._closeEventByEsc = new EscHandler(this._handleEventEditClose);
+    this._eventEditComponent.closeHandler = this._handleEventEditClose;
+    this._eventEditComponent.submitHandler = this._handleFormSubmit;
     this._eventEditComponent.toggleFavoriteHandler = this._handleFavoriteClick;
 
     return this._eventEditComponent.element;
   }
 
+  /**
+   * Обработчик закрытия формы регистрации. При закрытии также снимает
+   * обработчик нажатия на Esc.
+   *
+   * @return {void}
+   */
+  _handleEventEditClose() {
+    this._eventListContainer.replaceChild(
+        this._createEventSummaryElement(this._event),
+        this._eventEditComponent.element
+    );
+    this._eventEditComponent.remove();
+    this._closeEventByEsc.unbind();
+    this._closeEventByEsc = null;
+  }
+
+  /**
+   * Обработчик нажатия на кнопку «Добавить в избранное».
+   *
+   * @return {void}
+   */
   _handleFavoriteClick() {
     this._updateEventData(
         Object.assign({}, this._event, {isFavorite: !this._event.isFavorite})
     );
+  }
+
+  /**
+   * Обработчик сохранения данных формы
+   *
+   * @param  {Object} eventData - Данные формы для сохранения
+   * @return {void}
+   */
+  _handleFormSubmit(eventData) {
+    this._handleEventEditClose();
+    this._updateEventData(eventData);
   }
 
   /**

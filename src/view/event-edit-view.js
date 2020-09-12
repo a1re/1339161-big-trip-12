@@ -54,21 +54,6 @@ export class EventEditView extends AbstractView {
       </form>`;
   }
 
-  _closeHandler(evt) {
-    evt.preventDefault();
-    this._callback.close();
-  }
-
-  _submitHandler(evt) {
-    evt.preventDefault();
-    this._callback.submit();
-  }
-
-  _toggleFavoriteHandler(evt) {
-    evt.preventDefault();
-    this._callback.toggleFavorite();
-  }
-
   _makeEventTypeSelector() {
     const {id, type} = this._event;
 
@@ -273,6 +258,21 @@ export class EventEditView extends AbstractView {
         </section>`;
 
     return template;
+  }
+
+  _closeHandler(evt) {
+    evt.preventDefault();
+    this._callback.close();
+  }
+
+  _submitHandler(evt) {
+    evt.preventDefault();
+    this._callback.submit(this._event);
+  }
+
+  _toggleFavoriteHandler(evt) {
+    evt.preventDefault();
+    this._callback.toggleFavorite();
   }
 
   set closeHandler(callback) {
