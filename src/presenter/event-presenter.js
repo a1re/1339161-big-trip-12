@@ -4,11 +4,19 @@ import {EventEditView} from "../view/event-edit-view.js";
 import {render, RenderPosition} from "../utils/render.js";
 import {EscHandler} from "../utils/common.js";
 
+const Mode = {
+  SUMMARY: `SUMMARY`,
+  EDITING: `EDITING`
+};
+
 export class EventPresenter {
-  constructor(eventListContainer, eventData, updateEventData) {
+  constructor(eventListContainer, eventData, updateEventData, resetAllEvents) {
     this._eventListContainer = eventListContainer;
     this._event = eventData;
     this._updateEventData = updateEventData;
+    this._resetAllEvents = resetAllEvents;
+
+    this._mode = Mode.SUMMARY;
 
     this._eventSummaryComponent = null;
     this._eventEditComponent = null;
@@ -34,7 +42,7 @@ export class EventPresenter {
   update(eventData) {
     this._event = eventData;
 
-    if (this._eventListContainer.contains(this._eventSummaryComponent.element)) {
+    if (this._mode === Mode.SUMMARY) {
       const previousEventSummaryComponent = this._eventSummaryComponent;
       this._eventListContainer.replaceChild(
           this._createEventSummaryElement(eventData),
@@ -43,7 +51,7 @@ export class EventPresenter {
       previousEventSummaryComponent.remove();
     }
 
-    if (this._eventListContainer.contains(this._eventEditComponent.element)) {
+    if (this._mode === Mode.EDITING) {
       if (this._closeEventByEsc) {
         this._closeEventByEsc.unbind();
         this._closeEventByEsc = null;
@@ -54,6 +62,21 @@ export class EventPresenter {
           previousEventEditComponent.element
       );
       previousEventEditComponent.remove();
+    }
+  }
+
+  /**
+   * Сброс состояния события. Если событие было открыто в виде формы
+   * редактирования, то оно вренется в формат сводки.
+   *
+   * @return {void}
+   */
+  reset() {
+    if (this._mode !== Mode.SUMMARY) {
+      this._eventListContainer.replaceChild(
+          this._createEventSummaryElement(this._event),
+          this._eventEditComponent.element
+      );
     }
   }
 
@@ -89,6 +112,8 @@ export class EventPresenter {
       this._eventSummaryComponent.remove();
     };
 
+    this._mode = Mode.SUMMARY;
+
     return this._eventSummaryComponent.element;
   }
 
@@ -100,12 +125,15 @@ export class EventPresenter {
    * @return {Node}           - Шаблон в виде DOM-элемента для размещения.
    */
   _createEventEditElement() {
+    this._resetAllEvents();
+
     this._eventEditComponent = new EventEditView(this._event);
 
     this._closeEventByEsc = new EscHandler(this._closeEventEdit);
     this._eventEditComponent.closeHandler = this._closeEventEdit;
     this._eventEditComponent.submitHandler = this._submitForm;
     this._eventEditComponent.toggleFavoriteHandler = this._toggleFavorite;
+    this._mode = Mode.EDITING;
 
     return this._eventEditComponent.element;
   }

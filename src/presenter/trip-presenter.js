@@ -28,8 +28,9 @@ export class TripPresenter {
     this._noEventsComponent = new NoEventsView();
     this._sortingComponent = new SortingView(this._currentSortingMethod);
 
-    this._handleUpdateEvent = this._handleUpdateEvent.bind(this);
-    this._handleSortEvents = this._handleSortEvents.bind(this);
+    this._updateEvent = this._updateEvent.bind(this);
+    this._sortEvents = this._sortEvents.bind(this);
+    this._resetAllEvents = this._resetAllEvents.bind(this);
   }
 
   /**
@@ -40,7 +41,7 @@ export class TripPresenter {
    */
   init(eventList) {
     this._eventList = eventList.slice();
-    this._sortingComponent.sortEventsHandler = this._handleSortEvents;
+    this._sortingComponent.sortEventsHandler = this._sortEvents;
 
     render(this._container, this._sortingComponent, RenderPosition.BEFOREEND);
     render(this._container, this._dayListComponent, RenderPosition.BEFOREEND);
@@ -80,7 +81,7 @@ export class TripPresenter {
    * @param  {Boolean} updateView      - Флаг перерисовки отображения.
    * @return {void}
    */
-  _handleUpdateEvent(eventUpdatedData, updateView = true) {
+  _updateEvent(eventUpdatedData, updateView = true) {
     this._eventList = updateItem(this._eventList, eventUpdatedData);
     if (updateView) {
       this._eventPresenter.get(eventUpdatedData.id).update(eventUpdatedData);
@@ -107,7 +108,7 @@ export class TripPresenter {
     for (const event of eventList) {
       this._eventPresenter.set(
           event.id,
-          new EventPresenter(dayComponent.eventsContainer, event, this._handleUpdateEvent)
+          new EventPresenter(dayComponent.eventsContainer, event, this._updateEvent, this._resetAllEvents)
       );
     }
   }
@@ -165,7 +166,7 @@ export class TripPresenter {
    *                                  SortingMethod.
    * @return {void}
    */
-  _handleSortEvents(sortingMethod) {
+  _sortEvents(sortingMethod) {
     if (this._currentSortingMethod === sortingMethod) {
       return;
     }
@@ -174,5 +175,16 @@ export class TripPresenter {
 
     this._clearEventList();
     this._renderSortedEvents();
+  }
+
+  /**
+   * Закртие всех форм редактирования.
+   *
+   * @return {void}
+   */
+  _resetAllEvents() {
+    this._eventPresenter.forEach((eventPresenter) => {
+      eventPresenter.reset();
+    });
   }
 }
