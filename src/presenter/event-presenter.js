@@ -5,22 +5,22 @@ import {render, RenderPosition} from "../utils/render.js";
 import {EscHandler} from "../utils/common.js";
 
 export class EventPresenter {
-  constructor(eventListContainer, event, updateEventData) {
+  constructor(eventListContainer, eventData, updateEventData) {
     this._eventListContainer = eventListContainer;
-    this._event = event;
+    this._event = eventData;
     this._updateEventData = updateEventData;
 
     this._eventSummaryComponent = null;
     this._eventEditComponent = null;
     this._closeEventByEsc = null;
 
-    this._handleFavoriteClick = this._handleFavoriteClick.bind(this);
-    this._handleEventEditClose = this._handleEventEditClose.bind(this);
-    this._handleFormSubmit = this._handleFormSubmit.bind(this);
+    this._toggleFavorite = this._toggleFavorite.bind(this);
+    this._closeEventEdit = this._closeEventEdit.bind(this);
+    this._submitForm = this._submitForm.bind(this);
 
     render(
         this._eventListContainer,
-        this._createEventSummaryElement(event),
+        this._createEventSummaryElement(eventData),
         RenderPosition.BEFOREEND
     );
   }
@@ -28,16 +28,16 @@ export class EventPresenter {
   /**
    * Перерисовка карточки с новыми данными
    *
-   * @param  {Object} event - Объект с новыми данными.
+   * @param  {Object} eventData - Объект с новыми данными.
    * @return {void}
    */
-  reset(event) {
-    this._event = event;
+  update(eventData) {
+    this._event = eventData;
 
     if (this._eventListContainer.contains(this._eventSummaryComponent.element)) {
       const previousEventSummaryComponent = this._eventSummaryComponent;
       this._eventListContainer.replaceChild(
-          this._createEventSummaryElement(event),
+          this._createEventSummaryElement(eventData),
           previousEventSummaryComponent.element
       );
       previousEventSummaryComponent.remove();
@@ -50,10 +50,24 @@ export class EventPresenter {
       }
       const previousEventEditComponent = this._eventEditComponent;
       this._eventListContainer.replaceChild(
-          this._createEventEditElement(event),
+          this._createEventEditElement(eventData),
           previousEventEditComponent.element
       );
       previousEventEditComponent.remove();
+    }
+  }
+
+  /**
+   * Удаление события с обеими формами представления (сводки и редактрирования).
+   *
+   * @return {void}
+   */
+  destroy() {
+    if (this._eventEditComponent) {
+      this._eventEditComponent.remove();
+    }
+    if (this._eventSummaryComponent) {
+      this._eventSummaryComponent.remove();
     }
   }
 
@@ -88,10 +102,10 @@ export class EventPresenter {
   _createEventEditElement() {
     this._eventEditComponent = new EventEditView(this._event);
 
-    this._closeEventByEsc = new EscHandler(this._handleEventEditClose);
-    this._eventEditComponent.closeHandler = this._handleEventEditClose;
-    this._eventEditComponent.submitHandler = this._handleFormSubmit;
-    this._eventEditComponent.toggleFavoriteHandler = this._handleFavoriteClick;
+    this._closeEventByEsc = new EscHandler(this._closeEventEdit);
+    this._eventEditComponent.closeHandler = this._closeEventEdit;
+    this._eventEditComponent.submitHandler = this._submitForm;
+    this._eventEditComponent.toggleFavoriteHandler = this._toggleFavorite;
 
     return this._eventEditComponent.element;
   }
@@ -102,7 +116,7 @@ export class EventPresenter {
    *
    * @return {void}
    */
-  _handleEventEditClose() {
+  _closeEventEdit() {
     this._eventListContainer.replaceChild(
         this._createEventSummaryElement(this._event),
         this._eventEditComponent.element
@@ -117,34 +131,30 @@ export class EventPresenter {
    *
    * @return {void}
    */
-  _handleFavoriteClick() {
-    this._updateEventData(
-        Object.assign({}, this._event, {isFavorite: !this._event.isFavorite})
+  _toggleFavorite() {
+    this._event = Object.assign({}, this._event,
+        {
+          isFavorite: !this._event.isFavorite
+        }
     );
+    this._updateEventData(Object.assign({}, this._event), false);
   }
 
   /**
-   * Обработчик сохранения данных формы
+   * Cохранение данных формы
    *
    * @param  {Object} eventData - Данные формы для сохранения
    * @return {void}
    */
-  _handleFormSubmit(eventData) {
-    this._handleEventEditClose();
-    this._updateEventData(eventData);
-  }
-
-  /**
-   * Удаление события с обеими формами представления (сводки и редактрирования).
-   *
-   * @return {void}
-   */
-  destroy() {
-    if (this._eventEditComponent) {
-      this._eventEditComponent.remove();
-    }
-    if (this._eventSummaryComponent) {
-      this._eventSummaryComponent.remove();
-    }
+  _submitForm(eventData) {
+    this._closeEventEdit();
+    this._updateEventData(Object.assign({}, this._event,
+        {
+          type: eventData.type,
+          city: eventData.city,
+          price: parseInt(eventData.price, 10),
+          offers: eventData.offers
+        }
+    ));
   }
 }

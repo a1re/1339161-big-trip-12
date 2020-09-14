@@ -18,14 +18,29 @@ export class EventEditView extends AbstractView {
     super();
     this._event = event;
 
+    this._isSubmitEnabled = true;
+
     this._closeHandler = this._closeHandler.bind(this);
     this._submitHandler = this._submitHandler.bind(this);
     this._toggleFavoriteHandler = this._toggleFavoriteHandler.bind(this);
+    this._inputDestinationHandler = this._inputDestinationHandler.bind(this);
+    this._inputBeginTimeHandler = this._inputBeginTimeHandler.bind(this);
+    this._inputEndTimeHandler = this._inputEndTimeHandler.bind(this);
+    this._inputPriceHandler = this._inputPriceHandler.bind(this);
+    this._selectTypeHandler = this._selectTypeHandler.bind(this);
+    this._selectOfferHandler = this._selectOfferHandler.bind(this);
+
+    this.setHandlers();
   }
 
+  /**
+   * Получение общего шаблона отображения.
+   *
+   * @return {String} - Шаблон в виде строки с HTML-кодом.
+   */
   get template() {
     const eventTypeSelector = this._makeEventTypeSelector();
-    const citySelector = this._makeCitySelector();
+    const destinationSelector = this._makeDestinationSelector();
     const timeInput = this._makeTimeInput();
     const priceInput = this._makePriceInput();
     const favoriteButton = this._makeFavoriteButton();
@@ -35,13 +50,13 @@ export class EventEditView extends AbstractView {
         <header class="event__header">
           ${eventTypeSelector}
 
-          ${citySelector}
+          ${destinationSelector}
 
           ${timeInput}
 
           ${priceInput}
 
-          <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
+          <button class="event__save-btn  btn  btn--blue" type="submit" ${this._isSubmitEnabled ? `` : `disabled`}>Save</button>
           <button class="event__reset-btn" type="reset">Delete</button>
 
           ${favoriteButton}
@@ -54,6 +69,136 @@ export class EventEditView extends AbstractView {
       </form>`;
   }
 
+  /**
+   * Сеттер хэндлера закрытия формы редактирования.
+   *
+   * @param  {Function} callback - Коллбэк закрытия формы редактирования.
+   * @return {void}
+   */
+  set closeHandler(callback) {
+    this._callback.close = callback;
+
+    this.element.querySelector(`.event__rollup-btn`)
+      .addEventListener(`click`, this._closeHandler);
+  }
+
+  /**
+   * Сеттер хэндлера сохранения события в форме редактирования.
+   *
+   * @param  {Function} callback - Коллбэк сохранения события.
+   * @return {void}
+   */
+  set submitHandler(callback) {
+    this._callback.submit = callback;
+
+    this.element.addEventListener(`submit`, this._submitHandler);
+  }
+
+  /**
+   * Сеттер хэндлера для кнопки добавления/удаления события в избранное.
+   *
+   * @param  {Function} callback - Коллбэк нажатия на кнопку..
+   * @return {void}
+   */
+  set toggleFavoriteHandler(callback) {
+    this._callback.toggleFavorite = callback;
+
+    this.element.querySelector(`.event__favorite-btn`)
+      .addEventListener(`click`, this._toggleFavoriteHandler);
+  }
+
+  /**
+   * Перерисовка шаблона.
+   *
+   * @return {void}
+   */
+  updateElement() {
+    let prevElement = this.element;
+    const parent = prevElement.parentElement;
+    this.unset();
+
+    const newElement = this.element;
+    parent.replaceChild(newElement, prevElement);
+    prevElement = null;
+
+    this.setHandlers();
+  }
+
+  /**
+   * Обновление данных объекта события.
+   *
+   * @param  {Object} newData - Обновленные данные
+   * @return {void}
+   */
+  updateData(newData) {
+    if (!newData) {
+      return;
+    }
+
+    this._event = Object.assign({}, this._event, newData);
+  }
+
+  /**
+   * Групповая установка обработчиков разных элементов форм.
+   *
+   * @return {void}
+   */
+  setHandlers() {
+    this.element.querySelector(`.event__input--destination`)
+      .addEventListener(`input`, this._inputDestinationHandler);
+    this.element.querySelector(`#event-start-time-${this._event.id}`)
+      .addEventListener(`input`, this._inputBeginTimeHandler);
+    this.element.querySelector(`#event-end-time-${this._event.id}`)
+      .addEventListener(`input`, this._inputEndTimeHandler);
+    this.element.querySelector(`#event-price-${this._event.id}`)
+      .addEventListener(`input`, this._inputPriceHandler);
+    this.element.querySelector(`.event__type-list`)
+      .addEventListener(`change`, this._selectTypeHandler);
+    this.element.querySelector(`.event__available-offers`)
+      .addEventListener(`change`, this._selectOfferHandler);
+
+    this.closeHandler = this._callback.close;
+    this.submitHandler = this._callback.submit;
+    this.toggleFavoriteHandler = this._callback.toggleFavorite;
+  }
+
+  /**
+   * Получение списка выбранных предложений.
+   *
+   * @return {Object} - Объект со списком специальных предложений.
+   */
+  _getSelectedOffers() {
+    const offersMap = (TRANSPORTS.indexOf(this._event.type) >= 0)
+      ? TRANSPORT_OFFERS_MAP
+      : STOP_OFFERS_MAP;
+
+    const selectedOffers = this.element.querySelectorAll(`.event__available-offers input:checked`);
+    const newOffers = { };
+    for (const offer of selectedOffers) {
+      newOffers[offer.value] = offersMap.get(offer.value);
+    }
+
+    return newOffers;
+  }
+
+  /**
+   * Включение/выключение кнопки сабмита формы.
+   *
+   * @param  {Boolean} isEnabled - Флаг статуса кнопки сабмита формы.
+   * @return {void}
+   */
+  _updateSubmitStatus(isEnabled) {
+    this._isSubmitEnabled = isEnabled;
+
+    const submit = this.element.querySelector(`.event__save-btn`);
+    submit.disabled = !isEnabled;
+  }
+
+  /**
+   * Шаблон формы выбора типа события.
+   *
+   * @return {String} - Шаблон в виде строки с HTML-кодом.
+   */
   _makeEventTypeSelector() {
     const {id, type} = this._event;
 
@@ -83,7 +228,7 @@ export class EventEditView extends AbstractView {
                 class="event__type-input  visually-hidden"
                 type="radio"
                 name="event-type"
-                value="${transferName.toLowerCase()}"
+                value="${transferName}"
                 ${(transferName === type) ? `checked` : ``}>
               <label
                 class="event__type-label  event__type-label--${transferName.toLowerCase()}"
@@ -103,7 +248,7 @@ export class EventEditView extends AbstractView {
                 id="event-type-${activityName.toLowerCase()}-1"
                 class="event__type-input  visually-hidden"
                 type="radio" name="event-type"
-                value="${activityName.toLowerCase()}"
+                value="${activityName}"
                 ${(activityName === type) ? `checked` : ``}>
               <label
                 class="event__type-label  event__type-label--${activityName.toLowerCase()}"
@@ -121,7 +266,12 @@ export class EventEditView extends AbstractView {
     return template;
   }
 
-  _makeCitySelector() {
+  /**
+   * Шаблон инпута места назначения.
+   *
+   * @return {String} - Шаблон в виде строки с HTML-кодом.
+   */
+  _makeDestinationSelector() {
     const {id, type, city} = this._event;
     const isTransfer = TRANSPORTS.indexOf(type) >= 0;
 
@@ -150,6 +300,11 @@ export class EventEditView extends AbstractView {
     return template;
   }
 
+  /**
+   * Шаблон ввода времени.
+   *
+   * @return {String} - Шаблон в виде строки с HTML-кодом.
+   */
   _makeTimeInput() {
     const {id} = this._event;
 
@@ -190,6 +345,11 @@ export class EventEditView extends AbstractView {
       </div>`;
   }
 
+  /**
+   * Шаблон ввода стоимости.
+   *
+   * @return {String} - Шаблон в виде строки с HTML-кодом.
+   */
   _makePriceInput() {
     const {id, price} = this._event;
     return `
@@ -207,6 +367,11 @@ export class EventEditView extends AbstractView {
       </div>`;
   }
 
+  /**
+   * Шаблон кнопки добавления в избранное.
+   *
+   * @return {String} - Шаблон в виде строки с HTML-кодом.
+   */
   _makeFavoriteButton() {
     const {id, isFavorite} = this._event;
 
@@ -226,9 +391,14 @@ export class EventEditView extends AbstractView {
       </label>`;
   }
 
+  /**
+   * Шаблон списка специальных предложений.
+   *
+   * @return {String} - Шаблон в виде строки с HTML-кодом.
+   */
   _makeOffersList() {
     const {id, type, offers} = this._event;
-    const offersList = (TRANSPORTS.indexOf(type) >= 0) ? TRANSPORT_OFFERS_MAP : STOP_OFFERS_MAP;
+    const offersMap = (TRANSPORTS.indexOf(type) >= 0) ? TRANSPORT_OFFERS_MAP : STOP_OFFERS_MAP;
 
     let template = `
         <section class="event__details">
@@ -236,15 +406,16 @@ export class EventEditView extends AbstractView {
             <h3 class="event__section-title  event__section-title--offers">Offers</h3>
             <div class="event__available-offers">`;
 
-    for (const [offerId, offerDetails] of offersList) {
+    for (const [offerId, offerDetails] of offersMap) {
       template += `
               <div class="event__offer-selector">
                 <input
                     class="event__offer-checkbox  visually-hidden"
-                    id="event-offer-${offerId}-${id}"
+                    id="event-${id}-offer-${offerId}"
                     type="checkbox"
-                    name="event-offer-${offerId}" ${(offers[offerId]) ? `checked` : ``}>
-                <label class="event__offer-label" for="event-offer-${offerId}-${id}">
+                    name="event-${id}-offer"
+                    value="${offerId}" ${(offers[offerId]) ? `checked` : ``}>
+                <label class="event__offer-label" for="event-${id}-offer-${offerId}">
                   <span class="event__offer-title">${offerDetails.title}</span>
                   &plus;
                   &euro;&nbsp;<span class="event__offer-price">${offerDetails.price}</span>
@@ -260,36 +431,115 @@ export class EventEditView extends AbstractView {
     return template;
   }
 
+  /**
+   * Хэндлер закрытия формы реедактирования.
+   *
+   * @param  {Object} evt - Объект события в DOM.
+   * @return {void}
+   */
   _closeHandler(evt) {
     evt.preventDefault();
     this._callback.close();
   }
 
+  /**
+   * Хэндлер сабмита формы редактирования.
+   *
+   * @param  {Object} evt - Объект события в DOM.
+   * @return {void}
+   */
   _submitHandler(evt) {
     evt.preventDefault();
+
+    if (!this._isSubmitEnabled) {
+      return;
+    }
+
+    this.updateData({offers: this._getSelectedOffers()});
     this._callback.submit(this._event);
   }
 
-  _toggleFavoriteHandler(evt) {
-    evt.preventDefault();
+  /**
+   * Хэндлер добавления/удаления из избранного.
+   *
+   * @return {void}
+   */
+  _toggleFavoriteHandler() {
+    this.updateData({isFavorite: !this._event.isFavorite});
     this._callback.toggleFavorite();
   }
 
-  set closeHandler(callback) {
-    this._callback.close = callback;
-
-    this.element.querySelector(`.event__rollup-btn`).addEventListener(`click`, this._closeHandler);
+  /**
+   * Хэндлер ввода места назначения
+   *
+   * @param  {Object} evt - Объект события в DOM.
+   * @return {void}
+   */
+  _inputDestinationHandler(evt) {
+    if (evt.target.value.length > 0) {
+      this.updateData({city: evt.target.value});
+      this._updateSubmitStatus(true);
+    } else {
+      this._updateSubmitStatus(false);
+    }
   }
 
-  set submitHandler(callback) {
-    this._callback.submit = callback;
-
-    this.element.addEventListener(`submit`, this._submitHandler);
+  /**
+   * Хэндлер ввода времени начала события.
+   *
+   * @param  {Object} evt - Объект события в DOM.
+   * @return {void}
+   */
+  _inputBeginTimeHandler(evt) {
+    this._updateSubmitStatus(evt.target.value.length > 0);
   }
 
-  set toggleFavoriteHandler(callback) {
-    this._callback.toggleFavorite = callback;
+  /**
+   * Хэндлер ввода времени окончания события.
+   *
+   * @param  {Object} evt - Объект события в DOM.
+   * @return {void}
+   */
+  _inputEndTimeHandler(evt) {
+    this._updateSubmitStatus(evt.target.value.length > 0);
+  }
 
-    this.element.querySelector(`.event__favorite-btn`).addEventListener(`click`, this._toggleFavoriteHandler);
+  /**
+   * Хэндлер ввода стоимости события.
+   *
+   * @param  {Object} evt - Объект события в DOM.
+   * @return {void}
+   */
+  _inputPriceHandler(evt) {
+    const price = parseInt(evt.target.value, 10);
+    if (evt.target.value.length > 0 && !isNaN(price)) {
+      this.updateData({price});
+      this._updateSubmitStatus(true);
+    } else {
+      this._updateSubmitStatus(false);
+    }
+  }
+
+  /**
+   * Хэндлер выбора типа события.
+   *
+   * @param  {Object} evt - Объект события в DOM.
+   * @return {void}
+   */
+  _selectTypeHandler(evt) {
+    const eventIcon = this.element.querySelector(`.event__type-icon`);
+    eventIcon.setAttribute(`src`, `img/icons/${evt.target.value.toLowerCase()}.png`);
+    this.updateData({type: evt.target.value});
+    this.updateElement();
+  }
+
+  /**
+   * Хэндлер выбора спец. предложений.
+   *
+   * @return {void}
+   */
+  _selectOfferHandler() {
+    this.updateData({offers: this._getSelectedOffers()});
+    this.updateElement();
   }
 }

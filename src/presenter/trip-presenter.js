@@ -71,9 +71,20 @@ export class TripPresenter {
     }
   }
 
-  _handleUpdateEvent(eventUpdatedData) {
+  /**
+   * Хендлер ообновления данных списка событий. Передается объект
+   * с обновленными данными одного из события в списке, обновляется весь
+   * список.
+   *
+   * @param  {Object} eventUpdatedData - Объект с обновленными данными события.
+   * @param  {Boolean} updateView      - Флаг перерисовки отображения.
+   * @return {void}
+   */
+  _handleUpdateEvent(eventUpdatedData, updateView = true) {
     this._eventList = updateItem(this._eventList, eventUpdatedData);
-    this._eventPresenter.get(eventUpdatedData.id).reset(eventUpdatedData);
+    if (updateView) {
+      this._eventPresenter.get(eventUpdatedData.id).update(eventUpdatedData);
+    }
   }
 
   /**
