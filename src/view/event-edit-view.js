@@ -1,6 +1,6 @@
 import {CITIES, STOPS, TRANSPORTS, TRANSPORT_OFFERS_MAP, STOP_OFFERS_MAP} from "../const.js";
 import {getRandomInt} from "../utils/common.js";
-import {AbstractView} from "./abstract-view.js";
+import {UpdatableView} from "./updatable-view.js";
 
 const DEFAULT_EVENT_VALUES = {
   id: 0,
@@ -13,7 +13,7 @@ const DEFAULT_EVENT_VALUES = {
   isFavorite: false
 };
 
-export class EventEditView extends AbstractView {
+export class EventEditView extends UpdatableView {
   constructor(event = DEFAULT_EVENT_VALUES) {
     super();
     this._event = event;
@@ -105,23 +105,6 @@ export class EventEditView extends AbstractView {
 
     this.element.querySelector(`.event__favorite-btn`)
       .addEventListener(`click`, this._toggleFavoriteHandler);
-  }
-
-  /**
-   * Перерисовка шаблона.
-   *
-   * @return {void}
-   */
-  updateElement() {
-    let prevElement = this.element;
-    const parent = prevElement.parentElement;
-    this.unset();
-
-    const newElement = this.element;
-    parent.replaceChild(newElement, prevElement);
-    prevElement = null;
-
-    this.setHandlers();
   }
 
   /**
