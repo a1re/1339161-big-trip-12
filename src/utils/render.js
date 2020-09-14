@@ -1,4 +1,4 @@
-import Abstract from "../view/abstract.js";
+import {AbstractView} from "../view/abstract-view.js";
 
 /**
  * Словарь позиций внутри элементов DOM для размещения потомков.
@@ -22,11 +22,11 @@ export const RenderPosition = {
  * @return {void}
  */
 export const render = (container, child, place) => {
-  if (container instanceof Abstract) {
+  if (container instanceof AbstractView) {
     container = container.element;
   }
 
-  if (child instanceof Abstract) {
+  if (child instanceof AbstractView) {
     child = child.element;
   }
 
@@ -56,7 +56,7 @@ export const render = (container, child, place) => {
  * @return {void}
  */
 export const renderTemplate = (container, template, place) => {
-  if (container instanceof Abstract) {
+  if (container instanceof AbstractView) {
     container = container.element;
   }
 

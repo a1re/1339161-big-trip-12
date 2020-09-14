@@ -1,17 +1,17 @@
-import SortingView from "../view/sorting.js";
-import EventSummaryView from "../view/event-summary.js";
-import EventEditView from "../view/event-edit.js";
-import NoEventsView from "../view/no-events.js";
-import DayListView from "../view/day-list.js";
-import DayView from "../view/day.js";
+import {SortingView} from "../view/sorting-view.js";
+import {NoEventsView} from "../view/no-events-view.js";
+import {DayListView} from "../view/day-list-view.js";
+import {DayView} from "../view/day-view.js";
+
+import {EventPresenter} from "./event-presenter.js";
 
 import {render, RenderPosition} from "../utils/render.js";
-import {EscHandler} from "../utils/common.js";
 import {Itinerary} from "../utils/itinerary.js";
+import {updateItem} from "../utils/common.js";
 
 import {SortingMethod} from "../const.js";
 
-export default class Trip {
+export class TripPresenter {
   /**
    * Конструктор презентера. Заведение экземпляров отображений и установка
    * ключевого узла DOM для рендеринга компонентов.
@@ -21,12 +21,16 @@ export default class Trip {
   constructor(container) {
     this._container = container;
     this._currentSortingMethod = SortingMethod.EVENT;
+    this._eventPresenter = new Map();
+    this._dayComponent = new Map();
 
     this._dayListComponent = new DayListView();
     this._noEventsComponent = new NoEventsView();
     this._sortingComponent = new SortingView(this._currentSortingMethod);
 
-    this._handleSortEvents = this._handleSortEvents.bind(this);
+    this._updateEvent = this._updateEvent.bind(this);
+    this._sortEvents = this._sortEvents.bind(this);
+    this._resetAllEvents = this._resetAllEvents.bind(this);
   }
 
   /**
@@ -37,11 +41,11 @@ export default class Trip {
    */
   init(eventList) {
     this._eventList = eventList.slice();
-    this._sortingComponent.sortEventsHandler = this._handleSortEvents;
+    this._sortingComponent.sortEventsHandler = this._sortEvents;
 
     render(this._container, this._sortingComponent, RenderPosition.BEFOREEND);
     render(this._container, this._dayListComponent, RenderPosition.BEFOREEND);
-    this._renderSortedEvents(this._currentSortingMethod);
+    this._renderSortedEvents();
   }
 
   /**
@@ -69,6 +73,22 @@ export default class Trip {
   }
 
   /**
+   * Хендлер ообновления данных списка событий. Передается объект
+   * с обновленными данными одного из события в списке, обновляется весь
+   * список.
+   *
+   * @param  {Object} eventUpdatedData - Объект с обновленными данными события.
+   * @param  {Boolean} updateView      - Флаг перерисовки отображения.
+   * @return {void}
+   */
+  _updateEvent(eventUpdatedData, updateView = true) {
+    this._eventList = updateItem(this._eventList, eventUpdatedData);
+    if (updateView) {
+      this._eventPresenter.get(eventUpdatedData.id).update(eventUpdatedData);
+    }
+  }
+
+  /**
    * Рендеринг событий внутри одного дня. Может также использоваться для
    * вывода отсортированных событий (параметры dayDate и dayNumber не
    * обязательны).
@@ -82,13 +102,13 @@ export default class Trip {
    */
   _renderEventList(eventList, dayDate = null, dayNumber = null) {
     const dayComponent = new DayView({dayNumber, dayDate});
+    this._dayComponent.set(dayDate, dayComponent);
     render(this._dayListComponent, dayComponent, RenderPosition.BEFOREEND);
 
     for (const event of eventList) {
-      render(
-          dayComponent.eventsContainer,
-          this._createEventSummaryElement(dayComponent.eventsContainer, event),
-          RenderPosition.BEFOREEND
+      this._eventPresenter.set(
+          event.id,
+          new EventPresenter(dayComponent.eventsContainer, event, this._updateEvent, this._resetAllEvents)
       );
     }
   }
@@ -119,51 +139,6 @@ export default class Trip {
   }
 
   /**
-   * Создание шаблона отображения сводки о событии для демонстрации в общем
-   * списке. Вместе с шаблоном создается также и обработчик открытия события
-   * (замена шаблона сводки формой редактирования).
-   *
-   * @param  {Node} container - DOM-узел для размещения отобажения.
-   * @param  {Object} event   - Объект с данными события.
-   * @return {Node}           - Шаблон в виде DOM-элемента для размещения.
-   */
-  _createEventSummaryElement(container, event) {
-    const eventSummary = new EventSummaryView(event);
-    eventSummary.openHandler = () => {
-      container.replaceChild(this._createEventEditElement(container, event), eventSummary.element);
-      eventSummary.element.remove();
-      eventSummary.removeElement();
-    };
-
-    return eventSummary.element;
-  }
-
-  /**
-   * Создание формы редактрирован события в общем списке. Вместе с формой
-   * создаются также обработчики закрытия формы (замена формы шаблономм
-   * сводки) и сохранения данных.
-   *
-   * @param  {Node} container - DOM-узел для размещения отобажения.
-   * @param  {Object} event   - Объект с данными события.
-   * @return {Node}           - Шаблон в виде DOM-элемента для размещения.
-   */
-  _createEventEditElement(container, event) {
-    const eventEdit = new EventEditView(event);
-    const closeEventEdit = () => {
-      container.replaceChild(this._createEventSummaryElement(container, event), eventEdit.element);
-      eventEdit.element.remove();
-      eventEdit.removeElement();
-      closeEventByEsc.unbind();
-    };
-
-    const closeEventByEsc = new EscHandler(closeEventEdit);
-    eventEdit.closeHandler = closeEventEdit;
-    eventEdit.submitHandler = closeEventEdit;
-
-    return eventEdit.element;
-  }
-
-  /**
    * Рендеринг шаблона заглушки для состояния списка без событий.
    *
    * @return {void}
@@ -178,7 +153,10 @@ export default class Trip {
    * @return {void}
    */
   _clearEventList() {
-    this._dayListComponent.element.innerHTML = ``;
+    this._eventPresenter.forEach((event) => event.destroy());
+    this._eventPresenter.clear();
+    this._dayComponent.forEach((day) => day.remove());
+    this._dayComponent.clear();
   }
 
   /**
@@ -188,7 +166,7 @@ export default class Trip {
    *                                  SortingMethod.
    * @return {void}
    */
-  _handleSortEvents(sortingMethod) {
+  _sortEvents(sortingMethod) {
     if (this._currentSortingMethod === sortingMethod) {
       return;
     }
@@ -196,6 +174,17 @@ export default class Trip {
     this._currentSortingMethod = sortingMethod;
 
     this._clearEventList();
-    this._renderSortedEvents(sortingMethod);
+    this._renderSortedEvents();
+  }
+
+  /**
+   * Закртие всех форм редактирования.
+   *
+   * @return {void}
+   */
+  _resetAllEvents() {
+    this._eventPresenter.forEach((eventPresenter) => {
+      eventPresenter.reset();
+    });
   }
 }

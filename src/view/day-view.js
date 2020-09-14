@@ -1,6 +1,6 @@
-import AbstractView from "./abstract.js";
+import {AbstractView} from "./abstract-view.js";
 
-export default class Day extends AbstractView {
+export class DayView extends AbstractView {
   constructor({dayNumber = null, dayDate = null}) {
     super();
     this._number = dayNumber;

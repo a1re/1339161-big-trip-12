@@ -1,10 +1,10 @@
-import TripInfo from "../view/trip-info.js";
-import MenuView from "../view/menu.js";
-import FiltersView from "../view/filters.js";
+import {TripInfoView} from "../view/trip-info-view.js";
+import {MenuView} from "../view/menu-view.js";
+import {FiltersView} from "../view/filters-view.js";
 
 import {render, RenderPosition} from "../utils/render.js";
 
-export default class Header {
+export class HeaderPresenter {
   /**
    * Конструктор презентера. Заведение экземпляров отображений и установка
    * ключевого узла DOM для рендеринга компонентов.
@@ -25,7 +25,7 @@ export default class Header {
    * @return {void}
    */
   init(eventList) {
-    render(this._container, new TripInfo(eventList), RenderPosition.AFTERBEGIN);
+    render(this._container, new TripInfoView(eventList), RenderPosition.AFTERBEGIN);
     render(this._menuContainer, new MenuView(), RenderPosition.AFTEREND);
     render(this._filtersContainer, new FiltersView(), RenderPosition.AFTEREND);
   }

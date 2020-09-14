@@ -194,7 +194,6 @@ export const generateEvents = (eventsAmount) => {
         description: generateDescription(),
         price,
         offers: generateOffers(isTransfer),
-        isTransfer,
         isFavorite: false
       };
 
