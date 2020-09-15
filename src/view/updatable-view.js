@@ -1,6 +1,6 @@
-import {AbstractView} from "./abstract-view.js";
+import AbstractView from "./abstract-view.js";
 
-export class UpdatableView extends AbstractView {
+export default class UpdatableView extends AbstractView {
   constructor() {
     super();
   }

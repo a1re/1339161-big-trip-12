@@ -1,5 +1,5 @@
-import {EventSummaryView} from "../view/event-summary-view.js";
-import {EventEditView} from "../view/event-edit-view.js";
+import EventSummaryView from "../view/event-summary-view.js";
+import EventEditView from "../view/event-edit-view.js";
 
 import {render, RenderPosition} from "../utils/render.js";
 import {EscHandler} from "../utils/common.js";
@@ -9,7 +9,7 @@ const Mode = {
   EDITING: `EDITING`
 };
 
-export class EventPresenter {
+export default class EventPresenter {
   constructor(eventListContainer, eventData, updateEventData, resetAllEvents) {
     this._eventListContainer = eventListContainer;
     this._event = eventData;

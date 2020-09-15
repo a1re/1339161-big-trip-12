@@ -1,8 +1,8 @@
 import {TRANSPORTS} from "../const.js";
-import {AbstractView} from "./abstract-view.js";
-import {Itinerary} from "../utils/itinerary.js";
+import AbstractView from "./abstract-view.js";
+import Itinerary from "../utils/itinerary.js";
 
-export class EventSummaryView extends AbstractView {
+export default class EventSummaryView extends AbstractView {
   constructor(event) {
     super();
 

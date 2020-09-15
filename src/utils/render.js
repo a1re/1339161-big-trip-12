@@ -1,4 +1,4 @@
-import {AbstractView} from "../view/abstract-view.js";
+import AbstractView from "../view/abstract-view.js";
 
 /**
  * Словарь позиций внутри элементов DOM для размещения потомков.
