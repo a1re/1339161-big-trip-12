@@ -1,3 +1,5 @@
+import moment from "moment";
+
 /**
  * Генерация случайного целого числе с небольшой надстройкой — его можно сделать
  * кратным какому-то другому числу за счет указания третьего параметра divider
@@ -67,4 +69,46 @@ export const updateItem = (items, update) => {
     update,
     ...items.slice(index + 1)
   ];
+};
+
+/**
+ * Проверяет дату на корректность в соответствие с форматом.
+ *
+ * @param  {String} datetime - Дата в формате объекта Date или строки.
+ * @param  {String} format   - Требуемый формат даты в соответствие с API moment.
+ * @return {Boolean}         - True, если дата корректна, False — если нет.
+ */
+export const isValidDate = (datetime, format) => {
+  return moment(datetime, format).isValid();
+};
+
+/**
+ * Форматирует дату при помощи библиотеки moment. Если дата некорректна,
+ * то возвращается пустая строка.
+ *
+ * @param  {String/Date} datetime - Дата в формате объекта Date или строки.
+ * @param  {String} format        - Формат даты в соответствие с API moment.
+ * @return {String}               - Форматированная дата, либо пустая строка,
+ *                                  если распознать дату не удалось.
+ */
+export const formatDate = (datetime, format) => {
+  const dateObj = moment(datetime);
+
+  if (!dateObj.isValid()) {
+    return ``;
+  }
+
+  return dateObj.format(format);
+};
+
+/**
+ * Парсит дату, создавая объект Date из строки при помощи библиотеки moment.
+ *
+ * @param  {String} datetime - Дата для парсинга
+ * @param  {String} format   - Формат-подсказка для парсинга (не обязателен)
+ * @return {Date}            - Объект Date или false, если не удалось
+ *                             распарсить дату.
+ */
+export const parseDate = (datetime, format = ``) => {
+  return moment(datetime, format).toDate();
 };

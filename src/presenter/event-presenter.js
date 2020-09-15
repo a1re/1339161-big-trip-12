@@ -180,6 +180,8 @@ export default class EventPresenter {
         {
           type: eventData.type,
           city: eventData.city,
+          beginTime: eventData.beginTime,
+          endTime: eventData.endTime,
           price: parseInt(eventData.price, 10),
           offers: eventData.offers
         }

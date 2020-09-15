@@ -1,4 +1,5 @@
-import {TRANSPORTS} from "../const.js";
+import {TRANSPORTS, TIME_FORMAT} from "../const.js";
+import {formatDate} from "../utils/common.js";
 import AbstractView from "./abstract-view.js";
 import Itinerary from "../utils/itinerary.js";
 
@@ -45,16 +46,10 @@ export default class EventSummaryView extends AbstractView {
 
   _makeScheduleBlock() {
     const beginDateTime = this._event.beginTime.toISOString();
-    const beginTime = this._event.beginTime.toLocaleTimeString(
-        `en-US`,
-        {timeStyle: `short`, hour12: false}
-    );
+    const beginTime = formatDate(this._event.beginTime, TIME_FORMAT);
 
     const endDateTime = this._event.endTime.toISOString();
-    const endTime = this._event.endTime.toLocaleTimeString(
-        `en-US`,
-        {timeStyle: `short`, hour12: false}
-    );
+    const endTime = formatDate(this._event.endTime, TIME_FORMAT);
 
     const duration = Itinerary.getDuration(this._event.beginTime, this._event.endTime);
 

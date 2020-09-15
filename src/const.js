@@ -21,3 +21,11 @@ export const SortingMethod = {
   TIME: `sort-time`,
   PRICE: `sort-price`
 };
+
+export const TIME_FORMAT = `HH:mm`;
+export const DATETIME_FORMAT = `DD/MM/YY HH:mm`;
+
+export const DEFAULT_FLATPICKR_SETTINGS = { };
+DEFAULT_FLATPICKR_SETTINGS[`dateFormat`] = `d/m/y H:i`;
+DEFAULT_FLATPICKR_SETTINGS[`enableTime`] = true;
+DEFAULT_FLATPICKR_SETTINGS[`time_24hr`] = true;
