@@ -7,8 +7,8 @@ export default class Itinerary {
    *
    * @param  {Date} beginTime - Время начала события в объекте Date
    * @param  {Date} endTime   - Время окончания события в объекте Date
-   * @return {string}         - Длительность события в формате строки вида
-   *                            `01D 02H 03M`
+   * @return {String}         - Длительность события в формате строки вида
+   *                           `01D 02H 03M`
    */
   static getDuration(beginTime, endTime) {
     const MIN_IN_MS = 1000 * 60;
@@ -42,7 +42,7 @@ export default class Itinerary {
    * Распределяем события по дням. Для этого создаем объект Map, где ключом
    * будет дата в формате yyyy-mm-dd, а значением — массив с событиями.
    *
-   * @param  {array} eventList - Массив событий.
+   * @param  {Array} eventList - Массив событий.
    * @return {Map}             - Карта событий, где ключ — дата, а значение — массив
    *                             событий в рамках дня.
    */
@@ -65,8 +65,8 @@ export default class Itinerary {
   /**
    * Подсчет стоимости поездки по списку событий (включая доп. опции).
    *
-   * @param  {array} eventList - Список событий.
-   * @return {int}             - Итоговая стоимость.
+   * @param  {Array} eventList - Список событий.
+   * @return {Number}          - Итоговая стоимость.
    */
   static calcPrice(eventList) {
     let totalPrice = 0;
@@ -117,8 +117,8 @@ export default class Itinerary {
    * если даты остаются в рамках одного месяца, он пишется только один раз,
    * в конце (т.е. `30 MAR - 2 APR` или `28 - 30 MAR`);
    *
-   * @param  {array} eventList - Список событий.
-   * @return {string}          - Строка с датами.
+   * @param  {Array} eventList - Список событий.
+   * @return {String}          - Строка с датами.
    */
   static getTiming(eventList) {
     if (eventList.length === 0) {
