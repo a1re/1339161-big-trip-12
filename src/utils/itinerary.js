@@ -1,4 +1,6 @@
-export class Itinerary {
+import moment from "moment";
+
+export default class Itinerary {
   /**
    * Вычисление длительности события по времени начала и конца. Чтобы не
    * потеряться в часовых поясах, вычисление примитивно-математическое —
@@ -7,42 +9,43 @@ export class Itinerary {
    *
    * @param  {Date} beginTime - Время начала события в объекте Date
    * @param  {Date} endTime   - Время окончания события в объекте Date
-   * @return {string}         - Длительность события в формате строки вида
-   *                            `01D 02H 03M`
+   * @return {String}         - Длительность события в формате строки вида
+   *                           `01D 02H 03M`
    */
   static getDuration(beginTime, endTime) {
-    const MIN_IN_MS = 1000 * 60;
-    const HOUR_IN_MS = 60 * MIN_IN_MS;
-    const DAY_IN_MS = 24 * HOUR_IN_MS;
+    const beginMoment = moment(beginTime);
+    const endMoment = moment(endTime);
 
-    let timeDifference = endTime.valueOf() - beginTime.valueOf();
-    let duration = ``;
+    let days = parseInt(endMoment.diff(beginMoment, `days`), 10);
+    let hours = parseInt(endMoment.diff(beginMoment, `hours`) % 24, 10);
+    let minutes = parseInt(endMoment.diff(beginMoment, `minutes`) % 60, 10);
 
-    if (timeDifference >= DAY_IN_MS) {
-      const days = Math.round(timeDifference / DAY_IN_MS);
-      duration += ((days < 10) ? (`0` + days) : days) + `D `;
-      timeDifference = timeDifference % DAY_IN_MS;
+    if (days === 0) {
+      days = ``;
+    } else {
+      days = ((days < 10) ? (`0` + days) : days) + `D`;
     }
 
-    if (timeDifference.valueOf() >= 1000 * 60 * 60) {
-      const hours = Math.round(timeDifference / HOUR_IN_MS);
-      duration += ((hours < 10) ? (`0` + hours) : hours) + `H `;
-      timeDifference = timeDifference % HOUR_IN_MS;
+    if (hours === 0) {
+      hours = ``;
+    } else {
+      hours = ((hours < 10) ? (`0` + hours) : hours) + `H`;
     }
 
-    if (timeDifference > 0) {
-      const minutes = Math.round(timeDifference / MIN_IN_MS);
-      duration += ((minutes < 10) ? (`0` + minutes) : minutes) + `M`;
+    if (minutes === 0) {
+      minutes = ``;
+    } else {
+      minutes = ((minutes < 10) ? (`0` + minutes) : minutes) + `M`;
     }
 
-    return duration;
+    return `${days} ${hours} ${minutes}`;
   }
 
   /**
    * Распределяем события по дням. Для этого создаем объект Map, где ключом
    * будет дата в формате yyyy-mm-dd, а значением — массив с событиями.
    *
-   * @param  {array} eventList - Массив событий.
+   * @param  {Array} eventList - Массив событий.
    * @return {Map}             - Карта событий, где ключ — дата, а значение — массив
    *                             событий в рамках дня.
    */
@@ -65,8 +68,8 @@ export class Itinerary {
   /**
    * Подсчет стоимости поездки по списку событий (включая доп. опции).
    *
-   * @param  {array} eventList - Список событий.
-   * @return {int}             - Итоговая стоимость.
+   * @param  {Array} eventList - Список событий.
+   * @return {Number}          - Итоговая стоимость.
    */
   static calcPrice(eventList) {
     let totalPrice = 0;
@@ -117,8 +120,8 @@ export class Itinerary {
    * если даты остаются в рамках одного месяца, он пишется только один раз,
    * в конце (т.е. `30 MAR - 2 APR` или `28 - 30 MAR`);
    *
-   * @param  {array} eventList - Список событий.
-   * @return {string}          - Строка с датами.
+   * @param  {Array} eventList - Список событий.
+   * @return {String}          - Строка с датами.
    */
   static getTiming(eventList) {
     if (eventList.length === 0) {

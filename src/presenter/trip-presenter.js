@@ -1,17 +1,17 @@
-import {SortingView} from "../view/sorting-view.js";
-import {NoEventsView} from "../view/no-events-view.js";
-import {DayListView} from "../view/day-list-view.js";
-import {DayView} from "../view/day-view.js";
+import SortingView from "../view/sorting-view.js";
+import NoEventsView from "../view/no-events-view.js";
+import DayListView from "../view/day-list-view.js";
+import DayView from "../view/day-view.js";
 
-import {EventPresenter} from "./event-presenter.js";
+import EventPresenter from "./event-presenter.js";
 
 import {render, RenderPosition} from "../utils/render.js";
-import {Itinerary} from "../utils/itinerary.js";
+import Itinerary from "../utils/itinerary.js";
 import {updateItem} from "../utils/common.js";
 
 import {SortingMethod} from "../const.js";
 
-export class TripPresenter {
+export default class TripPresenter {
   /**
    * Конструктор презентера. Заведение экземпляров отображений и установка
    * ключевого узла DOM для рендеринга компонентов.

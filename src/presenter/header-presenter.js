@@ -1,10 +1,10 @@
-import {TripInfoView} from "../view/trip-info-view.js";
-import {MenuView} from "../view/menu-view.js";
-import {FiltersView} from "../view/filters-view.js";
+import TripInfoView from "../view/trip-info-view.js";
+import MenuView from "../view/menu-view.js";
+import FiltersView from "../view/filters-view.js";
 
 import {render, RenderPosition} from "../utils/render.js";
 
-export class HeaderPresenter {
+export default class HeaderPresenter {
   /**
    * Конструктор презентера. Заведение экземпляров отображений и установка
    * ключевого узла DOM для рендеринга компонентов.

@@ -1,6 +1,17 @@
-import {CITIES, STOPS, TRANSPORTS, TRANSPORT_OFFERS_MAP, STOP_OFFERS_MAP} from "../const.js";
-import {getRandomInt} from "../utils/common.js";
-import {UpdatableView} from "./updatable-view.js";
+import {
+  CITIES,
+  STOPS,
+  TRANSPORTS,
+  TRANSPORT_OFFERS_MAP,
+  STOP_OFFERS_MAP,
+  DATETIME_FORMAT,
+  DEFAULT_FLATPICKR_SETTINGS
+} from "../const.js";
+import {getRandomInt, formatDate, isValidDate, parseDate} from "../utils/common.js";
+import UpdatableView from "./updatable-view.js";
+
+import flatpickr from "flatpickr";
+import "../../node_modules/flatpickr/dist/flatpickr.min.css";
 
 const DEFAULT_EVENT_VALUES = {
   id: 0,
@@ -13,10 +24,12 @@ const DEFAULT_EVENT_VALUES = {
   isFavorite: false
 };
 
-export class EventEditView extends UpdatableView {
+export default class EventEditView extends UpdatableView {
   constructor(event = DEFAULT_EVENT_VALUES) {
     super();
     this._event = event;
+    this._beginTimePicker = null;
+    this._endTimePicker = null;
 
     this._isSubmitEnabled = true;
 
@@ -127,13 +140,13 @@ export class EventEditView extends UpdatableView {
    * @return {void}
    */
   setHandlers() {
+    const id = this._event.id;
+
     this.element.querySelector(`.event__input--destination`)
       .addEventListener(`input`, this._inputDestinationHandler);
-    this.element.querySelector(`#event-start-time-${this._event.id}`)
-      .addEventListener(`input`, this._inputBeginTimeHandler);
-    this.element.querySelector(`#event-end-time-${this._event.id}`)
+    this.element.querySelector(`#event-end-time-${id}`)
       .addEventListener(`input`, this._inputEndTimeHandler);
-    this.element.querySelector(`#event-price-${this._event.id}`)
+    this.element.querySelector(`#event-price-${id}`)
       .addEventListener(`input`, this._inputPriceHandler);
     this.element.querySelector(`.event__type-list`)
       .addEventListener(`change`, this._selectTypeHandler);
@@ -143,6 +156,38 @@ export class EventEditView extends UpdatableView {
     this.closeHandler = this._callback.close;
     this.submitHandler = this._callback.submit;
     this.toggleFavoriteHandler = this._callback.toggleFavorite;
+
+    if (this._beginTimePicker) {
+      this._beginTimePicker.destroy();
+      this._beginTimePicker = null;
+    }
+
+    const beginTimeInput = this.element.querySelector(`#event-start-time-${id}`);
+    beginTimeInput.addEventListener(`input`, this._inputBeginTimeHandler);
+    this._beginTimePicker = flatpickr(beginTimeInput, Object.assign(
+        {},
+        DEFAULT_FLATPICKR_SETTINGS,
+        {
+          defaultDate: this._event.beginTime,
+          onChange: this._inputBeginTimeHandler
+        }
+    ));
+
+    if (this._endTimePicker) {
+      this._endTimePicker.destroy();
+      this._endTimePicker = null;
+    }
+
+    const endTimeInput = this.element.querySelector(`#event-end-time-${id}`);
+    endTimeInput.addEventListener(`input`, this._inputEndTimeHandler);
+    this._endTimePicker = flatpickr(endTimeInput, Object.assign(
+        {},
+        DEFAULT_FLATPICKR_SETTINGS,
+        {
+          defaultDate: this._event.endTime,
+          onChange: this._inputEndTimeHandler
+        }
+    ));
   }
 
   /**
@@ -162,6 +207,17 @@ export class EventEditView extends UpdatableView {
     }
 
     return newOffers;
+  }
+
+  _setDatepicker() {
+    if (this._datepicker) {
+      this._datepicker.destroy();
+      this._datepicker = null;
+    }
+
+    this._datepicker = flatpickr(
+
+    );
   }
 
   /**
@@ -291,22 +347,8 @@ export class EventEditView extends UpdatableView {
   _makeTimeInput() {
     const {id} = this._event;
 
-    const beginMonth = this._event.beginTime.toLocaleDateString(
-        `en-GB`,
-        {year: `2-digit`, month: `2-digit`, day: `2-digit`}
-    );
-    const beginTime = this._event.beginTime.toLocaleTimeString(
-        `en-GB`,
-        {timeStyle: `short`, hour12: false}
-    );
-    const endMonth = this._event.endTime.toLocaleDateString(
-        `en-GB`,
-        {year: `2-digit`, month: `2-digit`, day: `2-digit`}
-    );
-    const endTime = this._event.endTime.toLocaleTimeString(
-        `en-GB`,
-        {timeStyle: `short`, hour12: false}
-    );
+    const beginTime = formatDate(this._event.beginTime, DATETIME_FORMAT);
+    const endTime = formatDate(this._event.endTime, DATETIME_FORMAT);
 
     return `
       <div class="event__field-group  event__field-group--time">
@@ -316,7 +358,7 @@ export class EventEditView extends UpdatableView {
             id="event-start-time-${id}"
             type="text"
             name="event-start-time"
-            value="${beginMonth} ${beginTime}">
+            value="${beginTime}">
         &mdash;
         <label class="visually-hidden" for="event-end-time-${id}">To</label>
         <input
@@ -324,7 +366,7 @@ export class EventEditView extends UpdatableView {
             id="event-end-time-${id}"
             type="text"
             name="event-end-time"
-            value="${endMonth} ${endTime}">
+            value="${endTime}">
       </div>`;
   }
 
@@ -468,23 +510,51 @@ export class EventEditView extends UpdatableView {
   }
 
   /**
-   * Хэндлер ввода времени начала события.
+   * Хэндлер ввода времени начала события. Используется и в качестве
+   * обработчика для инпута, и как коллбек для флэтпикера, поэтому зачение
+   * берется не из объекта события, а через запрос к DOM.
    *
-   * @param  {Object} evt - Объект события в DOM.
    * @return {void}
    */
-  _inputBeginTimeHandler(evt) {
-    this._updateSubmitStatus(evt.target.value.length > 0);
+  _inputBeginTimeHandler() {
+    const inputBeginTime = this.element
+        .querySelector(`#event-start-time-${this._event.id}`).value;
+    if (!isValidDate(inputBeginTime, DATETIME_FORMAT)) {
+      this._updateSubmitStatus(false);
+      return;
+    }
+
+    if (parseDate(inputBeginTime, DATETIME_FORMAT) > this._event.endTime) {
+      this._updateSubmitStatus(false);
+      return;
+    }
+
+    this.updateData({beginTime: parseDate(inputBeginTime, DATETIME_FORMAT)});
+    this._updateSubmitStatus(true);
   }
 
   /**
-   * Хэндлер ввода времени окончания события.
+   * Хэндлер ввода времени окончания события. Используется и в качестве
+   * обработчика для инпута, и как коллбек для флэтпикера, поэтому зачение
+   * берется не из объекта события, а через запрос к DOM.
    *
-   * @param  {Object} evt - Объект события в DOM.
    * @return {void}
    */
-  _inputEndTimeHandler(evt) {
-    this._updateSubmitStatus(evt.target.value.length > 0);
+  _inputEndTimeHandler() {
+    const inputEndTime = this.element
+        .querySelector(`#event-end-time-${this._event.id}`).value;
+    if (!isValidDate(inputEndTime, DATETIME_FORMAT)) {
+      this._updateSubmitStatus(false);
+      return;
+    }
+
+    if (parseDate(inputEndTime, DATETIME_FORMAT) < this._event.beginTime) {
+      this._updateSubmitStatus(false);
+      return;
+    }
+
+    this.updateData({endTime: parseDate(inputEndTime, DATETIME_FORMAT)});
+    this._updateSubmitStatus(true);
   }
 
   /**
