@@ -42,30 +42,6 @@ export default class Itinerary {
   }
 
   /**
-   * Распределяем события по дням. Для этого создаем объект Map, где ключом
-   * будет дата в формате yyyy-mm-dd, а значением — массив с событиями.
-   *
-   * @param  {Array} eventList - Массив событий.
-   * @return {Map}             - Карта событий, где ключ — дата, а значение — массив
-   *                             событий в рамках дня.
-   */
-  static organizeByDays(eventList) {
-    const eventsByDays = new Map();
-    eventList.forEach((event) => {
-      const eventDate = event.beginTime.toISOString().split(`T`)[0];
-
-      if (!eventsByDays.get(eventDate)) {
-        eventsByDays.set(eventDate, []);
-      }
-
-      const eventsInDate = eventsByDays.get(eventDate);
-      eventsInDate.push(event);
-      eventsByDays.set(eventDate, eventsInDate);
-    });
-
-    return eventsByDays;
-  }
-  /**
    * Подсчет стоимости поездки по списку событий (включая доп. опции).
    *
    * @param  {Array} eventList - Список событий.

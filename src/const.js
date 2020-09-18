@@ -22,6 +22,13 @@ export const SortingMethod = {
   PRICE: `sort-price`
 };
 
+export const UpdateMode = {
+  DATA: `DATA`,
+  PATCH: `PATCH`,
+  MINOR: `MINOR`,
+  MAJOR: `MAJOR`
+};
+
 export const TIME_FORMAT = `HH:mm`;
 export const DATETIME_FORMAT = `DD/MM/YY HH:mm`;
 
