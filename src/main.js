@@ -18,6 +18,5 @@ const eventListElement = document.querySelector(`.trip-events`);
 const tripPresenter = new TripPresenter(eventListElement, eventsModel);
 const headerPresenter = new HeaderPresenter(headerElement, eventsModel);
 
-
 tripPresenter.init();
-headerPresenter.init(eventList);
+headerPresenter.init();
