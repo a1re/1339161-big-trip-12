@@ -72,41 +72,23 @@ export default class TripPresenter {
 
   /**
    * Получение упорядоченного согласно заданной сортировке списка события
-   * в виде карты (объекта Map).
+   * в виде массива.
    *
-   * @return {Map} - Карта событий.
+   * @return {Array} - Карта событий.
    */
-  _getEventMap() {
-    const eventMap = new Map();
+  _getEventList() {
     const eventList = this._eventsModel.eventList.slice();
-
-    if (eventList.length === 0) {
-      return eventMap;
-    }
 
     switch (this._currentSortingMethod) {
       case SortingMethod.EVENT:
-        eventList.forEach((event) => {
-          const eventDate = event.beginTime.toISOString().split(`T`)[0];
-
-          if (!eventMap.get(eventDate)) {
-            eventMap.set(eventDate, []);
-          }
-
-          const eventsInDate = eventMap.get(eventDate);
-          eventsInDate.push(event);
-          eventMap.set(eventDate, eventsInDate);
-        });
-        break;
+        return eventList.sort(Itinerary.sortByEvents);
       case SortingMethod.TIME:
-        eventMap.set(null, eventList.sort(Itinerary.sortByDuration));
-        break;
+        return eventList.sort(Itinerary.sortByDuration);
       case SortingMethod.PRICE:
-        eventMap.set(null, eventList.sort(Itinerary.sortByPrice));
-        break;
+        return eventList.sort(Itinerary.sortByPrice);
     }
 
-    return eventMap;
+    return eventList;
   }
 
   /**
@@ -115,25 +97,37 @@ export default class TripPresenter {
    * @return {void}
    */
   _renderEvents() {
-    let i = 0;
-    const eventMap = this._getEventMap();
+    const eventList = this._getEventList();
+    let previousDay;
+    let dayComponent;
 
-    for (const [dayDate, eventList] of eventMap) {
-      const dayNumber = dayDate === null ? null : (i + 1);
-      const dayComponent = new DayView({dayNumber, dayDate});
+    eventList.forEach((event) => {
+      let dayNumber = event.dayNumber;
+      let dayDate = event.dayDate;
 
-      this._dayComponentMap.set(dayDate, dayComponent);
-      render(this._dayListComponent, dayComponent, RenderPosition.BEFOREEND);
-
-      for (const event of eventList) {
-        this._eventPresenterMap.set(
-            event.id,
-            new EventPresenter(dayComponent.eventsContainer, event, this._eventsModel, this._switchAllEventsMode)
-        );
+      if (this._currentSortingMethod !== SortingMethod.EVENT) {
+        dayNumber = null;
+        dayDate = null;
       }
 
-      i++;
-    }
+      if (previousDay !== dayNumber) {
+        dayComponent = new DayView({dayNumber, dayDate});
+        this._dayComponentMap.set(dayDate, dayComponent);
+        render(this._dayListComponent, dayComponent, RenderPosition.BEFOREEND);
+      }
+
+      this._eventPresenterMap.set(
+          event.id,
+          new EventPresenter(
+              dayComponent.eventsContainer,
+              event,
+              this._eventsModel,
+              this._switchAllEventsMode
+          )
+      );
+
+      previousDay = dayNumber;
+    });
   }
 
   /**

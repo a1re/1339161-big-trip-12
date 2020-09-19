@@ -1,4 +1,5 @@
 import Observer from "../utils/observer.js";
+import {TRANSPORTS} from "../const.js";
 
 /**
  * Модель событий. Для инициализации в конструтор класса необходимо передать
@@ -13,7 +14,7 @@ export default class EventsModel extends Observer {
    */
   constructor(eventList = []) {
     super();
-    this._eventList = eventList;
+    this._eventList = this._processData(eventList);
   }
 
   /**
@@ -78,7 +79,7 @@ export default class EventsModel extends Observer {
    * @param  {Object} eventData  - Объект с обновленными данными.
    * @return {void}
    */
-  deleteTask(updateMode, eventData) {
+  delete(updateMode, eventData) {
     const index = this._eventList.findIndex((event) => event.id === eventData.id);
 
     if (index === -1) {
@@ -91,5 +92,34 @@ export default class EventsModel extends Observer {
     ];
 
     this._notify(updateMode);
+  }
+
+  /**
+   * Обработка исходных данных и добавление необходимых для работы
+   * дополнительных флагов и значений.
+   *
+   * @param  {[type]} eventList [description]
+   * @return {[type]}           [description]
+   */
+  _processData(eventList) {
+    const processedData = [];
+    let lastDate = null;
+    let dayNumber = 0;
+
+    eventList.forEach((event) => {
+      const eventDate = event.beginTime.toISOString().split(`T`)[0];
+      if (eventDate !== lastDate) {
+        lastDate = eventDate;
+        dayNumber++;
+      }
+
+      processedData.push(Object.assign({}, event, {
+        dayNumber,
+        dayDate: eventDate,
+        isTransport: TRANSPORTS.indexOf(event.type) >= 0
+      }));
+    });
+
+    return processedData;
   }
 }
