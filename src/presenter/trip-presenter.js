@@ -22,7 +22,9 @@ export default class TripPresenter {
     this._container = container;
     this._eventsModel = eventsModel;
 
-    this._currentSortingMethod = SortingMethod.EVENT;
+    this._defaultSortingMethod = SortingMethod.EVENT;
+    this._currentSortingMethod = this._defaultSortingMethod;
+
     this._eventPresenterMap = new Map();
     this._dayComponentMap = new Map();
 
@@ -31,8 +33,11 @@ export default class TripPresenter {
     this._sortingComponent = new SortingView(this._currentSortingMethod);
 
     this._updateEvent = this._updateEvent.bind(this);
+    this._pushModel = this._pushModel.bind(this);
     this._sortEvents = this._sortEvents.bind(this);
-    this._resetAllEvents = this._resetAllEvents.bind(this);
+    this._switchAllEventsMode = this._switchAllEventsMode.bind(this);
+
+    this._eventsModel.subscribe(this._pushModel);
   }
 
   /**
@@ -46,6 +51,23 @@ export default class TripPresenter {
     render(this._container, this._sortingComponent, RenderPosition.BEFOREEND);
     render(this._container, this._dayListComponent, RenderPosition.BEFOREEND);
     this._renderEvents();
+  }
+
+  _pushModel(updateMode, eventData) {
+    switch (updateMode) {
+      case UpdateMode.PATCH:
+        this._eventPresenterMap.get(eventData.id).update(eventData);
+        break;
+      case UpdateMode.MINOR:
+        this._clearEvents();
+        this._renderEvents();
+        break;
+      case UpdateMode.MAJOR:
+        this._currentSortingMethod = this._defaultSortingMethod;
+        this._clearEvents();
+        this._renderEvents();
+        break;
+    }
   }
 
   /**
@@ -106,7 +128,7 @@ export default class TripPresenter {
       for (const event of eventList) {
         this._eventPresenterMap.set(
             event.id,
-            new EventPresenter(dayComponent.eventsContainer, event, this._updateEvent, this._resetAllEvents)
+            new EventPresenter(dayComponent.eventsContainer, event, this._eventsModel, this._switchAllEventsMode)
         );
       }
 
@@ -144,7 +166,7 @@ export default class TripPresenter {
    *
    * @return {void}
    */
-  _clearEventList() {
+  _clearEvents() {
     this._eventPresenterMap.forEach((event) => event.destroy());
     this._eventPresenterMap.clear();
     this._dayComponentMap.forEach((day) => day.remove());
@@ -165,18 +187,19 @@ export default class TripPresenter {
 
     this._currentSortingMethod = sortingMethod;
 
-    this._clearEventList();
+    this._clearEvents();
     this._renderEvents();
   }
 
   /**
-   * Закртие всех форм редактирования.
+   * Переключает все события в нужный режим (должен соответствовать одному
+   * из значений перечисления EventMode).
    *
-   * @return {void}
+   * @param  {String} eventMode - Режим отображения.
    */
-  _resetAllEvents() {
+  _switchAllEventsMode(eventMode) {
     this._eventPresenterMap.forEach((eventPresenter) => {
-      eventPresenter.reset();
+      eventPresenter.switchMode(eventMode);
     });
   }
 }

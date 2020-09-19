@@ -3,20 +3,16 @@ import EventEditView from "../view/event-edit-view.js";
 
 import {render, RenderPosition} from "../utils/render.js";
 import {EscHandler} from "../utils/common.js";
-
-const Mode = {
-  SUMMARY: `SUMMARY`,
-  EDITING: `EDITING`
-};
+import {UpdateMode, EventMode} from "../const.js";
 
 export default class EventPresenter {
-  constructor(eventListContainer, eventData, updateEventData, resetAllEvents) {
+  constructor(eventListContainer, eventData, eventsModel, switchAllEventsMode) {
     this._eventListContainer = eventListContainer;
     this._event = eventData;
-    this._updateEventData = updateEventData;
-    this._resetAllEvents = resetAllEvents;
+    this._eventsModel = eventsModel;
+    this._switchAllEventsMode = switchAllEventsMode;
 
-    this._mode = Mode.SUMMARY;
+    this._mode = EventMode.SUMMARY;
 
     this._eventSummaryComponent = null;
     this._eventEditComponent = null;
@@ -28,7 +24,7 @@ export default class EventPresenter {
 
     render(
         this._eventListContainer,
-        this._createEventSummaryElement(eventData),
+        this._createElement(EventMode.SUMMARY),
         RenderPosition.BEFOREEND
     );
   }
@@ -39,26 +35,26 @@ export default class EventPresenter {
    * @param  {Object} eventData - Объект с новыми данными.
    * @return {void}
    */
-  update(eventData) {
+  refresh(eventData) {
     this._event = eventData;
 
-    if (this._mode === Mode.SUMMARY) {
+    if (this._mode === EventMode.SUMMARY) {
       const previousEventSummaryComponent = this._eventSummaryComponent;
       this._eventListContainer.replaceChild(
-          this._createEventSummaryElement(eventData),
+          this._createElement(EventMode.SUMMARY),
           previousEventSummaryComponent.element
       );
       previousEventSummaryComponent.remove();
     }
 
-    if (this._mode === Mode.EDITING) {
+    if (this._mode === EventMode.EDITING) {
       if (this._closeEventByEsc) {
         this._closeEventByEsc.unbind();
         this._closeEventByEsc = null;
       }
       const previousEventEditComponent = this._eventEditComponent;
       this._eventListContainer.replaceChild(
-          this._createEventEditElement(eventData),
+          this._createElement(EventMode.EDITING),
           previousEventEditComponent.element
       );
       previousEventEditComponent.remove();
@@ -66,16 +62,21 @@ export default class EventPresenter {
   }
 
   /**
-   * Сброс состояния события. Если событие было открыто в виде формы
-   * редактирования, то оно вренется в формат сводки.
+   * Переключает событие в нужный режим (должен соответствовать одному
+   * из значений перечисления EventMode).
    *
+   * @param  {String} eventMode - Режим отображения.
    * @return {void}
    */
-  reset() {
-    if (this._mode !== Mode.SUMMARY) {
+  switchMode(eventMode) {
+    if (this._mode !== eventMode) {
+      const currentComponent = (this._mode === EventMode.EDITING)
+        ? this._eventEditComponent.element
+        : this._eventSummaryComponent.element;
+
       this._eventListContainer.replaceChild(
-          this._createEventSummaryElement(this._event),
-          this._eventEditComponent.element
+          this._createElement(eventMode),
+          currentComponent
       );
     }
   }
@@ -86,56 +87,53 @@ export default class EventPresenter {
    * @return {void}
    */
   destroy() {
-    if (this._eventEditComponent) {
+    if (this._mode === EventMode.EDITING) {
       this._eventEditComponent.remove();
     }
-    if (this._eventSummaryComponent) {
+    if (this._mode === EventMode.SUMMARY) {
       this._eventSummaryComponent.remove();
     }
   }
 
   /**
-   * Создание шаблона отображения сводки о событии для демонстрации в общем
-   * списке. Вместе с шаблоном создается также и обработчик открытия события
-   * (замена шаблона сводки формой редактирования).
+   * Создание отображения о событии в соответствии с текущим режимом (должен
+   * соответствовать одному из значений перечисления EventMode).
    *
-   * @return {Node}           - Шаблон в виде DOM-элемента для размещения.
+   *  Вместе с отображением создается также и обработчики открытия/закрытия
+   *  формы редактирования.
+   *
+   * @param  {String} eventMode - Режим отображения.
+   * @return {Node}             - Шаблон в виде DOM-элемента для размещения.
    */
-  _createEventSummaryElement() {
+  _createElement(eventMode) {
+    if (eventMode === EventMode.EDITING) {
+      this._switchAllEventsMode(EventMode.SUMMARY);
+
+      this._eventEditComponent = new EventEditView(this._event);
+
+      this._closeEventByEsc = new EscHandler(this._closeEventEdit);
+      this._eventEditComponent.closeHandler = this._closeEventEdit;
+      this._eventEditComponent.submitHandler = this._submitForm;
+      this._eventEditComponent.toggleFavoriteHandler = this._toggleFavorite;
+      this._mode = EventMode.EDITING;
+
+      return this._eventEditComponent.element;
+    }
+
+    // По умочанию — режим EventMode.SUMMARY
     this._eventSummaryComponent = new EventSummaryView(this._event);
 
     this._eventSummaryComponent.openHandler = () => {
       this._eventListContainer.replaceChild(
-          this._createEventEditElement(this._event),
+          this._createElement(EventMode.EDITING),
           this._eventSummaryComponent.element
       );
       this._eventSummaryComponent.remove();
     };
 
-    this._mode = Mode.SUMMARY;
+    this._mode = EventMode.SUMMARY;
 
     return this._eventSummaryComponent.element;
-  }
-
-  /**
-   * Создание формы редактрирования события на основе отоббражения. Вместе
-   * с формой создаются также обработчики закрытия формы (замена формы
-   * шаблоном сводки) и сохранения данных.
-   *
-   * @return {Node}           - Шаблон в виде DOM-элемента для размещения.
-   */
-  _createEventEditElement() {
-    this._resetAllEvents();
-
-    this._eventEditComponent = new EventEditView(this._event);
-
-    this._closeEventByEsc = new EscHandler(this._closeEventEdit);
-    this._eventEditComponent.closeHandler = this._closeEventEdit;
-    this._eventEditComponent.submitHandler = this._submitForm;
-    this._eventEditComponent.toggleFavoriteHandler = this._toggleFavorite;
-    this._mode = Mode.EDITING;
-
-    return this._eventEditComponent.element;
   }
 
   /**
@@ -146,7 +144,7 @@ export default class EventPresenter {
    */
   _closeEventEdit() {
     this._eventListContainer.replaceChild(
-        this._createEventSummaryElement(this._event),
+        this._createElement(EventMode.SUMMARY),
         this._eventEditComponent.element
     );
     this._eventEditComponent.remove();
@@ -165,7 +163,8 @@ export default class EventPresenter {
           isFavorite: !this._event.isFavorite
         }
     );
-    this._updateEventData(Object.assign({}, this._event), false);
+
+    this._eventsModel.update(UpdateMode.PATCH, Object.assign({}, this._event));
   }
 
   /**
@@ -176,7 +175,8 @@ export default class EventPresenter {
    */
   _submitForm(eventData) {
     this._closeEventEdit();
-    this._updateEventData(Object.assign({}, this._event,
+
+    this._eventsModel.update(UpdateMode.MINOR, Object.assign({}, this._event,
         {
           type: eventData.type,
           city: eventData.city,

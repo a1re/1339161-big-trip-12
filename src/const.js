@@ -23,10 +23,14 @@ export const SortingMethod = {
 };
 
 export const UpdateMode = {
-  DATA: `DATA`,
   PATCH: `PATCH`,
   MINOR: `MINOR`,
   MAJOR: `MAJOR`
+};
+
+export const EventMode = {
+  SUMMARY: `SUMMARY`,
+  EDITING: `EDITING`
 };
 
 export const TIME_FORMAT = `HH:mm`;
