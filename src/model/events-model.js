@@ -43,11 +43,10 @@ export default class EventsModel extends Observer {
       throw new Error(`Can't update unexisting event`);
     }
 
-    this._eventList = [
-      ...this._eventList.slice(0, index),
-      eventData,
-      ...this._eventList.slice(index + 1)
-    ];
+    const updatedEventList = this._eventList.slice();
+    updatedEventList[index] = eventData;
+
+    this._eventList = this._processData(updatedEventList);
 
     this._notify(updateMode, eventData);
   }

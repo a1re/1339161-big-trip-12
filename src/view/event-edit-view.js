@@ -144,8 +144,6 @@ export default class EventEditView extends UpdatableView {
 
     this.element.querySelector(`.event__input--destination`)
       .addEventListener(`input`, this._inputDestinationHandler);
-    this.element.querySelector(`#event-end-time-${id}`)
-      .addEventListener(`input`, this._inputEndTimeHandler);
     this.element.querySelector(`#event-price-${id}`)
       .addEventListener(`input`, this._inputPriceHandler);
     this.element.querySelector(`.event__type-list`)
@@ -163,7 +161,6 @@ export default class EventEditView extends UpdatableView {
     }
 
     const beginTimeInput = this.element.querySelector(`#event-start-time-${id}`);
-    beginTimeInput.addEventListener(`input`, this._inputBeginTimeHandler);
     this._beginTimePicker = flatpickr(beginTimeInput, Object.assign(
         {},
         DEFAULT_FLATPICKR_SETTINGS,
@@ -179,7 +176,6 @@ export default class EventEditView extends UpdatableView {
     }
 
     const endTimeInput = this.element.querySelector(`#event-end-time-${id}`);
-    endTimeInput.addEventListener(`input`, this._inputEndTimeHandler);
     this._endTimePicker = flatpickr(endTimeInput, Object.assign(
         {},
         DEFAULT_FLATPICKR_SETTINGS,
@@ -519,17 +515,23 @@ export default class EventEditView extends UpdatableView {
   _inputBeginTimeHandler() {
     const inputBeginTime = this.element
         .querySelector(`#event-start-time-${this._event.id}`).value;
+    const inputEndTime = this.element
+        .querySelector(`#event-end-time-${this._event.id}`).value;
+
     if (!isValidDate(inputBeginTime, DATETIME_FORMAT)) {
       this._updateSubmitStatus(false);
       return;
     }
 
-    if (parseDate(inputBeginTime, DATETIME_FORMAT) > this._event.endTime) {
+    if (parseDate(inputBeginTime, DATETIME_FORMAT) > parseDate(inputEndTime, DATETIME_FORMAT)) {
       this._updateSubmitStatus(false);
       return;
     }
 
-    this.updateData({beginTime: parseDate(inputBeginTime, DATETIME_FORMAT)});
+    this.updateData({
+      beginTime: parseDate(inputBeginTime, DATETIME_FORMAT),
+      endTime: parseDate(inputEndTime, DATETIME_FORMAT)
+    });
     this._updateSubmitStatus(true);
   }
 
@@ -541,19 +543,25 @@ export default class EventEditView extends UpdatableView {
    * @return {void}
    */
   _inputEndTimeHandler() {
+    const inputBeginTime = this.element
+        .querySelector(`#event-start-time-${this._event.id}`).value;
     const inputEndTime = this.element
         .querySelector(`#event-end-time-${this._event.id}`).value;
+
     if (!isValidDate(inputEndTime, DATETIME_FORMAT)) {
       this._updateSubmitStatus(false);
       return;
     }
 
-    if (parseDate(inputEndTime, DATETIME_FORMAT) < this._event.beginTime) {
+    if (parseDate(inputEndTime, DATETIME_FORMAT) < parseDate(inputBeginTime, DATETIME_FORMAT)) {
       this._updateSubmitStatus(false);
       return;
     }
 
-    this.updateData({endTime: parseDate(inputEndTime, DATETIME_FORMAT)});
+    this.updateData({
+      beginTime: parseDate(inputBeginTime, DATETIME_FORMAT),
+      endTime: parseDate(inputEndTime, DATETIME_FORMAT)
+    });
     this._updateSubmitStatus(true);
   }
 
