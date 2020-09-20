@@ -6,9 +6,7 @@ import DayView from "../view/day-view.js";
 import EventPresenter from "./event-presenter.js";
 
 import {render, RenderPosition} from "../utils/render.js";
-import Itinerary from "../utils/itinerary.js";
-
-import {SortingMethod, UpdateMode} from "../const.js";
+import {UpdateMode} from "../const.js";
 
 export default class TripPresenter {
   /**
@@ -17,20 +15,19 @@ export default class TripPresenter {
    *
    * @param  {Node} container       — Узел документа для презентера.
    * @param  {Observer} eventsModel - Модель для работы с событиями.
+   * @param  {Observer} sortingsModel - Модель для работы с сортировками.
    */
-  constructor(container, eventsModel) {
+  constructor(container, eventsModel, sortingsModel) {
     this._container = container;
     this._eventsModel = eventsModel;
-
-    this._defaultSortingMethod = SortingMethod.EVENT;
-    this._currentSortingMethod = this._defaultSortingMethod;
+    this._sortingsModel = sortingsModel;
 
     this._eventPresenterMap = new Map();
     this._dayComponentMap = new Map();
 
     this._dayListComponent = new DayListView();
     this._noEventsComponent = new NoEventsView();
-    this._sortingComponent = new SortingView(this._currentSortingMethod);
+    this._sortingComponent = new SortingView(this._sortingsModel.list, this._sortingsModel.isGrouped);
 
     this._updateEvent = this._updateEvent.bind(this);
     this._pushModel = this._pushModel.bind(this);
@@ -38,6 +35,7 @@ export default class TripPresenter {
     this._switchAllEventsMode = this._switchAllEventsMode.bind(this);
 
     this._eventsModel.subscribe(this._pushModel);
+    this._sortingsModel.subscribe(this._pushModel);
   }
 
   /**
@@ -63,7 +61,7 @@ export default class TripPresenter {
         this._renderEvents();
         break;
       case UpdateMode.MAJOR:
-        this._currentSortingMethod = this._defaultSortingMethod;
+        this._sortingsModel.reset();
         this._clearEvents();
         this._renderEvents();
         break;
@@ -78,17 +76,7 @@ export default class TripPresenter {
    */
   _getEventList() {
     const eventList = this._eventsModel.eventList.slice();
-
-    switch (this._currentSortingMethod) {
-      case SortingMethod.EVENT:
-        return eventList.sort(Itinerary.sortByEvents);
-      case SortingMethod.TIME:
-        return eventList.sort(Itinerary.sortByDuration);
-      case SortingMethod.PRICE:
-        return eventList.sort(Itinerary.sortByPrice);
-    }
-
-    return eventList;
+    return eventList.sort(this._sortingsModel.callback);
   }
 
   /**
@@ -105,7 +93,7 @@ export default class TripPresenter {
       let dayNumber = event.dayNumber;
       let dayDate = event.dayDate;
 
-      if (this._currentSortingMethod !== SortingMethod.EVENT) {
+      if (!this._sortingsModel.isGrouped) {
         dayNumber = null;
         dayDate = null;
       }
@@ -170,16 +158,15 @@ export default class TripPresenter {
   /**
    * Хендлер для метода сортировки событий. Перед применением очищает список.
    *
-   * @param  {String} sortingMethod - Метод сортировки согласно перечислению
-   *                                  SortingMethod.
+   * @param  {String} sortingId - Id метода сортировки.
    * @return {void}
    */
-  _sortEvents(sortingMethod) {
-    if (this._currentSortingMethod === sortingMethod) {
+  _sortEvents(sortingId) {
+    if (this._sortingsModel.active === sortingId) {
       return;
     }
 
-    this._currentSortingMethod = sortingMethod;
+    this._sortingsModel.active = sortingId;
 
     this._clearEvents();
     this._renderEvents();
