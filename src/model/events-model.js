@@ -1,5 +1,6 @@
 import Observer from "../utils/observer.js";
 import {TRANSPORTS} from "../const.js";
+import moment from "moment";
 
 /**
  * Модель событий. Для инициализации в конструтор класса необходимо передать
@@ -60,12 +61,9 @@ export default class EventsModel extends Observer {
    * @return {void}
    */
   add(updateMode, eventData) {
-    this._eventList = [
-      eventData,
-      ...this._eventList
-    ];
+    this._eventList = this._processData([eventData, ...this._eventList]);
 
-    this._notify(updateMode, eventData);
+    this._notify(updateMode);
   }
 
   /**
@@ -97,23 +95,27 @@ export default class EventsModel extends Observer {
    * Обработка исходных данных и добавление необходимых для работы
    * дополнительных флагов и значений.
    *
-   * @param  {[type]} eventList [description]
-   * @return {[type]}           [description]
+   * @param  {Array} eventList - Список событий в исходном виде.
+   * @return {Array}           - Список событий в подготовленном для работы виде.
    */
   _processData(eventList) {
+    if (eventList.length === 0) {
+      return [];
+    }
+
     const processedData = [];
     let lastDate = null;
-    let dayNumber = 0;
+    eventList.sort((eventA, eventB) => eventA.beginTime.valueOf() - eventB.beginTime.valueOf());
+    const beginDate = moment(eventList[0].beginTime).startOf(`day`);
 
     eventList.forEach((event) => {
-      const eventDate = event.beginTime.toISOString().split(`T`)[0];
+      const eventDate = moment(event.beginTime, `YYYY-MM-DD`);
       if (eventDate !== lastDate) {
         lastDate = eventDate;
-        dayNumber++;
       }
 
       processedData.push(Object.assign({}, event, {
-        dayNumber,
+        dayNumber: moment(event.beginTime).startOf(`day`).diff(beginDate, `days`) + 1,
         dayDate: eventDate,
         isTransport: TRANSPORTS.indexOf(event.type) >= 0
       }));
