@@ -1,11 +1,20 @@
 import AbstractView from "./abstract-view.js";
 
 export default class TripInfoView extends AbstractView {
-  constructor(eventList) {
+  /**
+   * Конструктор отображения
+   * @param  {Array} eventList - Список всех событий.
+   * @param  {Array} offerList - Список всех спец. предложений.
+   */
+  constructor(eventList, offerList) {
     super();
     this._eventList = eventList;
+    this._offerList = offerList;
   }
 
+  /**
+   * Геттер шаблона.
+   */
   get template() {
     const totalPrice = this._getTotalPrice();
     const tripSummary = this._getTripSummary();
@@ -30,13 +39,16 @@ export default class TripInfoView extends AbstractView {
   _getTotalPrice() {
     let totalPrice = 0;
 
-    for (let eventDetails of this._eventList) {
-      totalPrice += eventDetails.price;
-      const offers = Object.values(eventDetails.offers);
-      for (let i = 0; i < offers.length; i++) {
-        totalPrice += parseInt(offers[i].price, 10);
-      }
-    }
+    this._eventList.forEach((event) => {
+      totalPrice += event.price;
+      event.offers.forEach((offerId) => {
+        const selectedOffer = this._offerList.find((offer) => offer.id === offerId);
+        if (selectedOffer) {
+          totalPrice += selectedOffer.price;
+        }
+      });
+    });
+
     return totalPrice;
   }
 

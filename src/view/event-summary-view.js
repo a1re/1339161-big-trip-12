@@ -1,21 +1,30 @@
-import {TRANSPORTS, TIME_FORMAT} from "../const.js";
+import {TIME_FORMAT} from "../const.js";
 import {formatDate} from "../utils/common.js";
 import AbstractView from "./abstract-view.js";
 import Itinerary from "../utils/itinerary.js";
 
 export default class EventSummaryView extends AbstractView {
-  constructor(event) {
+  /**
+   * Конструктор класса отображения краткой сводки о собыиии..
+   *
+   * @param  {Object} event    - Объект с данными события.
+   * @param  {Array} offerList - Массив со списком спц. предложений.
+   */
+  constructor(event, offerList) {
     super();
 
     this._MAX_OFFERS_TO_SHOW = 3;
     this._event = event;
+    this._offerList = offerList;
 
     this._openHandler = this._openHandler.bind(this);
   }
 
+  /**
+   * Геттер шаблона отобрадения.
+   */
   get template() {
-    const {type, city} = this._event;
-    const isTransfer = TRANSPORTS.indexOf(type) >= 0;
+    const {type, city, isTransport} = this._event;
     const priceBlock = this._makePriceBlock();
     const offerList = this._makeOffersList();
     const scheduleBlock = this._makeScheduleBlock();
@@ -28,7 +37,7 @@ export default class EventSummaryView extends AbstractView {
                   src="img/icons/${type.toLowerCase()}.png"
                   alt="Event type icon">
             </div>
-            <h3 class="event__title">${type} ${(isTransfer) ? `to` : `in`} ${city}</h3>
+            <h3 class="event__title">${type} ${(isTransport) ? `to` : `in`} ${city}</h3>
 
             ${scheduleBlock}
 
@@ -44,6 +53,22 @@ export default class EventSummaryView extends AbstractView {
     return template;
   }
 
+  /**
+   * Сеттер коллбека открытия формы редактирования.
+   *
+   * @param  {Function} callback - Коллбек открытия формы редактирования.
+   */
+  set openHandler(callback) {
+    this._callback.open = callback;
+
+    this.element.querySelector(`.event__rollup-btn`).addEventListener(`click`, this._openHandler);
+  }
+
+  /**
+   * Подготовка блока вывода временных рамос события.
+   *
+   * @return {String} - HTML-строка с шаблоном для создания элемента.
+   */
   _makeScheduleBlock() {
     const beginDateTime = this._event.beginTime.toISOString();
     const beginTime = formatDate(this._event.beginTime, TIME_FORMAT);
@@ -63,6 +88,11 @@ export default class EventSummaryView extends AbstractView {
           </div>`;
   }
 
+  /**
+   * Подготовка блока вывода временных рамок события.
+   *
+   * @return {String} - Шаблон в виде строки с HTML-кодом.
+   */
   _makePriceBlock() {
     const {price} = this._event;
 
@@ -71,9 +101,14 @@ export default class EventSummaryView extends AbstractView {
         </p>`;
   }
 
+  /**
+   * Подготовка блока вывода выбранных спец. предложений для события.
+   *
+   * @return {String} - Шаблон в виде строки с HTML-кодом.
+   */
   _makeOffersList() {
-    const offerList = Object.values(this._event.offers);
-    if (offerList.length === 0) {
+    const shownOffers = this._offerList.filter((offer) => this._event.offers.indexOf(offer.id) >= 0);
+    if (shownOffers.length === 0) {
       return ``;
     }
 
@@ -81,12 +116,12 @@ export default class EventSummaryView extends AbstractView {
         <h4 class="visually-hidden">Offers:</h4>
         <ul class="event__selected-offers">`;
 
-    for (let i = 0; i < this._MAX_OFFERS_TO_SHOW && i < offerList.length; i++) {
+    for (let i = 0; i < this._MAX_OFFERS_TO_SHOW && i < shownOffers.length; i++) {
       template += `
           <li class="event__offer">
-            <span class="event__offer-title">${offerList[i].title}</span>
+            <span class="event__offer-title">${shownOffers[i].title}</span>
             &plus;
-            &euro;&nbsp;<span class="event__offer-price">${offerList[i].price}</span>
+            &euro;&nbsp;<span class="event__offer-price">${shownOffers[i].price}</span>
           </li>`;
     }
 
@@ -96,14 +131,13 @@ export default class EventSummaryView extends AbstractView {
     return template;
   }
 
+  /**
+   * Обработчик открытия формы редактирования события.
+   *
+   * @param  {Object} evt - Объект события в DOM.
+   */
   _openHandler(evt) {
     evt.preventDefault();
     this._callback.open();
-  }
-
-  set openHandler(callback) {
-    this._callback.open = callback;
-
-    this.element.querySelector(`.event__rollup-btn`).addEventListener(`click`, this._openHandler);
   }
 }

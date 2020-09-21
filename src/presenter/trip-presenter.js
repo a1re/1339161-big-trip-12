@@ -13,14 +13,16 @@ export default class TripPresenter {
    * Конструктор презентера. Заведение экземпляров отображений и установка
    * ключевого узла DOM для рендеринга компонентов.
    *
-   * @param  {Node} container       — Узел документа для презентера.
-   * @param  {Observer} eventsModel - Модель для работы с событиями.
-   * @param  {Observer} filtersModel - Модель для работы с фильтрациями.
+   * @param  {Node} container         - Узел документа для презентера.
+   * @param  {Observer} eventsModel   - Модель для работы с событиями.
+   * @param  {Observer} offersModel   - Модель для работы с спец. предложениями.
+   * @param  {Observer} filtersModel  - Модель для работы с фильтрациями.
    * @param  {Observer} sortingsModel - Модель для работы с сортировками.
    */
-  constructor(container, eventsModel, filtersModel, sortingsModel) {
+  constructor(container, eventsModel, offersModel, filtersModel, sortingsModel) {
     this._container = container;
     this._eventsModel = eventsModel;
+    this._offersModel = offersModel;
     this._sortingsModel = sortingsModel;
     this._filtersModel = filtersModel;
 
@@ -43,8 +45,6 @@ export default class TripPresenter {
 
   /**
    * Инициализация и первичная отрисовка списка событий.
-   *
-   * @return {void}
    */
   init() {
     this._sortingComponent.sortEventsHandler = this._sortEvents;
@@ -91,9 +91,7 @@ export default class TripPresenter {
   }
 
   /**
-   * Рендеринг списка событий согласно выбранной сортировке
-   *
-   * @return {void}
+   * Рендеринг списка событий согласно выбранной сортировке.
    */
   _renderEvents() {
     const eventList = this._getEventList();
@@ -121,6 +119,7 @@ export default class TripPresenter {
               dayComponent.eventsContainer,
               event,
               this._eventsModel,
+              this._offersModel,
               this._switchAllEventsMode
           )
       );
@@ -136,7 +135,6 @@ export default class TripPresenter {
    *
    * @param  {Object} newEventData - Объект с обновленными данными события.
    * @param  {Boolean} updateView      - Флаг перерисовки отображения.
-   * @return {void}
    */
   _updateEvent(newEventData, updateView = true) {
     this._eventsModel.update(UpdateMode.DATA, newEventData);
@@ -147,8 +145,6 @@ export default class TripPresenter {
 
   /**
    * Рендеринг шаблона заглушки для состояния списка без событий.
-   *
-   * @return {void}
    */
   _renderFallback() {
     render(this._container, this._noEventsComponent, RenderPosition.BEFOREEND);
@@ -156,8 +152,6 @@ export default class TripPresenter {
 
   /**
    * Очистка контейнера с событиями.
-   *
-   * @return {void}
    */
   _clearEvents() {
     this._eventPresenterMap.forEach((event) => event.destroy());
@@ -170,7 +164,6 @@ export default class TripPresenter {
    * Хендлер для метода сортировки событий. Перед применением очищает список.
    *
    * @param  {String} sortingId - Id метода сортировки.
-   * @return {void}
    */
   _sortEvents(sortingId) {
     if (this._sortingsModel.active === sortingId) {

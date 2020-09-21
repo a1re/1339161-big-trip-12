@@ -25,11 +25,18 @@ const DEFAULT_EVENT_VALUES = {
 };
 
 export default class EventEditView extends UpdatableView {
-  constructor(event = DEFAULT_EVENT_VALUES) {
+  /**
+   * Конструктор класса отображения формы редактирования.
+   *
+   * @param  {Object} event    - Объект с данными события.
+   * @param  {Array} offerList - Массив со списком спц. предложений.
+   */
+  constructor(event = DEFAULT_EVENT_VALUES, offerList) {
     super();
     this._event = event;
     this._beginTimePicker = null;
     this._endTimePicker = null;
+    this._offerList = offerList;
 
     this._isSubmitEnabled = true;
 
@@ -189,17 +196,13 @@ export default class EventEditView extends UpdatableView {
   /**
    * Получение списка выбранных предложений.
    *
-   * @return {Object} - Объект со списком специальных предложений.
+   * @return {Array} - Массив с id выбранных предложений
    */
   _getSelectedOffers() {
-    const offersMap = (TRANSPORTS.indexOf(this._event.type) >= 0)
-      ? TRANSPORT_OFFERS_MAP
-      : STOP_OFFERS_MAP;
-
     const selectedOffers = this.element.querySelectorAll(`.event__available-offers input:checked`);
-    const newOffers = { };
+    const newOffers = [];
     for (const offer of selectedOffers) {
-      newOffers[offer.value] = offersMap.get(offer.value);
+      newOffers.push(parseInt(offer.value, 10));
     }
 
     return newOffers;
@@ -307,13 +310,12 @@ export default class EventEditView extends UpdatableView {
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   _makeDestinationSelector() {
-    const {id, type, city} = this._event;
-    const isTransfer = TRANSPORTS.indexOf(type) >= 0;
+    const {id, type, city, isTransport} = this._event;
 
     let template = `
       <div class="event__field-group  event__field-group--destination">
         <label class="event__label  event__type-output" for="event-destination-${id}">
-          ${type} ${(isTransfer) ? `to` : `in`}
+          ${type} ${(isTransport) ? `to` : `in`}
         </label>
         <input
             class="event__input  event__input--destination"
@@ -418,31 +420,32 @@ export default class EventEditView extends UpdatableView {
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   _makeOffersList() {
-    const {id, type, offers} = this._event;
-    const offersMap = (TRANSPORTS.indexOf(type) >= 0) ? TRANSPORT_OFFERS_MAP : STOP_OFFERS_MAP;
-
     let template = `
         <section class="event__details">
           <section class="event__section  event__section--offers">
             <h3 class="event__section-title  event__section-title--offers">Offers</h3>
             <div class="event__available-offers">`;
 
-    for (const [offerId, offerDetails] of offersMap) {
+    this._offerList.forEach((offer) => {
+      if (this._event.isTransport !== offer.isTransport) {
+        return;
+      }
+
       template += `
               <div class="event__offer-selector">
                 <input
                     class="event__offer-checkbox  visually-hidden"
-                    id="event-${id}-offer-${offerId}"
+                    id="event-${this._event.id}-offer-${offer.id}"
                     type="checkbox"
-                    name="event-${id}-offer"
-                    value="${offerId}" ${(offers[offerId]) ? `checked` : ``}>
-                <label class="event__offer-label" for="event-${id}-offer-${offerId}">
-                  <span class="event__offer-title">${offerDetails.title}</span>
+                    name="event-${this._event.id}-offer"
+                    value="${offer.id}" ${(this._event.offers.indexOf(offer.id) >= 0) ? `checked` : ``}>
+                <label class="event__offer-label" for="event-${this._event.id}-offer-${offer.id}">
+                  <span class="event__offer-title">${offer.title}</span>
                   &plus;
-                  &euro;&nbsp;<span class="event__offer-price">${offerDetails.price}</span>
+                  &euro;&nbsp;<span class="event__offer-price">${offer.price}</span>
                 </label>
               </div>`;
-    }
+    });
 
     template += `
             </div>
@@ -456,7 +459,6 @@ export default class EventEditView extends UpdatableView {
    * Хэндлер закрытия формы реедактирования.
    *
    * @param  {Object} evt - Объект события в DOM.
-   * @return {void}
    */
   _closeHandler(evt) {
     evt.preventDefault();
@@ -467,7 +469,6 @@ export default class EventEditView extends UpdatableView {
    * Хэндлер сабмита формы редактирования.
    *
    * @param  {Object} evt - Объект события в DOM.
-   * @return {void}
    */
   _submitHandler(evt) {
     evt.preventDefault();
@@ -482,8 +483,6 @@ export default class EventEditView extends UpdatableView {
 
   /**
    * Хэндлер добавления/удаления из избранного.
-   *
-   * @return {void}
    */
   _toggleFavoriteHandler() {
     this.updateData({isFavorite: !this._event.isFavorite});
@@ -494,7 +493,6 @@ export default class EventEditView extends UpdatableView {
    * Хэндлер ввода места назначения
    *
    * @param  {Object} evt - Объект события в DOM.
-   * @return {void}
    */
   _inputDestinationHandler(evt) {
     if (evt.target.value.length > 0) {
@@ -509,8 +507,6 @@ export default class EventEditView extends UpdatableView {
    * Хэндлер ввода времени начала события. Используется и в качестве
    * обработчика для инпута, и как коллбек для флэтпикера, поэтому зачение
    * берется не из объекта события, а через запрос к DOM.
-   *
-   * @return {void}
    */
   _inputBeginTimeHandler() {
     const inputBeginTime = this.element
@@ -539,8 +535,6 @@ export default class EventEditView extends UpdatableView {
    * Хэндлер ввода времени окончания события. Используется и в качестве
    * обработчика для инпута, и как коллбек для флэтпикера, поэтому зачение
    * берется не из объекта события, а через запрос к DOM.
-   *
-   * @return {void}
    */
   _inputEndTimeHandler() {
     const inputBeginTime = this.element
@@ -569,7 +563,6 @@ export default class EventEditView extends UpdatableView {
    * Хэндлер ввода стоимости события.
    *
    * @param  {Object} evt - Объект события в DOM.
-   * @return {void}
    */
   _inputPriceHandler(evt) {
     const price = parseInt(evt.target.value, 10);
@@ -585,19 +578,19 @@ export default class EventEditView extends UpdatableView {
    * Хэндлер выбора типа события.
    *
    * @param  {Object} evt - Объект события в DOM.
-   * @return {void}
    */
   _selectTypeHandler(evt) {
     const eventIcon = this.element.querySelector(`.event__type-icon`);
     eventIcon.setAttribute(`src`, `img/icons/${evt.target.value.toLowerCase()}.png`);
-    this.updateData({type: evt.target.value});
+    this.updateData({
+      type: evt.target.value,
+      isTransport: TRANSPORTS.indexOf(evt.target.value) >= 0
+    });
     this.updateElement();
   }
 
   /**
    * Хэндлер выбора спец. предложений.
-   *
-   * @return {void}
    */
   _selectOfferHandler() {
     this.updateData({offers: this._getSelectedOffers()});

@@ -6,10 +6,22 @@ import {EscHandler} from "../utils/common.js";
 import {UpdateMode, EventMode} from "../const.js";
 
 export default class EventPresenter {
-  constructor(eventListContainer, eventData, eventsModel, switchAllEventsMode) {
+  /**
+   * Конструктор презентера. Заведение экземпляров отображений и установка
+   * ключевого узла DOM для рендеринга компонентов.
+   *
+   * @param  {Node} eventListContainer      - Контейнер для вставки события
+   * @param  {Object} eventData             - Объект с данными события
+   * @param  {Observer} eventsModel         - Модель для работы с событиями.
+   * @param  {Observer} offersModel         - Модель для работы с спец. предложениями.
+   * @param  {Function} switchAllEventsMode - Метод переключючения режима всех
+   *                                          событий маршрута.
+   */
+  constructor(eventListContainer, eventData, eventsModel, offersModel, switchAllEventsMode) {
     this._eventListContainer = eventListContainer;
     this._event = eventData;
     this._eventsModel = eventsModel;
+    this._offersModel = offersModel;
     this._switchAllEventsMode = switchAllEventsMode;
 
     this._mode = EventMode.SUMMARY;
@@ -30,10 +42,9 @@ export default class EventPresenter {
   }
 
   /**
-   * Перерисовка карточки с новыми данными
+   * Перерисовка карточки с новыми данными.
    *
    * @param  {Object} eventData - Объект с новыми данными.
-   * @return {void}
    */
   refresh(eventData) {
     this._event = eventData;
@@ -66,7 +77,6 @@ export default class EventPresenter {
    * из значений перечисления EventMode).
    *
    * @param  {String} eventMode - Режим отображения.
-   * @return {void}
    */
   switchMode(eventMode) {
     if (this._mode !== eventMode) {
@@ -83,8 +93,6 @@ export default class EventPresenter {
 
   /**
    * Удаление события с обеими формами представления (сводки и редактрирования).
-   *
-   * @return {void}
    */
   destroy() {
     if (this._mode === EventMode.EDITING) {
@@ -109,7 +117,10 @@ export default class EventPresenter {
     if (eventMode === EventMode.EDITING) {
       this._switchAllEventsMode(EventMode.SUMMARY);
 
-      this._eventEditComponent = new EventEditView(this._event);
+      this._eventEditComponent = new EventEditView(
+          this._event,
+          this._offersModel.getList()
+      );
 
       this._closeEventByEsc = new EscHandler(this._closeEventEdit);
       this._eventEditComponent.closeHandler = this._closeEventEdit;
@@ -120,8 +131,12 @@ export default class EventPresenter {
       return this._eventEditComponent.element;
     }
 
+
     // По умочанию — режим EventMode.SUMMARY
-    this._eventSummaryComponent = new EventSummaryView(this._event);
+    this._eventSummaryComponent = new EventSummaryView(
+        this._event,
+        this._offersModel.getList(this._event.isTransport)
+    );
 
     this._eventSummaryComponent.openHandler = () => {
       this._eventListContainer.replaceChild(
@@ -139,8 +154,6 @@ export default class EventPresenter {
   /**
    * Обработчик закрытия формы регистрации. При закрытии также снимает
    * обработчик нажатия на Esc.
-   *
-   * @return {void}
    */
   _closeEventEdit() {
     this._eventListContainer.replaceChild(
@@ -154,8 +167,6 @@ export default class EventPresenter {
 
   /**
    * Обработчик нажатия на кнопку «Добавить в избранное».
-   *
-   * @return {void}
    */
   _toggleFavorite() {
     this._event = Object.assign({}, this._event,
@@ -170,8 +181,7 @@ export default class EventPresenter {
   /**
    * Cохранение данных формы
    *
-   * @param  {Object} eventData - Данные формы для сохранения
-   * @return {void}
+   * @param  {Object} eventData - Данные формы для сохранения.
    */
   _submitForm(eventData) {
     this._closeEventEdit();
