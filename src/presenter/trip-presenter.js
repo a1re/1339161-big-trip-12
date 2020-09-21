@@ -29,9 +29,9 @@ export default class TripPresenter {
     this._eventPresenterMap = new Map();
     this._dayComponentMap = new Map();
 
-    this._dayListComponent = new DayListView();
-    this._noEventsComponent = new NoEventsView();
-    this._sortingComponent = new SortingView(this._sortingsModel.list, this._sortingsModel.isGrouped);
+    this._noEventsComponent = null;
+    this._sortingComponent = null;
+    this._dayListComponent = null;
 
     this._updateEvent = this._updateEvent.bind(this);
     this._updatePresenter = this._updatePresenter.bind(this);
@@ -47,10 +47,7 @@ export default class TripPresenter {
    * Инициализация и первичная отрисовка списка событий.
    */
   init() {
-    this._sortingComponent.sortEventsHandler = this._sortEvents;
-
-    render(this._container, this._sortingComponent, RenderPosition.BEFOREEND);
-    render(this._container, this._dayListComponent, RenderPosition.BEFOREEND);
+    this._renderCaption();
     this._renderEvents();
   }
 
@@ -72,6 +69,8 @@ export default class TripPresenter {
       case UpdateMode.MAJOR:
         this._sortingsModel.reset();
         this._clearEvents();
+        this._clearCaption();
+        this._renderCaption();
         this._renderEvents();
         break;
     }
@@ -91,12 +90,41 @@ export default class TripPresenter {
   }
 
   /**
+   * Рендеринг шаблона заглушки для состояния списка без событий.
+   */
+  _renderFallback() {
+    this._noEventsComponent = new NoEventsView();
+    render(this._container, this._noEventsComponent, RenderPosition.BEFOREEND);
+  }
+
+  /**
+   * Рендеринг заголовка таблицы.
+   */
+  _renderCaption() {
+    this._sortingComponent = new SortingView(this._sortingsModel.list, this._sortingsModel.isGrouped);
+    this._sortingComponent.sortEventsHandler = this._sortEvents;
+    render(this._container, this._sortingComponent, RenderPosition.BEFOREEND);
+
+    this._dayListComponent = new DayListView();
+    render(this._container, this._dayListComponent, RenderPosition.BEFOREEND);
+  }
+
+  /**
    * Рендеринг списка событий согласно выбранной сортировке.
    */
   _renderEvents() {
+    if (this._noEventsComponent) {
+      this._noEventsComponent.remove();
+      this._noEventsComponent = null;
+    }
+
     const eventList = this._getEventList();
     let previousDay;
     let dayComponent;
+
+    if (eventList.length === 0) {
+      this._renderFallback();
+    }
 
     eventList.forEach((event) => {
       let dayNumber = event.dayNumber;
@@ -144,13 +172,6 @@ export default class TripPresenter {
   }
 
   /**
-   * Рендеринг шаблона заглушки для состояния списка без событий.
-   */
-  _renderFallback() {
-    render(this._container, this._noEventsComponent, RenderPosition.BEFOREEND);
-  }
-
-  /**
    * Очистка контейнера с событиями.
    */
   _clearEvents() {
@@ -158,6 +179,17 @@ export default class TripPresenter {
     this._eventPresenterMap.clear();
     this._dayComponentMap.forEach((day) => day.remove());
     this._dayComponentMap.clear();
+  }
+
+  /**
+   * Очистка заголовка и контейнера таблицы
+   */
+  _clearCaption() {
+    this._dayListComponent.remove();
+    this._dayListComponent = null;
+
+    this._sortingComponent.remove();
+    this._sortingComponent = null;
   }
 
   /**

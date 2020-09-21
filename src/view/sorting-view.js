@@ -1,6 +1,11 @@
 import AbstractView from "./abstract-view.js";
 
 export default class SortingView extends AbstractView {
+  /**
+   * Конструктор заголовков сортировки таблицы.
+   *
+   * @param  {Array} sortingList - Список методов сортировки.
+   */
   constructor(sortingList) {
     super();
 
@@ -8,9 +13,17 @@ export default class SortingView extends AbstractView {
     this._sortingList = sortingList;
   }
 
+  /**
+   * Геттер шаблона заголовков сортировки таблицы.
+   * @return {String} - Шаблон в виде строки с HTML-кодом.
+   */
   get template() {
+    const selectedSorting = this._sortingList.find((sorting) => sorting.isActive);
+
     let template = `<form class="trip-events__trip-sort  trip-sort" action="#" method="get">
-            <span class="trip-sort__item  trip-sort__item--day">Day</span>`;
+            <span class="trip-sort__item  trip-sort__item--day">
+              ${this._isDayColumnShown(selectedSorting.id) ? `Day` : ``}
+            </span>`;
 
     this._sortingList.forEach((sorting) => {
       template += `
@@ -37,6 +50,11 @@ export default class SortingView extends AbstractView {
     return template;
   }
 
+  /**
+   * Сеттер обаботчика нажатия на заголовок для сортровки.
+   *
+   * @param  {Function} callback - Коллбек сортировки.
+   */
   set sortEventsHandler(callback) {
     this._callback.sortEvents = callback;
     const sortingLabels = this.element.querySelectorAll(`.trip-sort__btn`);
@@ -45,17 +63,34 @@ export default class SortingView extends AbstractView {
     });
   }
 
+
+  /**
+   * Обработчик нажатия на заголовок для сортровки.
+   *
+   * @param  {Object} evt - Объект события в DOM.
+   */
   _sortHandler(evt) {
     this._callback.sortEvents(evt.target.getAttribute(`for`));
 
     const dayColumn = this.element.querySelector(`.trip-sort__item--day`);
-    const showColumnSorting = this._sortingList
-      .find((sorting) => sorting.isGrouped === true);
 
-    if (showColumnSorting.id === evt.target.getAttribute(`for`)) {
+    if (this._isDayColumnShown(evt.target.getAttribute(`for`))) {
       dayColumn.innerText = `Day`;
     } else {
       dayColumn.innerText = ``;
     }
+  }
+
+  /**
+   * Проверка показывать ли заголовок стобца Day.
+   * @param  {String}  selectedSorting - Id выбранной сортировки.
+   * @return {Boolean}                 - True если нужно показывать,
+   *                                     False — если нет.
+   */
+  _isDayColumnShown(selectedSorting) {
+    const groupedSortingColumn = this._sortingList
+      .find((sorting) => sorting.isGrouped === true);
+
+    return selectedSorting === groupedSortingColumn.id;
   }
 }
