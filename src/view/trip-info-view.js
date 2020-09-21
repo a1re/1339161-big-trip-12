@@ -1,5 +1,7 @@
 import AbstractView from "./abstract-view.js";
 
+import he from "he";
+
 export default class TripInfoView extends AbstractView {
   /**
    * Конструктор отображения
@@ -67,13 +69,13 @@ export default class TripInfoView extends AbstractView {
     });
 
     if (uniquePoints.length === 1) {
-      return uniquePoints[0].city;
+      return he.encode(uniquePoints[0].city);
     }
 
     const route = [];
-    route.push(uniquePoints[0].city);
+    route.push(he.encode(uniquePoints[0].city));
     if (uniquePoints.length === 3) {
-      route.push(uniquePoints[1].city);
+      route.push(he.encode(uniquePoints[1].city));
     } else if (uniquePoints.length > 3) {
       route.push(`...`);
     }

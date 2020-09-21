@@ -3,6 +3,8 @@ import {formatDate} from "../utils/common.js";
 import AbstractView from "./abstract-view.js";
 import Itinerary from "../utils/itinerary.js";
 
+import he from "he";
+
 export default class EventSummaryView extends AbstractView {
   /**
    * Конструктор класса отображения краткой сводки о собыиии..
@@ -37,7 +39,7 @@ export default class EventSummaryView extends AbstractView {
                   src="img/icons/${type.toLowerCase()}.png"
                   alt="Event type icon">
             </div>
-            <h3 class="event__title">${type} ${(isTransport) ? `to` : `in`} ${city}</h3>
+            <h3 class="event__title">${type} ${(isTransport) ? `to` : `in`} ${he.encode(city)}</h3>
 
             ${scheduleElement}
 

@@ -2,6 +2,7 @@ import {CITIES, STOPS, TRANSPORTS, DATETIME_FORMAT, DEFAULT_FLATPICKR_SETTINGS} 
 import {getRandomInt, generateId, formatDate, isValidDate, parseDate} from "../utils/common.js";
 import UpdatableView from "./updatable-view.js";
 
+import he from "he";
 import moment from "moment";
 import flatpickr from "flatpickr";
 import "../../node_modules/flatpickr/dist/flatpickr.min.css";
@@ -318,7 +319,7 @@ export default class EventFormView extends UpdatableView {
             id="event-destination-${id}"
             type="text"
             name="event-destination"
-            value="${city}"
+            value="${he.encode(city)}"
             list="destination-list-1">
         <datalist id="destination-list-${id}">`;
 
