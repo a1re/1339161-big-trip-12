@@ -15,12 +15,14 @@ export default class TripPresenter {
    *
    * @param  {Node} container       — Узел документа для презентера.
    * @param  {Observer} eventsModel - Модель для работы с событиями.
+   * @param  {Observer} filtersModel - Модель для работы с фильтрациями.
    * @param  {Observer} sortingsModel - Модель для работы с сортировками.
    */
-  constructor(container, eventsModel, sortingsModel) {
+  constructor(container, eventsModel, filtersModel, sortingsModel) {
     this._container = container;
     this._eventsModel = eventsModel;
     this._sortingsModel = sortingsModel;
+    this._filtersModel = filtersModel;
 
     this._eventPresenterMap = new Map();
     this._dayComponentMap = new Map();
@@ -30,12 +32,13 @@ export default class TripPresenter {
     this._sortingComponent = new SortingView(this._sortingsModel.list, this._sortingsModel.isGrouped);
 
     this._updateEvent = this._updateEvent.bind(this);
-    this._pushModel = this._pushModel.bind(this);
+    this._updatePresenter = this._updatePresenter.bind(this);
     this._sortEvents = this._sortEvents.bind(this);
     this._switchAllEventsMode = this._switchAllEventsMode.bind(this);
 
-    this._eventsModel.subscribe(this._pushModel);
-    this._sortingsModel.subscribe(this._pushModel);
+    this._eventsModel.subscribe(this._updatePresenter);
+    this._sortingsModel.subscribe(this._updatePresenter);
+    this._filtersModel.subscribe(this._updatePresenter);
   }
 
   /**
@@ -51,7 +54,13 @@ export default class TripPresenter {
     this._renderEvents();
   }
 
-  _pushModel(updateMode, eventData) {
+  /**
+   * Коллбек уведомления об обновлении модели
+   * @param  {String} updateMode - Режим обновления согласно перечислению
+   *                               UpdateMode.
+   * @param  {Object} eventData  - Объект с обновленной информацией о событии.
+   */
+  _updatePresenter(updateMode, eventData) {
     switch (updateMode) {
       case UpdateMode.PATCH:
         this._eventPresenterMap.get(eventData.id).update(eventData);
@@ -75,7 +84,9 @@ export default class TripPresenter {
    * @return {Array} - Карта событий.
    */
   _getEventList() {
-    const eventList = this._eventsModel.eventList.slice();
+    const eventList = this._eventsModel.eventList.slice()
+      .filter(this._filtersModel.callback);
+
     return eventList.sort(this._sortingsModel.callback);
   }
 

@@ -12,19 +12,24 @@ export default class HeaderPresenter {
    *
    * @param  {Node} container       — Узел документа для презентера.
    * @param  {Observer} eventsModel – Модель для работы с событиями.
+   * @param  {Observer} filtersModel – Модель для работы с фильтрациями.
    */
-  constructor(container, eventsModel) {
+  constructor(container, eventsModel, filtersModel) {
     this._container = container;
     this._eventsModel = eventsModel;
+    this._filtersModel = filtersModel;
 
     this._tripInfoComponent = null;
+    this._filtersComponent = new FiltersView(this._filtersModel.list);
+    this._menuComponent = new MenuView();
 
-    this._pushModel = this._pushModel.bind(this);
+    this._updatePresenter = this._updatePresenter.bind(this);
+    this._filterEvents = this._filterEvents.bind(this);
 
     this._menuContainer = container.querySelector(`.trip-controls h2:first-child`);
     this._filtersContainer = container.querySelector(`.trip-controls h2:last-child`);
 
-    this._eventsModel.subscribe(this._pushModel);
+    this._eventsModel.subscribe(this._updatePresenter);
   }
 
   /**
@@ -34,17 +39,20 @@ export default class HeaderPresenter {
    * @return {void}
    */
   init() {
-    render(this._menuContainer, new MenuView(), RenderPosition.AFTEREND);
-    render(this._filtersContainer, new FiltersView(), RenderPosition.AFTEREND);
+    this._filtersComponent.filterEventsHandler = this._filterEvents;
+    render(this._menuContainer, this._menuComponent, RenderPosition.AFTEREND);
+    render(this._filtersContainer, this._filtersComponent, RenderPosition.AFTEREND);
 
     this._renderTripInfo();
   }
 
-  _getEventList() {
-    return this._eventsModel.eventList;
-  }
-
-  _pushModel(updateMode) {
+  /**
+   * Коллбек уведомления об обновлении от модели
+   *
+   * @param  {String} updateMode - Режим обновления согласно перечислению
+   *                               UpdateMode.
+   */
+  _updatePresenter(updateMode) {
     switch (updateMode) {
       case UpdateMode.MINOR:
         this._clearTripInfo();
@@ -57,12 +65,32 @@ export default class HeaderPresenter {
     }
   }
 
+  /**
+   * Очистка сводки о машруте, датах и общей стооимости поездки.
+   */
   _clearTripInfo() {
     this._tripInfoComponent.remove();
   }
 
+  /**
+   * Отрисовка сводки о машруте, датах и общей стооимости поездки.
+   */
   _renderTripInfo() {
-    this._tripInfoComponent = new TripInfoView(this._getEventList());
+    this._tripInfoComponent = new TripInfoView(this._eventsModel.eventList);
     render(this._container, this._tripInfoComponent, RenderPosition.AFTERBEGIN);
+  }
+
+  /**
+   * Хендлер для метода фильтрации событий.
+   *
+   * @param  {String} filterId - Id метода фильтрации.
+   * @return {void}
+   */
+  _filterEvents(filterId) {
+    if (this._filtersModel.active === filterId) {
+      return;
+    }
+
+    this._filtersModel.active = filterId;
   }
 }
