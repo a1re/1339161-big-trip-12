@@ -1,41 +1,57 @@
 import {CITIES, STOPS, TRANSPORTS, DATETIME_FORMAT, DEFAULT_FLATPICKR_SETTINGS} from "../const.js";
-import {getRandomInt, formatDate, isValidDate, parseDate} from "../utils/common.js";
+import {getRandomInt, generateId, formatDate, isValidDate, parseDate} from "../utils/common.js";
 import UpdatableView from "./updatable-view.js";
 
+import moment from "moment";
 import flatpickr from "flatpickr";
 import "../../node_modules/flatpickr/dist/flatpickr.min.css";
 
 const DEFAULT_EVENT_VALUES = {
-  id: 0,
   city: ``,
   type: TRANSPORTS[getRandomInt(0, TRANSPORTS.length - 1)],
-  beginTime: new Date().setHours(new Date().getHours() + 1, 0, 0, 0),
-  endTime: new Date().setHours(new Date().getHours() + 2, 0, 0, 0),
+  beginTime: moment().startOf(`hour`).toDate(),
+  endTime: moment().startOf(`hour`).add(2, `hours`).toDate(),
+  isTransport: true,
   price: 0,
   offers: [],
   isFavorite: false
 };
 
-export default class EventEditView extends UpdatableView {
+const EventFormMode = {
+  ADDING: `ADDING`,
+  EDITING: `EDITING`
+};
+
+export default class EventFormView extends UpdatableView {
   /**
-   * Конструктор класса отображения формы редактирования.
+   * Конструктор класса отображения формы добавления/редактирования события.
    *
-   * @param  {Object} event    - Объект с данными события.
    * @param  {Array} offerList - Массив со списком спц. предложений.
+   * @param  {Object} [event]  - Объект с информацие о событии, если это
+   *                             форма редактирования, а не добавления.
    */
-  constructor(event = DEFAULT_EVENT_VALUES, offerList) {
+  constructor(offerList, event = null) {
     super();
-    this._event = event;
+    if (!event) {
+      this._event = DEFAULT_EVENT_VALUES;
+      this._event.id = generateId();
+      this._mode = EventFormMode.ADDING;
+      this._isSubmitEnabled = false;
+    } else {
+      this._event = event;
+      this._mode = EventFormMode.EDITING;
+      this._isSubmitEnabled = true;
+
+      this._deleteHandler = this._deleteHandler.bind(this);
+      this._toggleFavoriteHandler = this._toggleFavoriteHandler.bind(this);
+    }
+
     this._beginTimePicker = null;
     this._endTimePicker = null;
     this._offerList = offerList;
 
-    this._isSubmitEnabled = true;
-
     this._closeHandler = this._closeHandler.bind(this);
     this._submitHandler = this._submitHandler.bind(this);
-    this._deleteHandler = this._deleteHandler.bind(this);
-    this._toggleFavoriteHandler = this._toggleFavoriteHandler.bind(this);
     this._inputDestinationHandler = this._inputDestinationHandler.bind(this);
     this._inputBeginTimeHandler = this._inputBeginTimeHandler.bind(this);
     this._inputEndTimeHandler = this._inputEndTimeHandler.bind(this);
@@ -56,10 +72,10 @@ export default class EventEditView extends UpdatableView {
     const destinationSelector = this._makeDestinationSelector();
     const timeInput = this._makeTimeInput();
     const priceInput = this._makePriceInput();
-    const favoriteButton = this._makeFavoriteButton();
     const offersList = this._makeOffersList();
+    const favoriteButton = this._makeFavoriteButton();
 
-    return `<form class="event event--edit" action="#" method="post">
+    return `<form class="trip-events__item  event  event--edit" action="#" method="post">
         <header class="event__header">
           ${eventTypeSelector}
 
@@ -70,13 +86,13 @@ export default class EventEditView extends UpdatableView {
           ${priceInput}
 
           <button class="event__save-btn  btn  btn--blue" type="submit" ${this._isSubmitEnabled ? `` : `disabled`}>Save</button>
-          <button class="event__reset-btn" type="reset">Delete</button>
+          <button class="event__reset-btn" type="reset">${this._mode === EventFormMode.ADDING ? `Cancel` : `Delete`}</button>
 
-          ${favoriteButton}
+          ${this._mode === EventFormMode.EDITING ? favoriteButton : ``}
 
-          <button class="event__rollup-btn" type="button">
+          ${this._mode === EventFormMode.EDITING ? `<button class="event__rollup-btn" type="button">
             <span class="visually-hidden">Open event</span>
-          </button>
+          </button>` : ``}
         </header>
         ${offersList}
       </form>`;
@@ -90,20 +106,15 @@ export default class EventEditView extends UpdatableView {
   set closeHandler(callback) {
     this._callback.close = callback;
 
-    this.element.querySelector(`.event__rollup-btn`)
-      .addEventListener(`click`, this._closeHandler);
-  }
+    if (this._mode === EventFormMode.ADDING) {
+      this.element.querySelector(`.event__reset-btn`)
+        .addEventListener(`click`, this._closeHandler);
+    }
 
-  /**
-   * Сеттер обработчика сохранения события в форме редактирования.
-   *
-   * @param  {Function} callback - Коллбек сохранения события.
-   */
-  set submitHandler(callback) {
-    this._callback.submit = callback;
-
-    this.element.querySelector(`.event__reset-btn`)
-      .addEventListener(`click`, this._deleteHandler);
+    if (this._mode === EventFormMode.EDITING) {
+      this.element.querySelector(`.event__rollup-btn`)
+        .addEventListener(`click`, this._closeHandler);
+    }
   }
 
   /**
@@ -114,7 +125,8 @@ export default class EventEditView extends UpdatableView {
   set deleteHandler(callback) {
     this._callback.delete = callback;
 
-    this.element.addEventListener(`submit`, this._submitHandler);
+    this.element.querySelector(`.event__reset-btn`)
+      .addEventListener(`click`, this._deleteHandler);
   }
 
   /**
@@ -127,6 +139,17 @@ export default class EventEditView extends UpdatableView {
 
     this.element.querySelector(`.event__favorite-btn`)
       .addEventListener(`click`, this._toggleFavoriteHandler);
+  }
+
+  /**
+   * Сеттер обработчика сохранения события в форме редактирования.
+   *
+   * @param  {Function} callback - Коллбек сохранения события.
+   */
+  set submitHandler(callback) {
+    this._callback.submit = callback;
+
+    this.element.addEventListener(`submit`, this._submitHandler);
   }
 
   /**
@@ -159,8 +182,20 @@ export default class EventEditView extends UpdatableView {
 
     this.closeHandler = this._callback.close;
     this.submitHandler = this._callback.submit;
-    this.deleteHandler = this._callback.delete;
-    this.toggleFavoriteHandler = this._callback.toggleFavorite;
+
+    if (this._mode === EventFormMode.EDITING) {
+      this.deleteHandler = this._callback.delete;
+      this.toggleFavoriteHandler = this._callback.toggleFavorite;
+    }
+
+    this._setTimePicking();
+  }
+
+  /**
+   * Установка обработчиков выбора дат.
+   */
+  _setTimePicking() {
+    const id = this._event.id;
 
     if (this._beginTimePicker) {
       this._beginTimePicker.destroy();
@@ -191,45 +226,6 @@ export default class EventEditView extends UpdatableView {
           onChange: this._inputEndTimeHandler
         }
     ));
-  }
-
-  /**
-   * Получение списка выбранных предложений.
-   *
-   * @return {Array} - Массив с id выбранных предложений
-   */
-  _getSelectedOffers() {
-    const selectedOffers = this.element.querySelectorAll(`.event__available-offers input:checked`);
-    const newOffers = [];
-    for (const offer of selectedOffers) {
-      newOffers.push(parseInt(offer.value, 10));
-    }
-
-    return newOffers;
-  }
-
-  _setDatepicker() {
-    if (this._datepicker) {
-      this._datepicker.destroy();
-      this._datepicker = null;
-    }
-
-    this._datepicker = flatpickr(
-
-    );
-  }
-
-  /**
-   * Включение/выключение кнопки сабмита формы.
-   *
-   * @param  {Boolean} isEnabled - Флаг статуса кнопки сабмита формы.
-   * @return {void}
-   */
-  _updateSubmitStatus(isEnabled) {
-    this._isSubmitEnabled = isEnabled;
-
-    const submit = this.element.querySelector(`.event__save-btn`);
-    submit.disabled = !isEnabled;
   }
 
   /**
@@ -391,30 +387,6 @@ export default class EventEditView extends UpdatableView {
   }
 
   /**
-   * Шаблон кнопки добавления в избранное.
-   *
-   * @return {String} - Шаблон в виде строки с HTML-кодом.
-   */
-  _makeFavoriteButton() {
-    const {id, isFavorite} = this._event;
-
-    return `
-      <input
-          id="event-favorite-${id}"
-          class="event__favorite-checkbox  visually-hidden"
-          type="checkbox"
-          name="event-favorite" ${(isFavorite) ? `checked` : ``}>
-      <label class="event__favorite-btn" for="event-favorite-${id}">
-      <span class="visually-hidden">Add to favorite</span>
-        <svg class="event__favorite-icon" width="28" height="28" viewBox="0 0 28 28">
-          <path
-              d="M14 21l-8.22899 4.3262 1.57159-9.1631L.685209 9.67376 9.8855 8.33688
-              14 0l4.1145 8.33688 9.2003 1.33688-6.6574 6.48934 1.5716 9.1631L14 21z"/>
-        </svg>
-      </label>`;
-  }
-
-  /**
    * Шаблон списка специальных предложений.
    *
    * @return {String} - Шаблон в виде строки с HTML-кодом.
@@ -456,7 +428,158 @@ export default class EventEditView extends UpdatableView {
   }
 
   /**
-   * Обработчик закрытия формы реедактирования.
+   * Шаблон кнопки добавления в избранное.
+   *
+   * @return {String} - Шаблон в виде строки с HTML-кодом.
+   */
+  _makeFavoriteButton() {
+    const {id, isFavorite} = this._event;
+
+    return `
+      <input
+          id="event-favorite-${id}"
+          class="event__favorite-checkbox  visually-hidden"
+          type="checkbox"
+          name="event-favorite" ${(isFavorite) ? `checked` : ``}>
+      <label class="event__favorite-btn" for="event-favorite-${id}">
+      <span class="visually-hidden">Add to favorite</span>
+        <svg class="event__favorite-icon" width="28" height="28" viewBox="0 0 28 28">
+          <path
+              d="M14 21l-8.22899 4.3262 1.57159-9.1631L.685209 9.67376 9.8855 8.33688
+              14 0l4.1145 8.33688 9.2003 1.33688-6.6574 6.48934 1.5716 9.1631L14 21z"/>
+        </svg>
+      </label>`;
+  }
+
+  /**
+   * Получение списка выбранных предложений.
+   *
+   * @return {Array} - Массив с id выбранных предложений
+   */
+  _getSelectedOffers() {
+    const selectedOffers = this.element.querySelectorAll(`.event__available-offers input:checked`);
+    const newOffers = [];
+    for (const offer of selectedOffers) {
+      newOffers.push(parseInt(offer.value, 10));
+    }
+
+    return newOffers;
+  }
+
+  /**
+   * Включение/выключение кнопки сабмита формы.
+   *
+   * @param  {Boolean} isEnabled - Флаг статуса кнопки сабмита формы.
+   * @return {void}
+   */
+  _updateSubmitStatus(isEnabled) {
+    this._isSubmitEnabled = isEnabled;
+
+    const submit = this.element.querySelector(`.event__save-btn`);
+    submit.disabled = !isEnabled;
+  }
+
+  /**
+   * Вадидатор введеной стоимости.
+   *
+   * @param  {String/Number} price - Значение стоимости для проверки.
+   * @return {Boolean}             - Результат проверки. True — если значение
+   *                                 корректно, False — если нет.
+   */
+  _validatePrice(price) {
+    if (price.length === 0 || isNaN(price) || parseInt(price, 10) < 0) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Вадидатор введеной точки назначения.
+   *
+   * @param  {String} destination - Значение точки назначения для проверки.
+   * @return {Boolean}            - Результат проверки. True — если значение
+   *                                корректно, False — если нет.
+   */
+  _validateDestination(destination) {
+    if (destination.trim().length === 0) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Вадидатор введеного времени начала события.
+   *
+   * @param  {Date/String} beginTime - Значение точки назначения для проверки.
+   * @return {Boolean}               - Результат проверки. True — если значение
+   *                                   корректно, False — если нет.
+   */
+  _validateBeginTime(beginTime) {
+    if (!isValidDate(beginTime, DATETIME_FORMAT)) {
+      return false;
+    }
+
+    const endTime = this.element.querySelector(`#event-end-time-${this._event.id}`).value;
+    if (parseDate(endTime, DATETIME_FORMAT) > parseDate(beginTime, DATETIME_FORMAT)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Вадидатор введеного времени завершения события.
+   *
+   * @param  {Date/String} endTime   - Значение точки назначения для проверки.
+   * @return {Boolean}               - Результат проверки. True — если значение
+   *                                   корректно, False — если нет.
+   */
+  _validateEndTime(endTime) {
+    if (!isValidDate(endTime, DATETIME_FORMAT)) {
+      return false;
+    }
+
+    const beginTime = this.element.querySelector(`#event-start-time-${this._event.id}`).value;
+    if (parseDate(endTime, DATETIME_FORMAT) > parseDate(beginTime, DATETIME_FORMAT)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Валидация всех значений формы
+   *
+   * @return {Boolean}  - Результат проверки. True — если значения корректны, False — если нет.
+   */
+  _validateForm() {
+    const destinationInput = this.element.querySelector(`.event__input--destination`);
+    if (!this._validateDestination(destinationInput.value)) {
+      return false;
+    }
+
+    const priceInput = this.element.querySelector(`.event__input--price`);
+    if (!this._validatePrice(priceInput.value)) {
+      return false;
+    }
+
+    const beginTimeInput = this.element.querySelector(`#event-start-time-${this._event.id}`);
+    if (!this._validateBeginTime(beginTimeInput.value)) {
+      return false;
+    }
+
+    const endTimeInput = this.element.querySelector(`#event-end-time-${this._event.id}`);
+    if (!this._validateEndTime(endTimeInput.value)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Обработчик закрытия формы редактирования.
    *
    * @param  {Object} evt - Объект события в DOM.
    */
@@ -466,7 +589,7 @@ export default class EventEditView extends UpdatableView {
   }
 
   /**
-   * Обработчик сабмита формы редактирования.
+   * Обработчик сабмита формы.
    *
    * @param  {Object} evt - Объект события в DOM.
    */
@@ -482,34 +605,18 @@ export default class EventEditView extends UpdatableView {
   }
 
   /**
-   * Обработчик нажатия на кнопку удаления.
-   *
-   * @param  {Object} evt - Объект события в DOM.
-   */
-  _deleteHandler() {
-    this._callback.delete(this._event);
-  }
-
-  /**
-   * Обработчик добавления/удаления из избранного.
-   */
-  _toggleFavoriteHandler() {
-    this.updateData({isFavorite: !this._event.isFavorite});
-    this._callback.toggleFavorite();
-  }
-
-  /**
    * Обработчик ввода места назначения
    *
    * @param  {Object} evt - Объект события в DOM.
    */
   _inputDestinationHandler(evt) {
-    if (evt.target.value.length > 0) {
-      this.updateData({city: evt.target.value});
-      this._updateSubmitStatus(true);
-    } else {
+    if (!this._validateDestination(evt.target.value)) {
       this._updateSubmitStatus(false);
+      return;
     }
+
+    this.updateData({city: evt.target.value});
+    this._updateSubmitStatus(this._validateForm());
   }
 
   /**
@@ -520,24 +627,12 @@ export default class EventEditView extends UpdatableView {
   _inputBeginTimeHandler() {
     const inputBeginTime = this.element
         .querySelector(`#event-start-time-${this._event.id}`).value;
-    const inputEndTime = this.element
-        .querySelector(`#event-end-time-${this._event.id}`).value;
-
-    if (!isValidDate(inputBeginTime, DATETIME_FORMAT)) {
-      this._updateSubmitStatus(false);
-      return;
-    }
-
-    if (parseDate(inputBeginTime, DATETIME_FORMAT) > parseDate(inputEndTime, DATETIME_FORMAT)) {
-      this._updateSubmitStatus(false);
-      return;
-    }
 
     this.updateData({
-      beginTime: parseDate(inputBeginTime, DATETIME_FORMAT),
-      endTime: parseDate(inputEndTime, DATETIME_FORMAT)
+      beginTime: parseDate(inputBeginTime, DATETIME_FORMAT)
     });
-    this._updateSubmitStatus(true);
+
+    this._updateSubmitStatus(this._validateForm());
   }
 
   /**
@@ -546,26 +641,13 @@ export default class EventEditView extends UpdatableView {
    * берется не из объекта события, а через запрос к DOM.
    */
   _inputEndTimeHandler() {
-    const inputBeginTime = this.element
-        .querySelector(`#event-start-time-${this._event.id}`).value;
     const inputEndTime = this.element
         .querySelector(`#event-end-time-${this._event.id}`).value;
 
-    if (!isValidDate(inputEndTime, DATETIME_FORMAT)) {
-      this._updateSubmitStatus(false);
-      return;
-    }
-
-    if (parseDate(inputEndTime, DATETIME_FORMAT) < parseDate(inputBeginTime, DATETIME_FORMAT)) {
-      this._updateSubmitStatus(false);
-      return;
-    }
-
     this.updateData({
-      beginTime: parseDate(inputBeginTime, DATETIME_FORMAT),
       endTime: parseDate(inputEndTime, DATETIME_FORMAT)
     });
-    this._updateSubmitStatus(true);
+    this._updateSubmitStatus(this._validateForm());
   }
 
   /**
@@ -574,13 +656,13 @@ export default class EventEditView extends UpdatableView {
    * @param  {Object} evt - Объект события в DOM.
    */
   _inputPriceHandler(evt) {
-    const price = parseInt(evt.target.value, 10);
-    if (evt.target.value.length > 0 && !isNaN(price)) {
-      this.updateData({price});
-      this._updateSubmitStatus(true);
-    } else {
+    if (!this._validatePrice(evt.target.value)) {
       this._updateSubmitStatus(false);
+      return;
     }
+
+    this.updateData({price: parseInt(evt.target.value, 10)});
+    this._updateSubmitStatus(this._validateForm());
   }
 
   /**
@@ -604,5 +686,22 @@ export default class EventEditView extends UpdatableView {
   _selectOfferHandler() {
     this.updateData({offers: this._getSelectedOffers()});
     this.updateElement();
+  }
+
+  /**
+   * Обработчик нажатия на кнопку удаления.
+   *
+   * @param  {Object} evt - Объект события в DOM.
+   */
+  _deleteHandler() {
+    this._callback.delete(this._event);
+  }
+
+  /**
+   * Обработчик добавления/удаления из избранного.
+   */
+  _toggleFavoriteHandler() {
+    this.updateData({isFavorite: !this._event.isFavorite});
+    this._callback.toggleFavorite();
   }
 }

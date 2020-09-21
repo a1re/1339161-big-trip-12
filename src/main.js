@@ -24,6 +24,7 @@ const filtersModel = new FiltersModel(filters);
 
 const headerElement = document.querySelector(`.trip-main`);
 const eventListElement = document.querySelector(`.trip-events`);
+const newEventElement = document.querySelector(`.trip-main__event-add-btn`);
 
 const tripPresenter = new TripPresenter(
     eventListElement,
@@ -42,3 +43,8 @@ const headerPresenter = new HeaderPresenter(
 
 tripPresenter.init();
 headerPresenter.init();
+
+newEventElement.addEventListener(`click`, (evt) => {
+  evt.preventDefault();
+  tripPresenter.createNewEvent();
+});

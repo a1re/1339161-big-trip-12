@@ -25,9 +25,9 @@ export default class EventSummaryView extends AbstractView {
    */
   get template() {
     const {type, city, isTransport} = this._event;
-    const priceBlock = this._makePriceBlock();
+    const priceElement = this._makePriceElement();
     const offerList = this._makeOffersList();
-    const scheduleBlock = this._makeScheduleBlock();
+    const scheduleElement = this._makeScheduleElement();
 
     let template = `<div class="event">
             <div class="event__type">
@@ -39,9 +39,9 @@ export default class EventSummaryView extends AbstractView {
             </div>
             <h3 class="event__title">${type} ${(isTransport) ? `to` : `in`} ${city}</h3>
 
-            ${scheduleBlock}
+            ${scheduleElement}
 
-            ${priceBlock}
+            ${priceElement}
 
             ${offerList}
 
@@ -65,11 +65,11 @@ export default class EventSummaryView extends AbstractView {
   }
 
   /**
-   * Подготовка блока вывода временных рамос события.
+   * Подготовка элемента вывода временных рамок события.
    *
    * @return {String} - HTML-строка с шаблоном для создания элемента.
    */
-  _makeScheduleBlock() {
+  _makeScheduleElement() {
     const beginDateTime = this._event.beginTime.toISOString();
     const beginTime = formatDate(this._event.beginTime, TIME_FORMAT);
 
@@ -89,11 +89,11 @@ export default class EventSummaryView extends AbstractView {
   }
 
   /**
-   * Подготовка блока вывода временных рамок события.
+   * Подготовка элемента вывода временных рамок события.
    *
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
-  _makePriceBlock() {
+  _makePriceElement() {
     const {price} = this._event;
 
     return `<p class="event__price">
@@ -102,7 +102,7 @@ export default class EventSummaryView extends AbstractView {
   }
 
   /**
-   * Подготовка блока вывода выбранных спец. предложений для события.
+   * Подготовка элемента вывода выбранных спец. предложений для события.
    *
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */

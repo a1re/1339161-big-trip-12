@@ -1,5 +1,5 @@
 import EventSummaryView from "../view/event-summary-view.js";
-import EventEditView from "../view/event-edit-view.js";
+import EventFormView from "../view/event-form-view.js";
 
 import {render, RenderPosition} from "../utils/render.js";
 import {EscHandler} from "../utils/common.js";
@@ -27,11 +27,11 @@ export default class EventPresenter {
     this._mode = EventMode.SUMMARY;
 
     this._eventSummaryComponent = null;
-    this._eventEditComponent = null;
-    this._closeEventByEsc = null;
+    this._eventFormComponent = null;
+    this._closeFormByEsc = null;
 
     this._toggleFavorite = this._toggleFavorite.bind(this);
-    this._closeEventEdit = this._closeEventEdit.bind(this);
+    this._closeEventForm = this._closeEventForm.bind(this);
     this._submitForm = this._submitForm.bind(this);
     this._delete = this._delete.bind(this);
 
@@ -60,16 +60,16 @@ export default class EventPresenter {
     }
 
     if (this._mode === EventMode.EDITING) {
-      if (this._closeEventByEsc) {
-        this._closeEventByEsc.unbind();
-        this._closeEventByEsc = null;
+      if (this._closeFormByEsc) {
+        this._closeFormByEsc.unbind();
+        this._closeFormByEsc = null;
       }
-      const previousEventEditComponent = this._eventEditComponent;
+      const previousEventFormComponent = this._eventFormComponent;
       this._eventListContainer.replaceChild(
           this._createElement(EventMode.EDITING),
-          previousEventEditComponent.element
+          previousEventFormComponent.element
       );
-      previousEventEditComponent.remove();
+      previousEventFormComponent.remove();
     }
   }
 
@@ -81,14 +81,14 @@ export default class EventPresenter {
    */
   switchMode(eventMode) {
     if (this._mode !== eventMode) {
-      const currentComponent = (this._mode === EventMode.EDITING)
-        ? this._eventEditComponent.element
-        : this._eventSummaryComponent.element;
-
-      this._eventListContainer.replaceChild(
-          this._createElement(eventMode),
-          currentComponent
-      );
+      if (this._mode === EventMode.EDITING) {
+        this._closeEventForm();
+      } else {
+        this._eventListContainer.replaceChild(
+            this._createElement(eventMode),
+            this._eventSummaryComponent.element
+        );
+      }
     }
   }
 
@@ -97,7 +97,7 @@ export default class EventPresenter {
    */
   destroy() {
     if (this._mode === EventMode.EDITING) {
-      this._eventEditComponent.remove();
+      this._eventFormComponent.remove();
     }
     if (this._mode === EventMode.SUMMARY) {
       this._eventSummaryComponent.remove();
@@ -116,23 +116,20 @@ export default class EventPresenter {
    */
   _createElement(eventMode) {
     if (eventMode === EventMode.EDITING) {
-      this._switchAllEventsMode(EventMode.SUMMARY);
-
-      this._eventEditComponent = new EventEditView(
-          this._event,
-          this._offersModel.getList()
+      this._eventFormComponent = new EventFormView(
+          this._offersModel.getList(),
+          this._event
       );
 
-      this._closeEventByEsc = new EscHandler(this._closeEventEdit);
-      this._eventEditComponent.closeHandler = this._closeEventEdit;
-      this._eventEditComponent.submitHandler = this._submitForm;
-      this._eventEditComponent.deleteHandler = this._delete;
-      this._eventEditComponent.toggleFavoriteHandler = this._toggleFavorite;
+      this._closeFormByEsc = new EscHandler(this._closeEventForm);
+      this._eventFormComponent.closeHandler = this._closeEventForm;
+      this._eventFormComponent.submitHandler = this._submitForm;
+      this._eventFormComponent.deleteHandler = this._delete;
+      this._eventFormComponent.toggleFavoriteHandler = this._toggleFavorite;
       this._mode = EventMode.EDITING;
 
-      return this._eventEditComponent.element;
+      return this._eventFormComponent.element;
     }
-
 
     // По умочанию — режим EventMode.SUMMARY
     this._eventSummaryComponent = new EventSummaryView(
@@ -141,6 +138,8 @@ export default class EventPresenter {
     );
 
     this._eventSummaryComponent.openHandler = () => {
+      this._switchAllEventsMode(EventMode.SUMMARY);
+
       this._eventListContainer.replaceChild(
           this._createElement(EventMode.EDITING),
           this._eventSummaryComponent.element
@@ -157,14 +156,14 @@ export default class EventPresenter {
    * Обработчик закрытия формы регистрации. При закрытии также снимает
    * обработчик нажатия на Esc.
    */
-  _closeEventEdit() {
+  _closeEventForm() {
     this._eventListContainer.replaceChild(
         this._createElement(EventMode.SUMMARY),
-        this._eventEditComponent.element
+        this._eventFormComponent.element
     );
-    this._eventEditComponent.remove();
-    this._closeEventByEsc.unbind();
-    this._closeEventByEsc = null;
+    this._eventFormComponent.remove();
+    this._closeFormByEsc.unbind();
+    this._closeFormByEsc = null;
   }
 
   /**
@@ -186,7 +185,7 @@ export default class EventPresenter {
    * @param  {Object} eventData - Данные формы для сохранения.
    */
   _submitForm(eventData) {
-    this._closeEventEdit();
+    this._closeEventForm();
 
     this._eventsModel.update(UpdateMode.MINOR, Object.assign({}, this._event,
         {
@@ -204,7 +203,7 @@ export default class EventPresenter {
    * Удаение события.
    */
   _delete() {
-    this._closeEventEdit();
+    this._closeEventForm();
 
     this._eventsModel.delete(UpdateMode.MINOR, this._event);
   }

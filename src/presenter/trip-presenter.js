@@ -4,9 +4,10 @@ import DayListView from "../view/day-list-view.js";
 import DayView from "../view/day-view.js";
 
 import EventPresenter from "./event-presenter.js";
+import NewEventPresenter from "./new-event-presenter.js";
 
 import {render, RenderPosition} from "../utils/render.js";
-import {UpdateMode} from "../const.js";
+import {UpdateMode, EventMode} from "../const.js";
 
 export default class TripPresenter {
   /**
@@ -21,6 +22,7 @@ export default class TripPresenter {
    */
   constructor(container, eventsModel, offersModel, filtersModel, sortingsModel) {
     this._container = container;
+
     this._eventsModel = eventsModel;
     this._offersModel = offersModel;
     this._sortingsModel = sortingsModel;
@@ -32,6 +34,7 @@ export default class TripPresenter {
     this._noEventsComponent = null;
     this._sortingComponent = null;
     this._dayListComponent = null;
+    this._newEventPresenter = null;
 
     this._updateEvent = this._updateEvent.bind(this);
     this._updatePresenter = this._updatePresenter.bind(this);
@@ -51,6 +54,17 @@ export default class TripPresenter {
     this._renderEvents();
   }
 
+  createNewEvent() {
+    this._switchAllEventsMode(EventMode.SUMMARY);
+
+    this._newEventPresenter = new NewEventPresenter(
+        this._dayListComponent.element,
+        this._eventsModel,
+        this._offersModel,
+        this._switchAllEventsMode
+    );
+  }
+
   /**
    * Коллбек уведомления об обновлении модели
    * @param  {String} updateMode - Режим обновления согласно перечислению
@@ -60,16 +74,16 @@ export default class TripPresenter {
   _updatePresenter(updateMode, eventData) {
     switch (updateMode) {
       case UpdateMode.PATCH:
-        this._eventPresenterMap.get(eventData.id).update(eventData);
+        this._eventPresenterMap.get(eventData.id).refresh(eventData);
         break;
       case UpdateMode.MINOR:
         this._clearEvents();
         this._renderEvents();
         break;
       case UpdateMode.MAJOR:
-        this._sortingsModel.reset();
         this._clearEvents();
         this._clearCaption();
+        this._sortingsModel.reset();
         this._renderCaption();
         this._renderEvents();
         break;
@@ -185,6 +199,11 @@ export default class TripPresenter {
    * Очистка заголовка и контейнера таблицы
    */
   _clearCaption() {
+    if (this._newEventPresenter) {
+      this._newEventPresenter.destroy();
+      this._newEventPresenter = null;
+    }
+
     this._dayListComponent.remove();
     this._dayListComponent = null;
 
@@ -218,5 +237,10 @@ export default class TripPresenter {
     this._eventPresenterMap.forEach((eventPresenter) => {
       eventPresenter.switchMode(eventMode);
     });
+
+    if (this._newEventPresenter) {
+      this._newEventPresenter.destroy();
+      this._newEventPresenter = null;
+    }
   }
 }
