@@ -33,6 +33,7 @@ export default class EventPresenter {
     this._toggleFavorite = this._toggleFavorite.bind(this);
     this._closeEventEdit = this._closeEventEdit.bind(this);
     this._submitForm = this._submitForm.bind(this);
+    this._delete = this._delete.bind(this);
 
     render(
         this._eventListContainer,
@@ -125,6 +126,7 @@ export default class EventPresenter {
       this._closeEventByEsc = new EscHandler(this._closeEventEdit);
       this._eventEditComponent.closeHandler = this._closeEventEdit;
       this._eventEditComponent.submitHandler = this._submitForm;
+      this._eventEditComponent.deleteHandler = this._delete;
       this._eventEditComponent.toggleFavoriteHandler = this._toggleFavorite;
       this._mode = EventMode.EDITING;
 
@@ -196,5 +198,14 @@ export default class EventPresenter {
           offers: eventData.offers
         }
     ));
+  }
+
+  /**
+   * Удаение события.
+   */
+  _delete() {
+    this._closeEventEdit();
+
+    this._eventsModel.delete(UpdateMode.MINOR, this._event);
   }
 }

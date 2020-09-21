@@ -1,12 +1,4 @@
-import {
-  CITIES,
-  STOPS,
-  TRANSPORTS,
-  TRANSPORT_OFFERS_MAP,
-  STOP_OFFERS_MAP,
-  DATETIME_FORMAT,
-  DEFAULT_FLATPICKR_SETTINGS
-} from "../const.js";
+import {CITIES, STOPS, TRANSPORTS, DATETIME_FORMAT, DEFAULT_FLATPICKR_SETTINGS} from "../const.js";
 import {getRandomInt, formatDate, isValidDate, parseDate} from "../utils/common.js";
 import UpdatableView from "./updatable-view.js";
 
@@ -42,6 +34,7 @@ export default class EventEditView extends UpdatableView {
 
     this._closeHandler = this._closeHandler.bind(this);
     this._submitHandler = this._submitHandler.bind(this);
+    this._deleteHandler = this._deleteHandler.bind(this);
     this._toggleFavoriteHandler = this._toggleFavoriteHandler.bind(this);
     this._inputDestinationHandler = this._inputDestinationHandler.bind(this);
     this._inputBeginTimeHandler = this._inputBeginTimeHandler.bind(this);
@@ -90,10 +83,9 @@ export default class EventEditView extends UpdatableView {
   }
 
   /**
-   * Сеттер хэндлера закрытия формы редактирования.
+   * Сеттер обработчика закрытия формы редактирования.
    *
-   * @param  {Function} callback - Коллбэк закрытия формы редактирования.
-   * @return {void}
+   * @param  {Function} callback - Коллбек закрытия формы редактирования.
    */
   set closeHandler(callback) {
     this._callback.close = callback;
@@ -103,22 +95,32 @@ export default class EventEditView extends UpdatableView {
   }
 
   /**
-   * Сеттер хэндлера сохранения события в форме редактирования.
+   * Сеттер обработчика сохранения события в форме редактирования.
    *
-   * @param  {Function} callback - Коллбэк сохранения события.
-   * @return {void}
+   * @param  {Function} callback - Коллбек сохранения события.
    */
   set submitHandler(callback) {
     this._callback.submit = callback;
+
+    this.element.querySelector(`.event__reset-btn`)
+      .addEventListener(`click`, this._deleteHandler);
+  }
+
+  /**
+   * Сеттер обработчика удаления события в форме редактирования.
+   *
+   * @param  {Function} callback - Коллбек сохранения события.
+   */
+  set deleteHandler(callback) {
+    this._callback.delete = callback;
 
     this.element.addEventListener(`submit`, this._submitHandler);
   }
 
   /**
-   * Сеттер хэндлера для кнопки добавления/удаления события в избранное.
+   * Сеттер обработчика для кнопки добавления/удаления события в избранное.
    *
-   * @param  {Function} callback - Коллбэк нажатия на кнопку..
-   * @return {void}
+   * @param  {Function} callback - Коллбек нажатия на кнопку.
    */
   set toggleFavoriteHandler(callback) {
     this._callback.toggleFavorite = callback;
@@ -131,7 +133,6 @@ export default class EventEditView extends UpdatableView {
    * Обновление данных объекта события.
    *
    * @param  {Object} newData - Обновленные данные
-   * @return {void}
    */
   updateData(newData) {
     if (!newData) {
@@ -143,8 +144,6 @@ export default class EventEditView extends UpdatableView {
 
   /**
    * Групповая установка обработчиков разных элементов форм.
-   *
-   * @return {void}
    */
   setHandlers() {
     const id = this._event.id;
@@ -160,6 +159,7 @@ export default class EventEditView extends UpdatableView {
 
     this.closeHandler = this._callback.close;
     this.submitHandler = this._callback.submit;
+    this.deleteHandler = this._callback.delete;
     this.toggleFavoriteHandler = this._callback.toggleFavorite;
 
     if (this._beginTimePicker) {
@@ -456,7 +456,7 @@ export default class EventEditView extends UpdatableView {
   }
 
   /**
-   * Хэндлер закрытия формы реедактирования.
+   * Обработчик закрытия формы реедактирования.
    *
    * @param  {Object} evt - Объект события в DOM.
    */
@@ -466,7 +466,7 @@ export default class EventEditView extends UpdatableView {
   }
 
   /**
-   * Хэндлер сабмита формы редактирования.
+   * Обработчик сабмита формы редактирования.
    *
    * @param  {Object} evt - Объект события в DOM.
    */
@@ -482,7 +482,16 @@ export default class EventEditView extends UpdatableView {
   }
 
   /**
-   * Хэндлер добавления/удаления из избранного.
+   * Обработчик нажатия на кнопку удаления.
+   *
+   * @param  {Object} evt - Объект события в DOM.
+   */
+  _deleteHandler() {
+    this._callback.delete(this._event);
+  }
+
+  /**
+   * Обработчик добавления/удаления из избранного.
    */
   _toggleFavoriteHandler() {
     this.updateData({isFavorite: !this._event.isFavorite});
@@ -490,7 +499,7 @@ export default class EventEditView extends UpdatableView {
   }
 
   /**
-   * Хэндлер ввода места назначения
+   * Обработчик ввода места назначения
    *
    * @param  {Object} evt - Объект события в DOM.
    */
@@ -504,7 +513,7 @@ export default class EventEditView extends UpdatableView {
   }
 
   /**
-   * Хэндлер ввода времени начала события. Используется и в качестве
+   * Обработчик ввода времени начала события. Используется и в качестве
    * обработчика для инпута, и как коллбек для флэтпикера, поэтому зачение
    * берется не из объекта события, а через запрос к DOM.
    */
@@ -532,7 +541,7 @@ export default class EventEditView extends UpdatableView {
   }
 
   /**
-   * Хэндлер ввода времени окончания события. Используется и в качестве
+   * Обработчик ввода времени окончания события. Используется и в качестве
    * обработчика для инпута, и как коллбек для флэтпикера, поэтому зачение
    * берется не из объекта события, а через запрос к DOM.
    */
@@ -560,7 +569,7 @@ export default class EventEditView extends UpdatableView {
   }
 
   /**
-   * Хэндлер ввода стоимости события.
+   * Обработчик ввода стоимости события.
    *
    * @param  {Object} evt - Объект события в DOM.
    */
@@ -575,7 +584,7 @@ export default class EventEditView extends UpdatableView {
   }
 
   /**
-   * Хэндлер выбора типа события.
+   * Обработчик выбора типа события.
    *
    * @param  {Object} evt - Объект события в DOM.
    */
@@ -590,7 +599,7 @@ export default class EventEditView extends UpdatableView {
   }
 
   /**
-   * Хэндлер выбора спец. предложений.
+   * Обработчик выбора спец. предложений.
    */
   _selectOfferHandler() {
     this.updateData({offers: this._getSelectedOffers()});
