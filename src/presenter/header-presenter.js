@@ -12,7 +12,7 @@ export default class HeaderPresenter {
    *
    * @param  {Node} container        - Узел документа для презентера.
    * @param  {Observer} eventsModel  - Модель для работы с событиями.
-   * @param  {Observer} offersModel  - Модель для работы с спец. предложениями.
+   * @param  {Object} offersModel    - Модель для работы с спец. предложениями.
    * @param  {Observer} filtersModel - Модель для работы с фильтрациями.
    * @param  {Function} displayTable - Коллбек открытия списка событий.
    * @param  {Function} displayStats - Коллбек открытия статистики.

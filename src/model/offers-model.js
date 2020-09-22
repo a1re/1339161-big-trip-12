@@ -1,18 +1,14 @@
-import Observer from "../utils/observer.js";
-
 /**
  * Модель дополнительных предложений. Для инициализации в конструтор класса
  * необходимо передать массив объектов с id, названием и ценой
  */
-export default class OffersModel extends Observer {
+export default class OffersModel {
   /**
    * Конструктор класса
    *
    * @param  {Array} offerList - Массив со списком спец. предложений.
    */
   constructor(offerList = []) {
-    super();
-
     this._offerList = offerList.slice();
   }
 

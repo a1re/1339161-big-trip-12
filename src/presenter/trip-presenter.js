@@ -16,8 +16,8 @@ export default class TripPresenter {
    *
    * @param  {Node} container         - Узел документа для презентера.
    * @param  {Observer} eventsModel   - Модель для работы с событиями.
-   * @param  {Observer} typesModel    - Модель для работы с типамм событий.
-   * @param  {Observer} offersModel   - Модель для работы с спец. предложениями.
+   * @param  {Object} typesModel      - Модель для работы с типамм событий.
+   * @param  {Object} offersModel     - Модель для работы с спец. предложениями.
    * @param  {Observer} filtersModel  - Модель для работы с фильтрациями.
    * @param  {Observer} sortingsModel - Модель для работы с сортировками.
    */
