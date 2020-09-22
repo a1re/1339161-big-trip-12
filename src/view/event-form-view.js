@@ -154,6 +154,15 @@ export default class EventFormView extends UpdatableView {
   }
 
   /**
+   * Удаление формы. Метод родительского класс переопределяется, чтобы
+   * вместе с удалением обнулять и удалять дейтпикеры.
+   */
+  remove() {
+    super.remove();
+    this._destroyTimePicking();
+  }
+
+  /**
    * Обновление данных объекта события.
    *
    * @param  {Object} newData - Обновленные данные
@@ -196,12 +205,8 @@ export default class EventFormView extends UpdatableView {
    * Установка обработчиков выбора дат.
    */
   _setTimePicking() {
+    this._destroyTimePicking();
     const id = this._event.id;
-
-    if (this._beginTimePicker) {
-      this._beginTimePicker.destroy();
-      this._beginTimePicker = null;
-    }
 
     const beginTimeInput = this.element.querySelector(`#event-start-time-${id}`);
     this._beginTimePicker = flatpickr(beginTimeInput, Object.assign(
@@ -213,11 +218,6 @@ export default class EventFormView extends UpdatableView {
         }
     ));
 
-    if (this._endTimePicker) {
-      this._endTimePicker.destroy();
-      this._endTimePicker = null;
-    }
-
     const endTimeInput = this.element.querySelector(`#event-end-time-${id}`);
     this._endTimePicker = flatpickr(endTimeInput, Object.assign(
         {},
@@ -227,6 +227,21 @@ export default class EventFormView extends UpdatableView {
           onChange: this._inputEndTimeHandler
         }
     ));
+  }
+
+  /**
+   * Удаление таймпикеров.
+   */
+  _destroyTimePicking() {
+    if (this._beginTimePicker) {
+      this._beginTimePicker.destroy();
+      this._beginTimePicker = null;
+    }
+
+    if (this._endTimePicker) {
+      this._endTimePicker.destroy();
+      this._endTimePicker = null;
+    }
   }
 
   /**
