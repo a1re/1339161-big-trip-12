@@ -1,5 +1,5 @@
-import {CITIES, STOPS, TRANSPORTS, TRANSPORT_OFFERS_MAP, STOP_OFFERS_MAP} from "../const.js";
-import {getRandomInt} from "../utils/common.js";
+import {CITIES, STOPS, TRANSPORTS} from "../const.js";
+import {getRandomInt, generateId} from "../utils/common.js";
 
 // Отклоенение дня начала путешествия
 const TRIP_START_DAYS_GAP = 2;
@@ -79,38 +79,35 @@ const generateBeginDate = () => {
 };
 
 /**
- * Генерация случайного набора дополнительных опций для события.
+ * Генерация случайного набора дополнительных опций из списка доступных.
  *
+ * @param  {Array} offerList    - Список доступных опций в виде массива объектов.
  * @param  {Boolean} isTransfer - Является ли событие трансфером.
  *
- * @return {Object} - Объект в доп. опциями. Такой вид возвращаемого значения
- *                    был выбран для сохранения порядка (при переборе в интерфейсе
- *                    опции будут в одном порядке) и для будущей совместимости с
- *                    получением данных через API (малоероятно, что там на входе
- *                    будет Map).
+ * @return {Array}              - Массив id предложений.
  */
-const generateOffers = (isTransfer = false) => {
+const getAppliedOffers = (offerList, isTransfer) => {
+  const appliedOfferList = [];
   // Простой рандом от 0 до EVENT_OFFERS_MAX значительно уменьшает шансы увидеть
   // событие без доп. опций, поэтому в начале работы функции жеребим возможность
   // увидеть событие без функций как 1 к 1.
   const isNoOffers = getRandomInt(0, 1);
   if (isNoOffers) {
-    return {};
+    return appliedOfferList;
   }
 
-  const offersMap = (isTransfer) ? TRANSPORT_OFFERS_MAP : STOP_OFFERS_MAP;
-  const offersKeys = Array.from(offersMap.keys()).sort(() => Math.random() - 0.5);
-  const offersNum = getRandomInt(EVENT_OFFERS_MIN, Math.min(offersMap.size, EVENT_OFFERS_MAX));
-  const offers = {};
+  const avalibleOffers = offerList.filter((offer) => offer.isTransport === isTransfer);
+  const offersAmount = getRandomInt(EVENT_OFFERS_MIN, Math.min(avalibleOffers.length, EVENT_OFFERS_MAX));
+  avalibleOffers.sort(() => Math.random() - 0.5);
 
-  for (let i = 0; i < offersNum; i++) {
-    offers[offersKeys[i]] = offersMap.get(offersKeys[i]);
+  for (let i = 0; i < offersAmount; i++) {
+    appliedOfferList.push(avalibleOffers[i].id);
   }
 
-  return offers;
+  return appliedOfferList;
 };
 
-export const generateEvents = (eventsAmount) => {
+export const generateEvents = (eventsAmount, offerList) => {
   const tripStart = generateBeginDate(); // Время начало путешествия
   const tripDuration = getRandomInt(TRIP_DURATION_DAYS_MIN, TRIP_DURATION_DAYS_MAX); // Длительность в днях
   const avgEventsPerDay = eventsAmount / tripDuration; // Среднее количество событий в день
@@ -121,7 +118,6 @@ export const generateEvents = (eventsAmount) => {
 
   const events = [];
   let eventsLeft = eventsAmount;
-  let id = 1;
   for (let day = 0; day < tripDuration; day++) {
     if (eventsLeft === 0) {
       break;
@@ -186,19 +182,18 @@ export const generateEvents = (eventsAmount) => {
 
       // Итоговый объект
       const eventInfo = {
-        id,
+        id: generateId(),
         city: currentCity,
         type,
         beginTime,
         endTime,
         description: generateDescription(),
         price,
-        offers: generateOffers(isTransfer),
+        offers: getAppliedOffers(offerList, isTransfer),
         isFavorite: false
       };
 
       events.push(eventInfo);
-      id++;
     }
 
     eventsLeft -= dayEvents;

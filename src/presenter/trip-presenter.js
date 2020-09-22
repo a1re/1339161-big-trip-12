@@ -4,187 +4,243 @@ import DayListView from "../view/day-list-view.js";
 import DayView from "../view/day-view.js";
 
 import EventPresenter from "./event-presenter.js";
+import NewEventPresenter from "./new-event-presenter.js";
 
 import {render, RenderPosition} from "../utils/render.js";
-import Itinerary from "../utils/itinerary.js";
-import {updateItem} from "../utils/common.js";
-
-import {SortingMethod} from "../const.js";
+import {UpdateMode, EventMode} from "../const.js";
 
 export default class TripPresenter {
   /**
    * Конструктор презентера. Заведение экземпляров отображений и установка
    * ключевого узла DOM для рендеринга компонентов.
    *
-   * @param  {Node} container — Узел документа для презентера.
+   * @param  {Node} container         - Узел документа для презентера.
+   * @param  {Observer} eventsModel   - Модель для работы с событиями.
+   * @param  {Observer} offersModel   - Модель для работы с спец. предложениями.
+   * @param  {Observer} filtersModel  - Модель для работы с фильтрациями.
+   * @param  {Observer} sortingsModel - Модель для работы с сортировками.
    */
-  constructor(container) {
+  constructor(container, eventsModel, offersModel, filtersModel, sortingsModel) {
     this._container = container;
-    this._currentSortingMethod = SortingMethod.EVENT;
-    this._eventPresenter = new Map();
-    this._dayComponent = new Map();
 
-    this._dayListComponent = new DayListView();
-    this._noEventsComponent = new NoEventsView();
-    this._sortingComponent = new SortingView(this._currentSortingMethod);
+    this._eventsModel = eventsModel;
+    this._offersModel = offersModel;
+    this._sortingsModel = sortingsModel;
+    this._filtersModel = filtersModel;
+
+    this._eventPresenterMap = new Map();
+    this._dayComponentMap = new Map();
+
+    this._noEventsComponent = null;
+    this._sortingComponent = null;
+    this._dayListComponent = null;
+    this._newEventPresenter = null;
 
     this._updateEvent = this._updateEvent.bind(this);
+    this._updatePresenter = this._updatePresenter.bind(this);
     this._sortEvents = this._sortEvents.bind(this);
-    this._resetAllEvents = this._resetAllEvents.bind(this);
+    this._switchAllEventsMode = this._switchAllEventsMode.bind(this);
+
+    this._eventsModel.subscribe(this._updatePresenter);
+    this._sortingsModel.subscribe(this._updatePresenter);
+    this._filtersModel.subscribe(this._updatePresenter);
   }
 
   /**
    * Инициализация и первичная отрисовка списка событий.
-   *
-   * @param  {array} eventList - Список событий.
-   * @return {void}
    */
-  init(eventList) {
-    this._eventList = eventList.slice();
-    this._sortingComponent.sortEventsHandler = this._sortEvents;
+  init() {
+    this._renderCaption();
+    this._renderEvents();
+  }
 
-    render(this._container, this._sortingComponent, RenderPosition.BEFOREEND);
-    render(this._container, this._dayListComponent, RenderPosition.BEFOREEND);
-    this._renderSortedEvents();
+  createNewEvent() {
+    this._switchAllEventsMode(EventMode.SUMMARY);
+
+    this._newEventPresenter = new NewEventPresenter(
+        this._dayListComponent.element,
+        this._eventsModel,
+        this._offersModel,
+        this._switchAllEventsMode
+    );
   }
 
   /**
-   * Рендеринг событий в базовой сортировке по дням. В начале метода вызывается
-   * функция Route.organizeByDays, которая конвертирует список событий в объект
-   * Map, где ключем является дата, а значением — список событий в рамках даты.
-   * В цикле для каждого дня вызывается метод this._renderDay, который и
-   * отрисовывает сами события. Если в списке нет событий, то вызывается метод
-   * this._renderFallback, который отрисовывает заглушку.
-   *
-   * @return {void}
+   * Коллбек уведомления об обновлении модели
+   * @param  {String} updateMode - Режим обновления согласно перечислению
+   *                               UpdateMode.
+   * @param  {Object} eventData  - Объект с обновленной информацией о событии.
    */
-  _renderEventsByDay() {
-    const dayList = Itinerary.organizeByDays(this._eventList);
-
-    if (dayList.size === 0) {
-      this._renderFallback();
-      return;
-    }
-
-    let dayNumber = 1;
-    for (const [dayDate, dayEventList] of dayList) {
-      this._renderEventList(dayEventList, dayDate, dayNumber++);
-    }
-  }
-
-  /**
-   * Хендлер ообновления данных списка событий. Передается объект
-   * с обновленными данными одного из события в списке, обновляется весь
-   * список.
-   *
-   * @param  {Object} eventUpdatedData - Объект с обновленными данными события.
-   * @param  {Boolean} updateView      - Флаг перерисовки отображения.
-   * @return {void}
-   */
-  _updateEvent(eventUpdatedData, updateView = true) {
-    this._eventList = updateItem(this._eventList, eventUpdatedData);
-    if (updateView) {
-      this._eventPresenter.get(eventUpdatedData.id).update(eventUpdatedData);
-    }
-  }
-
-  /**
-   * Рендеринг событий внутри одного дня. Может также использоваться для
-   * вывода отсортированных событий (параметры dayDate и dayNumber не
-   * обязательны).
-   *
-   * @param  {array} eventList  - Список событий. Если переданы параметры
-   *                              dayDate и dayNumber, то события выведутся
-   *                              в рамках одного дня.
-   * @param  {string} dayDate   - Дата в формате гггг-мм-дд.
-   * @param  {[type]} dayNumber - Номер лня.
-   * @return {void}
-   */
-  _renderEventList(eventList, dayDate = null, dayNumber = null) {
-    const dayComponent = new DayView({dayNumber, dayDate});
-    this._dayComponent.set(dayDate, dayComponent);
-    render(this._dayListComponent, dayComponent, RenderPosition.BEFOREEND);
-
-    for (const event of eventList) {
-      this._eventPresenter.set(
-          event.id,
-          new EventPresenter(dayComponent.eventsContainer, event, this._updateEvent, this._resetAllEvents)
-      );
-    }
-  }
-
-  /**
-   * Вывод отсортированных событий. В зависимости от метода сортировки выбирает
-   * нужную функцию для сортировки, а также метод вывода (если события
-   * выводятся по дням, то нужно выводит методом _renderEventsByDay).
-   *
-   * @return {void}
-   */
-  _renderSortedEvents() {
-    this._sortingComponent.sortingMethod = this._currentSortingMethod;
-
-    switch (this._currentSortingMethod) {
-      case SortingMethod.TIME:
-        this._eventList.sort(Itinerary.sortByDuration);
-        this._renderEventList(this._eventList);
+  _updatePresenter(updateMode, eventData) {
+    switch (updateMode) {
+      case UpdateMode.PATCH:
+        this._eventPresenterMap.get(eventData.id).refresh(eventData);
         break;
-      case SortingMethod.PRICE:
-        this._eventList.sort(Itinerary.sortByPrice);
-        this._renderEventList(this._eventList);
+      case UpdateMode.MINOR:
+        this._clearEvents();
+        this._renderEvents();
         break;
-      default:
-        this._eventList.sort(Itinerary.sortByEvents);
-        this._renderEventsByDay(this._eventList);
+      case UpdateMode.MAJOR:
+        this._clearEvents();
+        this._clearCaption();
+        this._sortingsModel.reset();
+        this._renderCaption();
+        this._renderEvents();
+        break;
     }
+  }
+
+  /**
+   * Получение упорядоченного согласно заданной сортировке списка события
+   * в виде массива.
+   *
+   * @return {Array} - Карта событий.
+   */
+  _getEventList() {
+    const eventList = this._eventsModel.eventList.slice()
+      .filter(this._filtersModel.callback);
+
+    return eventList.sort(this._sortingsModel.callback);
   }
 
   /**
    * Рендеринг шаблона заглушки для состояния списка без событий.
-   *
-   * @return {void}
    */
   _renderFallback() {
+    this._noEventsComponent = new NoEventsView();
     render(this._container, this._noEventsComponent, RenderPosition.BEFOREEND);
   }
 
   /**
-   * Очистка контейнера с событиями.
-   *
-   * @return {void}
+   * Рендеринг заголовка таблицы.
    */
-  _clearEventList() {
-    this._eventPresenter.forEach((event) => event.destroy());
-    this._eventPresenter.clear();
-    this._dayComponent.forEach((day) => day.remove());
-    this._dayComponent.clear();
+  _renderCaption() {
+    this._sortingComponent = new SortingView(this._sortingsModel.list, this._sortingsModel.isGrouped);
+    this._sortingComponent.sortEventsHandler = this._sortEvents;
+    render(this._container, this._sortingComponent, RenderPosition.BEFOREEND);
+
+    this._dayListComponent = new DayListView();
+    render(this._container, this._dayListComponent, RenderPosition.BEFOREEND);
+  }
+
+  /**
+   * Рендеринг списка событий согласно выбранной сортировке.
+   */
+  _renderEvents() {
+    if (this._noEventsComponent) {
+      this._noEventsComponent.remove();
+      this._noEventsComponent = null;
+    }
+
+    const eventList = this._getEventList();
+    let previousDay;
+    let dayComponent;
+
+    if (eventList.length === 0) {
+      this._renderFallback();
+    }
+
+    eventList.forEach((event) => {
+      let dayNumber = event.dayNumber;
+      let dayDate = event.dayDate;
+
+      if (!this._sortingsModel.isGrouped) {
+        dayNumber = null;
+        dayDate = null;
+      }
+
+      if (previousDay !== dayNumber) {
+        dayComponent = new DayView({dayNumber, dayDate});
+        this._dayComponentMap.set(dayDate, dayComponent);
+        render(this._dayListComponent, dayComponent, RenderPosition.BEFOREEND);
+      }
+
+      this._eventPresenterMap.set(
+          event.id,
+          new EventPresenter(
+              dayComponent.eventsContainer,
+              event,
+              this._eventsModel,
+              this._offersModel,
+              this._switchAllEventsMode
+          )
+      );
+
+      previousDay = dayNumber;
+    });
+  }
+
+  /**
+   * Хендлер обновления данных списка событий. Передается объект
+   * с обновленными данными одного из события в списке, обновляется весь
+   * список.
+   *
+   * @param  {Object} newEventData - Объект с обновленными данными события.
+   * @param  {Boolean} updateView      - Флаг перерисовки отображения.
+   */
+  _updateEvent(newEventData, updateView = true) {
+    this._eventsModel.update(UpdateMode.DATA, newEventData);
+    if (updateView) {
+      this._eventPresenterMap.get(newEventData.id).update(newEventData);
+    }
+  }
+
+  /**
+   * Очистка контейнера с событиями.
+   */
+  _clearEvents() {
+    this._eventPresenterMap.forEach((event) => event.destroy());
+    this._eventPresenterMap.clear();
+    this._dayComponentMap.forEach((day) => day.remove());
+    this._dayComponentMap.clear();
+  }
+
+  /**
+   * Очистка заголовка и контейнера таблицы
+   */
+  _clearCaption() {
+    if (this._newEventPresenter) {
+      this._newEventPresenter.destroy();
+      this._newEventPresenter = null;
+    }
+
+    this._dayListComponent.remove();
+    this._dayListComponent = null;
+
+    this._sortingComponent.remove();
+    this._sortingComponent = null;
   }
 
   /**
    * Хендлер для метода сортировки событий. Перед применением очищает список.
    *
-   * @param  {String} sortingMethod - Метод сортировки согласно перечислению
-   *                                  SortingMethod.
-   * @return {void}
+   * @param  {String} sortingId - Id метода сортировки.
    */
-  _sortEvents(sortingMethod) {
-    if (this._currentSortingMethod === sortingMethod) {
+  _sortEvents(sortingId) {
+    if (this._sortingsModel.active === sortingId) {
       return;
     }
 
-    this._currentSortingMethod = sortingMethod;
+    this._sortingsModel.active = sortingId;
 
-    this._clearEventList();
-    this._renderSortedEvents();
+    this._clearEvents();
+    this._renderEvents();
   }
 
   /**
-   * Закртие всех форм редактирования.
+   * Переключает все события в нужный режим (должен соответствовать одному
+   * из значений перечисления EventMode).
    *
-   * @return {void}
+   * @param  {String} eventMode - Режим отображения.
    */
-  _resetAllEvents() {
-    this._eventPresenter.forEach((eventPresenter) => {
-      eventPresenter.reset();
+  _switchAllEventsMode(eventMode) {
+    this._eventPresenterMap.forEach((eventPresenter) => {
+      eventPresenter.switchMode(eventMode);
     });
+
+    if (this._newEventPresenter) {
+      this._newEventPresenter.destroy();
+      this._newEventPresenter = null;
+    }
   }
 }

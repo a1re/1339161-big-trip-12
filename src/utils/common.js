@@ -19,6 +19,13 @@ export const getRandomInt = (a = 0, b = 1, divider = 1) => {
 };
 
 /**
+ * Генерация случайного id для моков.
+ *
+ * @return {Number} - Числовой id.
+ */
+export const generateId = () => Date.now() * parseInt(Math.random() * 10000, 10);
+
+/**
  * Класс для создаения и удалениея обработчика нажатия на кнопку Esc. C помощью
  * конструктора обработчик создается, с помощью метода unbbind() — удаляется.
  *
