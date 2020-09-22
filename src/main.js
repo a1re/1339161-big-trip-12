@@ -8,11 +8,13 @@ import {generateOffers} from "./mock/offers.js";
 import {getRandomInt} from "./utils/common.js";
 import {sortings} from "./utils/sortings.js";
 import {filters} from "./utils/filters.js";
+import {types} from "./utils/types.js";
 
 import EventsModel from "./model/events-model.js";
 import SortingsModel from "./model/sortings-model.js";
 import FiltersModel from "./model/filters-model.js";
 import OffersModel from "./model/offers-model.js";
+import TypesModel from "./model/types-model.js";
 
 import TripEventsView from "./view/trip-events-view.js";
 
@@ -22,7 +24,8 @@ import StatsPresenter from "./presenter/stats-presenter.js";
 
 const offerList = generateOffers();
 const eventList = generateEvents(getRandomInt(EVENTS_MIN, EVENTS_MAX), offerList);
-const eventsModel = new EventsModel(eventList);
+const typesModel = new TypesModel(types);
+const eventsModel = new EventsModel(eventList, typesModel.getList());
 const offersModel = new OffersModel(offerList);
 const sortingsModel = new SortingsModel(sortings);
 const filtersModel = new FiltersModel(filters);
@@ -47,6 +50,7 @@ const displayStats = () => {
 const tripPresenter = new TripPresenter(
     tripEventsComponent.element,
     eventsModel,
+    typesModel,
     offersModel,
     filtersModel,
     sortingsModel

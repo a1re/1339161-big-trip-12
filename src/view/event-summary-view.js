@@ -2,6 +2,8 @@ import {TIME_FORMAT} from "../const.js";
 import {formatDate} from "../utils/common.js";
 import AbstractView from "./abstract-view.js";
 
+import {MAX_OFFERS_TO_SHOW} from "../const.js";
+
 import moment from "moment";
 import he from "he";
 
@@ -9,15 +11,16 @@ export default class EventSummaryView extends AbstractView {
   /**
    * Конструктор класса отображения краткой сводки о собыиии..
    *
-   * @param  {Object} event    - Объект с данными события.
    * @param  {Array} offerList - Массив со списком спц. предложений.
+   * @param  {Object} type     - Объект с описанием типа события.
+   * @param  {Object} event    - Объект с данными события.
    */
-  constructor(event, offerList) {
+  constructor(offerList, type, event) {
     super();
 
-    this._MAX_OFFERS_TO_SHOW = 3;
-    this._event = event;
     this._offerList = offerList;
+    this._event = event;
+    this._type = type;
 
     this._openHandler = this._openHandler.bind(this);
   }
@@ -26,7 +29,6 @@ export default class EventSummaryView extends AbstractView {
    * Геттер шаблона отобрадения.
    */
   get template() {
-    const {type, city, isTransport} = this._event;
     const priceElement = this._makePriceElement();
     const offerList = this._makeOffersList();
     const scheduleElement = this._makeScheduleElement();
@@ -36,10 +38,14 @@ export default class EventSummaryView extends AbstractView {
               <img
                   class="event__type-icon"
                   width="42" height="42"
-                  src="img/icons/${type.toLowerCase()}.png"
+                  src="${this._type.icon}"
                   alt="Event type icon">
             </div>
-            <h3 class="event__title">${type} ${(isTransport) ? `to` : `in`} ${he.encode(city)}</h3>
+            <h3 class="event__title">
+              ${this._type.title}
+              ${(this._type.isTransport) ? `to` : `in`}
+              ${he.encode(this._event.city)}
+            </h3>
 
             ${scheduleElement}
 
@@ -118,7 +124,7 @@ export default class EventSummaryView extends AbstractView {
         <h4 class="visually-hidden">Offers:</h4>
         <ul class="event__selected-offers">`;
 
-    for (let i = 0; i < this._MAX_OFFERS_TO_SHOW && i < shownOffers.length; i++) {
+    for (let i = 0; i < MAX_OFFERS_TO_SHOW && i < shownOffers.length; i++) {
       template += `
           <li class="event__offer">
             <span class="event__offer-title">${shownOffers[i].title}</span>

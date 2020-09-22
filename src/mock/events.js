@@ -1,4 +1,5 @@
-import {CITIES, STOPS, TRANSPORTS} from "../const.js";
+import {CITIES} from "../const.js";
+import {types} from "../utils/types.js";
 import {getRandomInt, generateId} from "../utils/common.js";
 
 // Отклоенение дня начала путешествия
@@ -108,6 +109,9 @@ const getAppliedOffers = (offerList, isTransfer) => {
 };
 
 export const generateEvents = (eventsAmount, offerList) => {
+  const transports = types.filter((type) => type.isTransport).map((type) => type.id);
+  const stops = types.filter((type) => !type.isTransport).map((type) => type.id);
+
   const tripStart = generateBeginDate(); // Время начало путешествия
   const tripDuration = getRandomInt(TRIP_DURATION_DAYS_MIN, TRIP_DURATION_DAYS_MAX); // Длительность в днях
   const avgEventsPerDay = eventsAmount / tripDuration; // Среднее количество событий в день
@@ -165,10 +169,10 @@ export const generateEvents = (eventsAmount, offerList) => {
       if (isTransfer) {
         const remainedCities = CITIES.filter((element) => !(element === currentCity));
         currentCity = remainedCities[getRandomInt(0, remainedCities.length - 1)];
-        type = TRANSPORTS[getRandomInt(0, TRANSPORTS.length - 1)];
+        type = transports[getRandomInt(0, transports.length - 1)];
         transfersLeft--;
       } else {
-        type = STOPS[getRandomInt(0, STOPS.length - 1)];
+        type = stops[getRandomInt(0, stops.length - 1)];
       }
 
       const photosAmount = getRandomInt(TRIP_DESC_PHOTOS_MIN, TRIP_DESC_PHOTOS_MAX);

@@ -1,5 +1,4 @@
 import Observer from "../utils/observer.js";
-import {TRANSPORTS} from "../const.js";
 import moment from "moment";
 
 /**
@@ -11,10 +10,12 @@ export default class EventsModel extends Observer {
   /**
    * Конструктор класса
    *
-   * @param  {Array} eventList - Массив со список событий.
+   * @param  {Array} eventList - Массив со списком событий.
+   * @param  {Array} typeList  - Массив со списком типов событий.
    */
-  constructor(eventList = []) {
+  constructor(eventList = [], typeList) {
     super();
+    this._typeList = typeList;
     this._eventList = this._processData(eventList);
   }
 
@@ -114,10 +115,12 @@ export default class EventsModel extends Observer {
         lastDate = eventDate;
       }
 
+      const selectedType = this._typeList.find((type) => type.id === event.type);
+
       processedData.push(Object.assign({}, event, {
         dayNumber: moment(event.beginTime).startOf(`day`).diff(beginDate, `days`) + 1,
         dayDate: eventDate,
-        isTransport: TRANSPORTS.indexOf(event.type) >= 0
+        isTransport: selectedType.isTransport
       }));
     });
 

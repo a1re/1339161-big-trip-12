@@ -7,7 +7,7 @@ import EventPresenter from "./event-presenter.js";
 import NewEventPresenter from "./new-event-presenter.js";
 
 import {render, RenderPosition} from "../utils/render.js";
-import {UpdateMode, EventMode} from "../const.js";
+import {UpdateMode} from "../const.js";
 
 export default class TripPresenter {
   /**
@@ -16,14 +16,16 @@ export default class TripPresenter {
    *
    * @param  {Node} container         - Узел документа для презентера.
    * @param  {Observer} eventsModel   - Модель для работы с событиями.
+   * @param  {Observer} typesModel    - Модель для работы с типамм событий.
    * @param  {Observer} offersModel   - Модель для работы с спец. предложениями.
    * @param  {Observer} filtersModel  - Модель для работы с фильтрациями.
    * @param  {Observer} sortingsModel - Модель для работы с сортировками.
    */
-  constructor(container, eventsModel, offersModel, filtersModel, sortingsModel) {
+  constructor(container, eventsModel, typesModel, offersModel, filtersModel, sortingsModel) {
     this._container = container;
 
     this._eventsModel = eventsModel;
+    this._typesModel = typesModel;
     this._offersModel = offersModel;
     this._sortingsModel = sortingsModel;
     this._filtersModel = filtersModel;
@@ -84,6 +86,7 @@ export default class TripPresenter {
     this._newEventPresenter = new NewEventPresenter(
         this._dayListComponent.element,
         this._eventsModel,
+        this._typesModel,
         this._offersModel,
         this._switchAllEventsMode
     );
@@ -185,6 +188,7 @@ export default class TripPresenter {
               dayComponent.eventsContainer,
               event,
               this._eventsModel,
+              this._typesModel,
               this._offersModel,
               this._switchAllEventsMode
           )

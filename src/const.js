@@ -1,6 +1,6 @@
 export const CITIES = [`Amsterdam`, `Geneva`, `Chamonix`, `Saint Petersburg`];
-export const TRANSPORTS = [`Taxi`, `Bus`, `Train`, `Ship`, `Transport`, `Drive`, `Flight`];
-export const STOPS = [`Check-in`, `Sightseeing`, `Restaurant`];
+
+export const MAX_OFFERS_TO_SHOW = 3;
 
 export const UpdateMode = {
   PATCH: `PATCH`,

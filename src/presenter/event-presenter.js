@@ -13,14 +13,17 @@ export default class EventPresenter {
    * @param  {Node} eventListContainer      - Контейнер для вставки события
    * @param  {Object} eventData             - Объект с данными события
    * @param  {Observer} eventsModel         - Модель для работы с событиями.
+   * @param  {Observer} typesModel          - Модель для работы с типами событий.
    * @param  {Observer} offersModel         - Модель для работы с спец. предложениями.
    * @param  {Function} switchAllEventsMode - Метод переключючения режима всех
    *                                          событий маршрута.
    */
-  constructor(eventListContainer, eventData, eventsModel, offersModel, switchAllEventsMode) {
+  constructor(eventListContainer, eventData, eventsModel, typesModel, offersModel, switchAllEventsMode) {
     this._eventListContainer = eventListContainer;
     this._event = eventData;
+
     this._eventsModel = eventsModel;
+    this._typesModel = typesModel;
     this._offersModel = offersModel;
     this._switchAllEventsMode = switchAllEventsMode;
 
@@ -118,6 +121,7 @@ export default class EventPresenter {
     if (eventMode === EventMode.EDITING) {
       this._eventFormComponent = new EventFormView(
           this._offersModel.getList(),
+          this._typesModel.getList(),
           this._event
       );
 
@@ -133,8 +137,9 @@ export default class EventPresenter {
 
     // По умочанию — режим EventMode.SUMMARY
     this._eventSummaryComponent = new EventSummaryView(
-        this._event,
-        this._offersModel.getList(this._event.isTransport)
+        this._offersModel.getList(this._event.isTransport),
+        this._typesModel.getById(this._event.type),
+        this._event
     );
 
     this._eventSummaryComponent.openHandler = () => {

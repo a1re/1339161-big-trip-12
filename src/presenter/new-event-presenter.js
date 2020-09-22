@@ -11,11 +11,13 @@ export default class NewEventPresenter {
    * @param  {Node} dayListElement  - Узел DOM, относительно которого нужно
    *                                  разместить форму.
    * @param  {Observer} eventsModel - Модель событий.
+   * @param  {Observer} typesModel  - Модель типов событий.
    * @param  {Observer} offersModel - Модель спец. предложений.
    */
-  constructor(dayListElement, eventsModel, offersModel) {
+  constructor(dayListElement, eventsModel, typesModel, offersModel) {
     this._eventsModel = eventsModel;
     this._offersModel = offersModel;
+    this._typesModel = typesModel;
 
     this._eventFormComponent = null;
     this._closeFormByEsc = null;
@@ -51,7 +53,10 @@ export default class NewEventPresenter {
    * @return {Node} - Элемент DOM, доступный для вставки в документ.
    */
   _createElement() {
-    this._eventFormComponent = new EventFormView(this._offersModel.getList());
+    this._eventFormComponent = new EventFormView(
+        this._offersModel.getList(),
+        this._typesModel.getList()
+    );
 
     this._closeFormByEsc = new EscHandler(this.destroy);
     this._eventFormComponent.closeHandler = this.destroy;

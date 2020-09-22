@@ -1,4 +1,4 @@
-import {CITIES, STOPS, TRANSPORTS, DATETIME_FORMAT, DEFAULT_FLATPICKR_SETTINGS} from "../const.js";
+import {CITIES, DATETIME_FORMAT, DEFAULT_FLATPICKR_SETTINGS} from "../const.js";
 import {getRandomInt, generateId, formatDate, isValidDate, parseDate} from "../utils/common.js";
 import UpdatableView from "./updatable-view.js";
 
@@ -6,17 +6,6 @@ import he from "he";
 import moment from "moment";
 import flatpickr from "flatpickr";
 import "../../node_modules/flatpickr/dist/flatpickr.min.css";
-
-const DEFAULT_EVENT_VALUES = {
-  city: ``,
-  type: TRANSPORTS[getRandomInt(0, TRANSPORTS.length - 1)],
-  beginTime: moment().startOf(`hour`).toDate(),
-  endTime: moment().startOf(`hour`).add(2, `hours`).toDate(),
-  isTransport: true,
-  price: 0,
-  offers: [],
-  isFavorite: false
-};
 
 const EventFormMode = {
   ADDING: `ADDING`,
@@ -28,14 +17,25 @@ export default class EventFormView extends UpdatableView {
    * Конструктор класса отображения формы добавления/редактирования события.
    *
    * @param  {Array} offerList - Массив со списком спц. предложений.
+   * @param  {Array} typeList  - Массив со списком типов событий.
    * @param  {Object} [event]  - Объект с информацие о событии, если это
    *                             форма редактирования, а не добавления.
    */
-  constructor(offerList, event = null) {
+  constructor(offerList, typeList, event = null) {
     super();
     if (!event) {
-      this._event = DEFAULT_EVENT_VALUES;
-      this._event.id = generateId();
+      const randomType = typeList[getRandomInt(0, typeList.length - 1)];
+      this._event = {
+        id: generateId(),
+        city: ``,
+        type: randomType.id,
+        beginTime: moment().startOf(`hour`).toDate(),
+        endTime: moment().startOf(`hour`).add(2, `hours`).toDate(),
+        isTransport: randomType.isTransport,
+        price: 0,
+        offers: [],
+        isFavorite: false
+      };
       this._mode = EventFormMode.ADDING;
       this._isSubmitEnabled = false;
     } else {
@@ -50,6 +50,7 @@ export default class EventFormView extends UpdatableView {
     this._beginTimePicker = null;
     this._endTimePicker = null;
     this._offerList = offerList;
+    this._typeList = typeList;
 
     this._closeHandler = this._closeHandler.bind(this);
     this._submitHandler = this._submitHandler.bind(this);
@@ -250,39 +251,41 @@ export default class EventFormView extends UpdatableView {
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   _makeEventTypeSelector() {
-    const {id, type} = this._event;
+    const selectedType = this._typeList.find((type) => type.id === this._event.type);
+    const transportTypeList = this._typeList.filter((type) => type.isTransport);
+    const stopTypeList = this._typeList.filter((type) => !type.isTransport);
 
     let template = `
       <div class="event__type-wrapper">
-        <label class="event__type  event__type-btn" for="event-type-toggle-${id}">
+        <label class="event__type  event__type-btn" for="event-type-toggle-${this._event.id}">
           <span class="visually-hidden">Choose event type</span>
           <img
             class="event__type-icon"
             width="17" height="17"
-            src="img/icons/${type.toLowerCase()}.png"
+            src="${selectedType.icon}"
             alt="Event type icon">
         </label>
         <input
           class="event__type-toggle  visually-hidden"
-          id="event-type-toggle-${id}"
+          id="event-type-toggle-${this._event.id}"
           type="checkbox">
         <div class="event__type-list">
           <fieldset class="event__type-group">
             <legend class="visually-hidden">Transfer</legend>`;
 
-    for (const transferName of TRANSPORTS) {
+    for (const type of transportTypeList) {
       template += `
             <div class="event__type-item">
               <input
-                id="event-type-${transferName.toLowerCase()}-1"
+                id="event-type-${type.id}-1"
                 class="event__type-input  visually-hidden"
                 type="radio"
                 name="event-type"
-                value="${transferName}"
-                ${(transferName === type) ? `checked` : ``}>
+                value="${type.id}"
+                ${(type.id === selectedType) ? `checked` : ``}>
               <label
-                class="event__type-label  event__type-label--${transferName.toLowerCase()}"
-                for="event-type-${transferName.toLowerCase()}-1">${transferName}</label>
+                class="event__type-label  event__type-label--${type.id}"
+                for="event-type-${type.id}-1">${type.title}</label>
             </div>`;
     }
 
@@ -291,19 +294,19 @@ export default class EventFormView extends UpdatableView {
           <fieldset class="event__type-group">
             <legend class="visually-hidden">Activity</legend>`;
 
-    for (const activityName of STOPS) {
+    for (const type of stopTypeList) {
       template += `
             <div class="event__type-item">
               <input
-                id="event-type-${activityName.toLowerCase()}-1"
+                id="event-type-${type.id}-1"
                 class="event__type-input  visually-hidden"
                 type="radio" name="event-type"
-                value="${activityName}"
-                ${(activityName === type) ? `checked` : ``}>
+                value="${type.id}"
+                ${(type.id === selectedType) ? `checked` : ``}>
               <label
-                class="event__type-label  event__type-label--${activityName.toLowerCase()}"
-                for="event-type-${activityName.toLowerCase()}-1">
-                  ${activityName}
+                class="event__type-label  event__type-label--${type.id}"
+                for="event-type-${type.id}-1">
+                  ${type.title}
               </label>
             </div>`;
     }
@@ -322,21 +325,21 @@ export default class EventFormView extends UpdatableView {
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   _makeDestinationSelector() {
-    const {id, type, city, isTransport} = this._event;
+    const selectedType = this._typeList.find((type) => type.id === this._event.type);
 
     let template = `
       <div class="event__field-group  event__field-group--destination">
-        <label class="event__label  event__type-output" for="event-destination-${id}">
-          ${type} ${(isTransport) ? `to` : `in`}
+        <label class="event__label  event__type-output" for="event-destination-${this._event.id}">
+          ${selectedType.title} ${(selectedType.isTransport) ? `to` : `in`}
         </label>
         <input
             class="event__input  event__input--destination"
-            id="event-destination-${id}"
+            id="event-destination-${this._event.id}"
             type="text"
             name="event-destination"
-            value="${he.encode(city)}"
-            list="destination-list-${id}">
-        <datalist id="destination-list-${id}">`;
+            value="${he.encode(this._event.city)}"
+            list="destination-list-${this._event.id}">
+        <datalist id="destination-list-${this._event.id}">`;
 
     CITIES.forEach((cityName) => {
       template += `<option value="${cityName}"></option>`;
@@ -687,11 +690,13 @@ export default class EventFormView extends UpdatableView {
    * @param  {Object} evt - Объект события в DOM.
    */
   _selectTypeHandler(evt) {
+    const selectedType = this._typeList.find((type) => type.id === evt.target.value);
+
     const eventIcon = this.element.querySelector(`.event__type-icon`);
-    eventIcon.setAttribute(`src`, `img/icons/${evt.target.value.toLowerCase()}.png`);
+    eventIcon.setAttribute(`src`, selectedType.icon);
     this.updateData({
-      type: evt.target.value,
-      isTransport: TRANSPORTS.indexOf(evt.target.value) >= 0
+      type: selectedType.id,
+      isTransport: selectedType.isTransport
     });
     this.updateElement();
   }
