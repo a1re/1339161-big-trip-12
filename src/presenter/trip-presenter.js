@@ -54,6 +54,9 @@ export default class TripPresenter {
     this._renderEvents();
   }
 
+  /**
+   * Открытие формы добавления нового события.
+   */
   createNewEvent() {
     this._switchAllEventsMode(EventMode.SUMMARY);
 
