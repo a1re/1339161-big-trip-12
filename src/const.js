@@ -13,6 +13,11 @@ export const EventMode = {
   EDITING: `EDITING`
 };
 
+export const MenuItem = {
+  TABLE: `Table`,
+  STATS: `Stats`
+};
+
 export const TIME_FORMAT = `HH:mm`;
 export const DATETIME_FORMAT = `DD/MM/YY HH:mm`;
 

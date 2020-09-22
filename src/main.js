@@ -18,6 +18,7 @@ import TripEventsView from "./view/trip-events-view.js";
 
 import TripPresenter from "./presenter/trip-presenter.js";
 import HeaderPresenter from "./presenter/header-presenter.js";
+import StatsPresenter from "./presenter/stats-presenter.js";
 
 const offerList = generateOffers();
 const eventList = generateEvents(getRandomInt(EVENTS_MIN, EVENTS_MAX), offerList);
@@ -33,6 +34,16 @@ const newEventElement = document.querySelector(`.trip-main__event-add-btn`);
 const tripEventsComponent = new TripEventsView();
 render(pageContainerElement, tripEventsComponent, RenderPosition.BEFOREEND);
 
+const displayTable = () => {
+  statsPresenter.destroy();
+  tripPresenter.init();
+};
+
+const displayStats = () => {
+  tripPresenter.destroy();
+  statsPresenter.init();
+};
+
 const tripPresenter = new TripPresenter(
     tripEventsComponent.element,
     eventsModel,
@@ -45,7 +56,14 @@ const headerPresenter = new HeaderPresenter(
     headerElement,
     eventsModel,
     offersModel,
-    filtersModel
+    filtersModel,
+    displayTable,
+    displayStats
+);
+
+const statsPresenter = new StatsPresenter(
+    tripEventsComponent.element,
+    eventsModel
 );
 
 tripPresenter.init();
@@ -53,5 +71,6 @@ headerPresenter.init();
 
 newEventElement.addEventListener(`click`, (evt) => {
   evt.preventDefault();
+  displayTable();
   tripPresenter.createNewEvent();
 });

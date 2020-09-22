@@ -10,16 +10,21 @@ export default class HeaderPresenter {
    * Конструктор презентера. Заведение экземпляров отображений и установка
    * ключевого узла DOM для рендеринга компонентов.
    *
-   * @param  {Node} container       — Узел документа для презентера.
-   * @param  {Observer} eventsModel – Модель для работы с событиями.
-   * @param  {Observer} offersModel – Модель для работы с спец. предложениями.
-   * @param  {Observer} filtersModel – Модель для работы с фильтрациями.
+   * @param  {Node} container        - Узел документа для презентера.
+   * @param  {Observer} eventsModel  - Модель для работы с событиями.
+   * @param  {Observer} offersModel  - Модель для работы с спец. предложениями.
+   * @param  {Observer} filtersModel - Модель для работы с фильтрациями.
+   * @param  {Function} displayTable - Коллбек открытия списка событий.
+   * @param  {Function} displayStats - Коллбек открытия статистики.
    */
-  constructor(container, eventsModel, offersModel, filtersModel) {
+  constructor(container, eventsModel, offersModel, filtersModel, displayTable, displayStats) {
     this._container = container;
     this._eventsModel = eventsModel;
     this._offersModel = offersModel;
     this._filtersModel = filtersModel;
+
+    this._displayTable = displayTable;
+    this._displayStats = displayStats;
 
     this._tripInfoComponent = null;
     this._filtersComponent = null;
@@ -99,6 +104,8 @@ export default class HeaderPresenter {
    */
   _renderMenu() {
     this._menuComponent = new MenuView();
+    this._menuComponent.displayTable = this._displayTable;
+    this._menuComponent.displayStats = this._displayStats;
     render(this._menuContainer, this._menuComponent, RenderPosition.AFTEREND);
   }
 
