@@ -335,7 +335,7 @@ export default class EventFormView extends UpdatableView {
             type="text"
             name="event-destination"
             value="${he.encode(city)}"
-            list="destination-list-1">
+            list="destination-list-${id}">
         <datalist id="destination-list-${id}">`;
 
     CITIES.forEach((cityName) => {
