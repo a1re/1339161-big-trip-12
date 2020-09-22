@@ -1,8 +1,8 @@
 import {TIME_FORMAT} from "../const.js";
 import {formatDate} from "../utils/common.js";
 import AbstractView from "./abstract-view.js";
-import Itinerary from "../utils/itinerary.js";
 
+import moment from "moment";
 import he from "he";
 
 export default class EventSummaryView extends AbstractView {
@@ -78,7 +78,7 @@ export default class EventSummaryView extends AbstractView {
     const endDateTime = this._event.endTime.toISOString();
     const endTime = formatDate(this._event.endTime, TIME_FORMAT);
 
-    const duration = Itinerary.getDuration(this._event.beginTime, this._event.endTime);
+    const duration = this._getDuration();
 
     return `<div class="event__schedule">
             <p class="event__time">
@@ -131,6 +131,44 @@ export default class EventSummaryView extends AbstractView {
         </ul>`;
 
     return template;
+  }
+
+  /**
+   * Вычисление длительности события по времени начала и конца. Чтобы не
+   * потеряться в часовых поясах, вычисление примитивно-математическое —
+   * вначале берутся таймстемпы обеих дат, вычисляется разница между ними,
+   * затем поочереди делится на целые дни, целые часы и целые минуты.
+   *
+   * @return {String}         - Длительность события в формате строки вида
+   *                           `01D 02H 03M`
+   */
+  _getDuration() {
+    const beginMoment = moment(this._event.beginTime);
+    const endMoment = moment(this._event.endTime);
+
+    let days = parseInt(endMoment.diff(beginMoment, `days`), 10);
+    let hours = parseInt(endMoment.diff(beginMoment, `hours`) % 24, 10);
+    let minutes = parseInt(endMoment.diff(beginMoment, `minutes`) % 60, 10);
+
+    if (days === 0) {
+      days = ``;
+    } else {
+      days = ((days < 10) ? (`0` + days) : days) + `D`;
+    }
+
+    if (hours === 0) {
+      hours = ``;
+    } else {
+      hours = ((hours < 10) ? (`0` + hours) : hours) + `H`;
+    }
+
+    if (minutes === 0) {
+      minutes = ``;
+    } else {
+      minutes = ((minutes < 10) ? (`0` + minutes) : minutes) + `M`;
+    }
+
+    return `${days} ${hours} ${minutes}`;
   }
 
   /**
