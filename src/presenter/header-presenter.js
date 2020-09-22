@@ -22,8 +22,8 @@ export default class HeaderPresenter {
     this._filtersModel = filtersModel;
 
     this._tripInfoComponent = null;
-    this._filtersComponent = new FiltersView(this._filtersModel.list);
-    this._menuComponent = new MenuView();
+    this._filtersComponent = null;
+    this._menuComponent = null;
 
     this._updatePresenter = this._updatePresenter.bind(this);
     this._filterEvents = this._filterEvents.bind(this);
@@ -32,20 +32,32 @@ export default class HeaderPresenter {
     this._filtersContainer = container.querySelector(`.trip-controls h2:last-child`);
 
     this._eventsModel.subscribe(this._updatePresenter);
+    this._filtersModel.subscribe(this._updatePresenter);
+
+    this._isInitialized = false;
   }
 
   /**
    * Инициализация и первичная отрисовка заголовка.
-   *
-   * @param  {array} eventList - Список событий.
-   * @return {void}
    */
   init() {
-    this._filtersComponent.filterEventsHandler = this._filterEvents;
-    render(this._menuContainer, this._menuComponent, RenderPosition.AFTEREND);
-    render(this._filtersContainer, this._filtersComponent, RenderPosition.AFTEREND);
-
+    if (this._isInitialized) {
+      this.destroy();
+    }
+    this._renderMenu();
+    this._renderFilters();
     this._renderTripInfo();
+    this._isInitialized = true;
+  }
+
+  /**
+   * Очистка презентера.
+   */
+  destroy() {
+    this._menuComponent.remove();
+    this._filtersComponent.remove();
+    this._tripInfoComponent.remove();
+    this._isInitialized = false;
   }
 
   /**
@@ -57,21 +69,12 @@ export default class HeaderPresenter {
   _updatePresenter(updateMode) {
     switch (updateMode) {
       case UpdateMode.MINOR:
-        this._clearTripInfo();
-        this._renderTripInfo();
+        this.init();
         break;
       case UpdateMode.MAJOR:
-        this._clearTripInfo();
-        this._renderTripInfo();
+        this.init();
         break;
     }
-  }
-
-  /**
-   * Очистка сводки о машруте, датах и общей стооимости поездки.
-   */
-  _clearTripInfo() {
-    this._tripInfoComponent.remove();
   }
 
   /**
@@ -80,6 +83,23 @@ export default class HeaderPresenter {
   _renderTripInfo() {
     this._tripInfoComponent = new TripInfoView(this._eventsModel.eventList, this._offersModel.getList());
     render(this._container, this._tripInfoComponent, RenderPosition.AFTERBEGIN);
+  }
+
+  /**
+   * Отрисовка меню фильтров.
+   */
+  _renderFilters() {
+    this._filtersComponent = new FiltersView(this._filtersModel.list);
+    this._filtersComponent.filterEventsHandler = this._filterEvents;
+    render(this._filtersContainer, this._filtersComponent, RenderPosition.AFTEREND);
+  }
+
+  /**
+   * Отрисовка меню.
+   */
+  _renderMenu() {
+    this._menuComponent = new MenuView();
+    render(this._menuContainer, this._menuComponent, RenderPosition.AFTEREND);
   }
 
   /**

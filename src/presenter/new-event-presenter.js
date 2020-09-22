@@ -66,7 +66,7 @@ export default class NewEventPresenter {
    * @param  {Object} eventData - Данные формы для сохранения.
    */
   _submitForm(eventData) {
-    this._eventsModel.add(UpdateMode.MAJOR, eventData);
+    this._eventsModel.add(UpdateMode.MINOR, eventData);
     this.destroy();
   }
 }

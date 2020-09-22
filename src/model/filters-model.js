@@ -31,7 +31,15 @@ export default class FiltersModel extends Observer {
    * @return {Array} - Массив со список событий
    */
   get list() {
-    return [...this._filterMap.values()];
+    const filterList = [];
+    this._filterMap.forEach((filter) => {
+      filterList.push({
+        id: filter.id,
+        title: filter.title,
+        isActive: filter.id === this.active
+      });
+    });
+    return filterList;
   }
 
   /**
@@ -80,5 +88,6 @@ export default class FiltersModel extends Observer {
       throw new Error(`No default filter is set`);
     }
     this._activeFilter = this._defaultFilter;
+    this._notify(UpdateMode.MAJOR);
   }
 }

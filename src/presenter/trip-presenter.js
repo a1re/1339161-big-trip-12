@@ -28,12 +28,13 @@ export default class TripPresenter {
     this._sortingsModel = sortingsModel;
     this._filtersModel = filtersModel;
 
-    this._eventPresenterMap = new Map();
-    this._dayComponentMap = new Map();
-
     this._noEventsComponent = null;
     this._sortingComponent = null;
     this._dayListComponent = null;
+
+    this._dayComponentMap = new Map();
+    this._eventPresenterMap = new Map();
+
     this._newEventPresenter = null;
 
     this._updateEvent = this._updateEvent.bind(this);
@@ -44,21 +45,41 @@ export default class TripPresenter {
     this._eventsModel.subscribe(this._updatePresenter);
     this._sortingsModel.subscribe(this._updatePresenter);
     this._filtersModel.subscribe(this._updatePresenter);
+
+    this._isInitialized = false;
   }
 
   /**
    * Инициализация и первичная отрисовка списка событий.
    */
   init() {
+    if (this._isInitialized) {
+      this.destroy();
+    }
     this._renderCaption();
     this._renderEvents();
+    this._isInitialized = true;
+  }
+
+  /**
+   * Очистка презентера - удаление списка событий и заголовка с сортировками.
+   */
+  destroy() {
+    if (!this._isInitialized) {
+      return;
+    }
+    this._clearEvents();
+    this._clearCaption();
+    this._isInitialized = false;
   }
 
   /**
    * Открытие формы добавления нового события.
    */
   createNewEvent() {
-    this._switchAllEventsMode(EventMode.SUMMARY);
+    this._sortingsModel.reset();
+    this._filtersModel.reset();
+    this.init();
 
     this._newEventPresenter = new NewEventPresenter(
         this._dayListComponent.element,
