@@ -4,18 +4,21 @@ import he from "he";
 
 export default class TripInfoView extends AbstractView {
   /**
-   * Конструктор отображения
-   * @param  {Array} eventList - Список всех событий.
+   * Конструктор отображения информации о маршруте.
+   *
+   * @param  {Array} pointList - Список всех точек.
    * @param  {Array} offerList - Список всех спец. предложений.
    */
-  constructor(eventList, offerList) {
+  constructor(pointList, offerList) {
     super();
-    this._eventList = eventList;
+    this._pointList = pointList;
     this._offerList = offerList;
   }
 
   /**
-   * Геттер шаблона.
+   * Геттер шаблона отображения информации о маршруте.
+   *
+   * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   get template() {
     const totalPrice = this._getTotalPrice();
@@ -34,20 +37,17 @@ export default class TripInfoView extends AbstractView {
   }
 
   /**
-   * Подсчет стоимости поездки по списку событий (включая доп. опции).
+   * Подсчет стоимости поездки по списку точек (включая доп. опции).
    *
    * @return {Number} - Итоговая стоимость.
    */
   _getTotalPrice() {
     let totalPrice = 0;
 
-    this._eventList.forEach((event) => {
-      totalPrice += event.price;
-      event.offers.forEach((offerId) => {
-        const selectedOffer = this._offerList.find((offer) => offer.id === offerId);
-        if (selectedOffer) {
-          totalPrice += selectedOffer.price;
-        }
+    this._pointList.forEach((point) => {
+      totalPrice += point.price;
+      point.offers.forEach((offer) => {
+        totalPrice += offer.price;
       });
     });
 
@@ -55,55 +55,55 @@ export default class TripInfoView extends AbstractView {
   }
 
   /**
-   * Опеределние общего маршрута по списку событий.
+   * Опеределние общего маршрута по списку точек.
    *
    * @return {string} - Итоговый маршрут.
    */
   _getTripSummary() {
-    if (this._eventList.length === 0) {
+    if (this._pointList.length === 0) {
       return ``;
     }
 
-    const uniquePoints = this._eventList.filter((element, index, array) => {
-      return index === 0 || element.city !== array[index - 1].city;
+    const uniquePoints = this._pointList.filter((element, index, array) => {
+      return index === 0 || element.destination !== array[index - 1].destination;
     });
 
     if (uniquePoints.length === 1) {
-      return he.encode(uniquePoints[0].city);
+      return he.encode(uniquePoints[0].destination);
     }
 
     const route = [];
-    route.push(he.encode(uniquePoints[0].city));
+    route.push(he.encode(uniquePoints[0].destination));
     if (uniquePoints.length === 3) {
-      route.push(he.encode(uniquePoints[1].city));
+      route.push(he.encode(uniquePoints[1].destination));
     } else if (uniquePoints.length > 3) {
       route.push(`...`);
     }
-    route.push(uniquePoints[uniquePoints.length - 1].city);
+    route.push(uniquePoints[uniquePoints.length - 1].destination);
 
     return route.join(` &mdash; `);
   }
 
   /**
-   * Опеределние дат начала и конца путешествия по списку событий. В случае,
+   * Опеределние дат начала и конца путешествия по списку точек. В случае,
    * если даты остаются в рамках одного месяца, он пишется только один раз,
    * в конце (т.е. `30 MAR - 2 APR` или `28 - 30 MAR`);
    *
    * @return {String}  - Строка с датами.
    */
   _getTiming() {
-    const eventList = this._eventList.slice().sort((a, b) => {
+    const pointList = this._pointList.slice().sort((a, b) => {
       return a.beginTime.valueOf() - b.beginTime.valueOf();
     });
 
-    if (eventList.length === 0) {
+    if (pointList.length === 0) {
       return ``;
     }
 
-    const dayStart = eventList[0].beginTime.toLocaleString(`en-US`, {day: `numeric`});
-    const monthStart = eventList[0].beginTime.toLocaleString(`en-US`, {month: `short`});
-    const dayFinish = eventList[eventList.length - 1].endTime.toLocaleString(`en-US`, {day: `numeric`});
-    const monthFinish = eventList[eventList.length - 1].endTime.toLocaleString(`en-US`, {month: `short`});
+    const dayStart = pointList[0].beginTime.toLocaleString(`en-US`, {day: `numeric`});
+    const monthStart = pointList[0].beginTime.toLocaleString(`en-US`, {month: `short`});
+    const dayFinish = pointList[pointList.length - 1].endTime.toLocaleString(`en-US`, {day: `numeric`});
+    const monthFinish = pointList[pointList.length - 1].endTime.toLocaleString(`en-US`, {month: `short`});
 
     return `${dayStart}${(monthFinish !== monthStart) ? monthStart : ``}&nbsp;&mdash;&nbsp;${dayFinish} ${monthFinish}`;
   }

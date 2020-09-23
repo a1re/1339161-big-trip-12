@@ -1,4 +1,4 @@
-import {CITIES, STOPS, TRANSPORTS, DATETIME_FORMAT, DEFAULT_FLATPICKR_SETTINGS} from "../const.js";
+import {DATETIME_FORMAT, DEFAULT_FLATPICKR_SETTINGS} from "../const.js";
 import {getRandomInt, generateId, formatDate, isValidDate, parseDate} from "../utils/common.js";
 import UpdatableView from "./updatable-view.js";
 
@@ -7,41 +7,49 @@ import moment from "moment";
 import flatpickr from "flatpickr";
 import "../../node_modules/flatpickr/dist/flatpickr.min.css";
 
-const DEFAULT_EVENT_VALUES = {
-  city: ``,
-  type: TRANSPORTS[getRandomInt(0, TRANSPORTS.length - 1)],
-  beginTime: moment().startOf(`hour`).toDate(),
-  endTime: moment().startOf(`hour`).add(2, `hours`).toDate(),
-  isTransport: true,
-  price: 0,
-  offers: [],
-  isFavorite: false
-};
-
-const EventFormMode = {
+const PointFormMode = {
   ADDING: `ADDING`,
   EDITING: `EDITING`
 };
 
-export default class EventFormView extends UpdatableView {
+export default class PointFormView extends UpdatableView {
   /**
-   * Конструктор класса отображения формы добавления/редактирования события.
+   * Конструктор класса отображения формы добавления/редактирования точки.
    *
-   * @param  {Array} offerList - Массив со списком спц. предложений.
-   * @param  {Object} [event]  - Объект с информацие о событии, если это
-   *                             форма редактирования, а не добавления.
+   * @param  {Array} typeList         - Массив со списком типов точек.
+   * @param  {Array} offerList        - Массив со списком спец. предложений.
+   * @param  {Array} destinationList  - Массив со списком типов гороодв.
+   * @param  {Object} [point]         - Объект с информацие о точке, если это
+   *                                    форма редактирования, а не добавления.
    */
-  constructor(offerList, event = null) {
+  constructor(typeList, offerList, destinationList, point = null) {
     super();
-    if (!event) {
-      this._event = DEFAULT_EVENT_VALUES;
-      this._event.id = generateId();
-      this._mode = EventFormMode.ADDING;
+
+    this._typeList = typeList;
+    this._offerList = offerList;
+    this._destinationList = destinationList;
+
+    if (!point) {
+      const randomType = typeList[getRandomInt(0, typeList.length - 1)];
+      this._point = {
+        id: generateId(),
+        destination: ``,
+        type: randomType.id,
+        beginTime: moment().startOf(`hour`).toDate(),
+        endTime: moment().startOf(`hour`).add(2, `hours`).toDate(),
+        isTransport: randomType.isTransport,
+        price: 0,
+        offers: [],
+        isFavorite: false
+      };
+      this._mode = PointFormMode.ADDING;
       this._isSubmitEnabled = false;
+      this._avalibleOfferList = [];
     } else {
-      this._event = event;
-      this._mode = EventFormMode.EDITING;
+      this._point = point;
+      this._mode = PointFormMode.EDITING;
       this._isSubmitEnabled = true;
+      this._avalibleOfferList = this._getAvalibleOffers(this._point.type);
 
       this._deleteHandler = this._deleteHandler.bind(this);
       this._toggleFavoriteHandler = this._toggleFavoriteHandler.bind(this);
@@ -49,7 +57,6 @@ export default class EventFormView extends UpdatableView {
 
     this._beginTimePicker = null;
     this._endTimePicker = null;
-    this._offerList = offerList;
 
     this._closeHandler = this._closeHandler.bind(this);
     this._submitHandler = this._submitHandler.bind(this);
@@ -64,12 +71,12 @@ export default class EventFormView extends UpdatableView {
   }
 
   /**
-   * Получение общего шаблона отображения.
+   * Геттер общего шаблона отображения.
    *
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   get template() {
-    const eventTypeSelector = this._makeEventTypeSelector();
+    const pointTypeSelector = this._makePointTypeSelector();
     const destinationSelector = this._makeDestinationSelector();
     const timeInput = this._makeTimeInput();
     const priceInput = this._makePriceInput();
@@ -78,7 +85,7 @@ export default class EventFormView extends UpdatableView {
 
     return `<form class="trip-events__item  event  event--edit" action="#" method="post">
         <header class="event__header">
-          ${eventTypeSelector}
+          ${pointTypeSelector}
 
           ${destinationSelector}
 
@@ -87,11 +94,11 @@ export default class EventFormView extends UpdatableView {
           ${priceInput}
 
           <button class="event__save-btn  btn  btn--blue" type="submit" ${this._isSubmitEnabled ? `` : `disabled`}>Save</button>
-          <button class="event__reset-btn" type="reset">${this._mode === EventFormMode.ADDING ? `Cancel` : `Delete`}</button>
+          <button class="event__reset-btn" type="reset">${this._mode === PointFormMode.ADDING ? `Cancel` : `Delete`}</button>
 
-          ${this._mode === EventFormMode.EDITING ? favoriteButton : ``}
+          ${this._mode === PointFormMode.EDITING ? favoriteButton : ``}
 
-          ${this._mode === EventFormMode.EDITING ? `<button class="event__rollup-btn" type="button">
+          ${this._mode === PointFormMode.EDITING ? `<button class="event__rollup-btn" type="button">
             <span class="visually-hidden">Open event</span>
           </button>` : ``}
         </header>
@@ -107,21 +114,21 @@ export default class EventFormView extends UpdatableView {
   set closeHandler(callback) {
     this._callback.close = callback;
 
-    if (this._mode === EventFormMode.ADDING) {
+    if (this._mode === PointFormMode.ADDING) {
       this.element.querySelector(`.event__reset-btn`)
         .addEventListener(`click`, this._closeHandler);
     }
 
-    if (this._mode === EventFormMode.EDITING) {
+    if (this._mode === PointFormMode.EDITING) {
       this.element.querySelector(`.event__rollup-btn`)
         .addEventListener(`click`, this._closeHandler);
     }
   }
 
   /**
-   * Сеттер обработчика удаления события в форме редактирования.
+   * Сеттер обработчика удаления точки в форме редактирования.
    *
-   * @param  {Function} callback - Коллбек сохранения события.
+   * @param  {Function} callback - Коллбек удаления точки.
    */
   set deleteHandler(callback) {
     this._callback.delete = callback;
@@ -131,7 +138,7 @@ export default class EventFormView extends UpdatableView {
   }
 
   /**
-   * Сеттер обработчика для кнопки добавления/удаления события в избранное.
+   * Сеттер обработчика для кнопки добавления/удаления точки в избранное.
    *
    * @param  {Function} callback - Коллбек нажатия на кнопку.
    */
@@ -143,9 +150,9 @@ export default class EventFormView extends UpdatableView {
   }
 
   /**
-   * Сеттер обработчика сохранения события в форме редактирования.
+   * Сеттер обработчика сохранения точки в форме редактирования.
    *
-   * @param  {Function} callback - Коллбек сохранения события.
+   * @param  {Function} callback - Коллбек сохранения точки.
    */
   set submitHandler(callback) {
     this._callback.submit = callback;
@@ -154,23 +161,32 @@ export default class EventFormView extends UpdatableView {
   }
 
   /**
-   * Обновление данных объекта события.
-   *
-   * @param  {Object} newData - Обновленные данные
+   * Удаление формы. Метод родительского класс переопределяется, чтобы
+   * вместе с удалением обнулять и удалять дейтпикеры.
    */
-  updateData(newData) {
-    if (!newData) {
+  remove() {
+    super.remove();
+    this._destroyTimePicking();
+  }
+
+  /**
+   * Обновление данных объекта точки.
+   *
+   * @param  {Object} updatedPointData - Обновленные данные.
+   */
+  updateData(updatedPointData) {
+    if (!updatedPointData) {
       return;
     }
 
-    this._event = Object.assign({}, this._event, newData);
+    this._point = Object.assign({}, this._point, updatedPointData);
   }
 
   /**
    * Групповая установка обработчиков разных элементов форм.
    */
   setHandlers() {
-    const id = this._event.id;
+    const id = this._point.id;
 
     this.element.querySelector(`.event__input--destination`)
       .addEventListener(`input`, this._inputDestinationHandler);
@@ -178,13 +194,17 @@ export default class EventFormView extends UpdatableView {
       .addEventListener(`input`, this._inputPriceHandler);
     this.element.querySelector(`.event__type-list`)
       .addEventListener(`change`, this._selectTypeHandler);
-    this.element.querySelector(`.event__available-offers`)
-      .addEventListener(`change`, this._selectOfferHandler);
+
+    // Обработчик клика на спец. предложения ставим только если они есть
+    if (this._avalibleOfferList.length > 0) {
+      this.element.querySelector(`.event__available-offers`)
+        .addEventListener(`change`, this._selectOfferHandler);
+    }
 
     this.closeHandler = this._callback.close;
     this.submitHandler = this._callback.submit;
 
-    if (this._mode === EventFormMode.EDITING) {
+    if (this._mode === PointFormMode.EDITING) {
       this.deleteHandler = this._callback.delete;
       this.toggleFavoriteHandler = this._callback.toggleFavorite;
     }
@@ -196,78 +216,86 @@ export default class EventFormView extends UpdatableView {
    * Установка обработчиков выбора дат.
    */
   _setTimePicking() {
-    const id = this._event.id;
-
-    if (this._beginTimePicker) {
-      this._beginTimePicker.destroy();
-      this._beginTimePicker = null;
-    }
+    this._destroyTimePicking();
+    const id = this._point.id;
 
     const beginTimeInput = this.element.querySelector(`#event-start-time-${id}`);
     this._beginTimePicker = flatpickr(beginTimeInput, Object.assign(
         {},
         DEFAULT_FLATPICKR_SETTINGS,
         {
-          defaultDate: this._event.beginTime,
+          defaultDate: this._point.beginTime,
           onChange: this._inputBeginTimeHandler
         }
     ));
-
-    if (this._endTimePicker) {
-      this._endTimePicker.destroy();
-      this._endTimePicker = null;
-    }
 
     const endTimeInput = this.element.querySelector(`#event-end-time-${id}`);
     this._endTimePicker = flatpickr(endTimeInput, Object.assign(
         {},
         DEFAULT_FLATPICKR_SETTINGS,
         {
-          defaultDate: this._event.endTime,
+          defaultDate: this._point.endTime,
           onChange: this._inputEndTimeHandler
         }
     ));
   }
 
   /**
-   * Шаблон формы выбора типа события.
+   * Удаление таймпикеров.
+   */
+  _destroyTimePicking() {
+    if (this._beginTimePicker) {
+      this._beginTimePicker.destroy();
+      this._beginTimePicker = null;
+    }
+
+    if (this._endTimePicker) {
+      this._endTimePicker.destroy();
+      this._endTimePicker = null;
+    }
+  }
+
+  /**
+   * Создание шаблона формы выбора типа точки.
    *
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
-  _makeEventTypeSelector() {
-    const {id, type} = this._event;
+  _makePointTypeSelector() {
+    const selectedType = this._typeList.find((type) => type.id === this._point.type);
+    const transportTypeList = this._typeList.filter((type) => type.isTransport);
+    const stopTypeList = this._typeList.filter((type) => !type.isTransport);
 
     let template = `
       <div class="event__type-wrapper">
-        <label class="event__type  event__type-btn" for="event-type-toggle-${id}">
+        <label class="event__type  event__type-btn" for="event-type-toggle-${this._point.id}">
           <span class="visually-hidden">Choose event type</span>
           <img
             class="event__type-icon"
             width="17" height="17"
-            src="img/icons/${type.toLowerCase()}.png"
+            src="${selectedType.icon}"
             alt="Event type icon">
         </label>
         <input
           class="event__type-toggle  visually-hidden"
-          id="event-type-toggle-${id}"
+          id="event-type-toggle-${this._point.id}"
           type="checkbox">
         <div class="event__type-list">
           <fieldset class="event__type-group">
             <legend class="visually-hidden">Transfer</legend>`;
 
-    for (const transferName of TRANSPORTS) {
+    for (const type of transportTypeList) {
       template += `
             <div class="event__type-item">
               <input
-                id="event-type-${transferName.toLowerCase()}-1"
+                id="event-type-${type.id}-1"
                 class="event__type-input  visually-hidden"
                 type="radio"
                 name="event-type"
-                value="${transferName}"
-                ${(transferName === type) ? `checked` : ``}>
+                value="${type.id}"
+                ${(type.id === selectedType) ? `checked` : ``}>
               <label
-                class="event__type-label  event__type-label--${transferName.toLowerCase()}"
-                for="event-type-${transferName.toLowerCase()}-1">${transferName}</label>
+                class="event__type-label  event__type-label--${type.id}"
+                for="event-type-${type.id}-1">${type.title}</label>
             </div>`;
     }
 
@@ -276,19 +304,19 @@ export default class EventFormView extends UpdatableView {
           <fieldset class="event__type-group">
             <legend class="visually-hidden">Activity</legend>`;
 
-    for (const activityName of STOPS) {
+    for (const type of stopTypeList) {
       template += `
             <div class="event__type-item">
               <input
-                id="event-type-${activityName.toLowerCase()}-1"
+                id="event-type-${type.id}-1"
                 class="event__type-input  visually-hidden"
                 type="radio" name="event-type"
-                value="${activityName}"
-                ${(activityName === type) ? `checked` : ``}>
+                value="${type.id}"
+                ${(type.id === selectedType) ? `checked` : ``}>
               <label
-                class="event__type-label  event__type-label--${activityName.toLowerCase()}"
-                for="event-type-${activityName.toLowerCase()}-1">
-                  ${activityName}
+                class="event__type-label  event__type-label--${type.id}"
+                for="event-type-${type.id}-1">
+                  ${type.title}
               </label>
             </div>`;
     }
@@ -302,29 +330,29 @@ export default class EventFormView extends UpdatableView {
   }
 
   /**
-   * Шаблон инпута места назначения.
+   * Создание шаблона инпута места назначения.
    *
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   _makeDestinationSelector() {
-    const {id, type, city, isTransport} = this._event;
+    const selectedType = this._typeList.find((type) => type.id === this._point.type);
 
     let template = `
       <div class="event__field-group  event__field-group--destination">
-        <label class="event__label  event__type-output" for="event-destination-${id}">
-          ${type} ${(isTransport) ? `to` : `in`}
+        <label class="event__label  event__type-output" for="event-destination-${this._point.id}">
+          ${selectedType.title} ${(selectedType.isTransport) ? `to` : `in`}
         </label>
         <input
             class="event__input  event__input--destination"
-            id="event-destination-${id}"
+            id="event-destination-${this._point.id}"
             type="text"
             name="event-destination"
-            value="${he.encode(city)}"
-            list="destination-list-1">
-        <datalist id="destination-list-${id}">`;
+            value="${he.encode(this._point.destination)}"
+            list="destination-list-${this._point.id}">
+        <datalist id="destination-list-${this._point.id}">`;
 
-    CITIES.forEach((cityName) => {
-      template += `<option value="${cityName}"></option>`;
+    this._destinationList.forEach((destination) => {
+      template += `<option value="${destination.name}"></option>`;
     });
 
     template += `
@@ -335,15 +363,15 @@ export default class EventFormView extends UpdatableView {
   }
 
   /**
-   * Шаблон ввода времени.
+   * Создание шаблона ввода времени.
    *
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   _makeTimeInput() {
-    const {id} = this._event;
+    const {id} = this._point;
 
-    const beginTime = formatDate(this._event.beginTime, DATETIME_FORMAT);
-    const endTime = formatDate(this._event.endTime, DATETIME_FORMAT);
+    const beginTime = formatDate(this._point.beginTime, DATETIME_FORMAT);
+    const endTime = formatDate(this._point.endTime, DATETIME_FORMAT);
 
     return `
       <div class="event__field-group  event__field-group--time">
@@ -366,12 +394,12 @@ export default class EventFormView extends UpdatableView {
   }
 
   /**
-   * Шаблон ввода стоимости.
+   * Создание шаблона ввода стоимости.
    *
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   _makePriceInput() {
-    const {id, price} = this._event;
+    const {id, price} = this._point;
     return `
       <div class="event__field-group  event__field-group--price">
         <label class="event__label" for="event-price-${id}">
@@ -388,37 +416,42 @@ export default class EventFormView extends UpdatableView {
   }
 
   /**
-   * Шаблон списка специальных предложений.
+   * Создание шаблона списка специальных предложений.
    *
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   _makeOffersList() {
+    if (this._avalibleOfferList.length === 0) {
+      return ``;
+    }
+
     let template = `
         <section class="event__details">
           <section class="event__section  event__section--offers">
             <h3 class="event__section-title  event__section-title--offers">Offers</h3>
             <div class="event__available-offers">`;
 
-    this._offerList.forEach((offer) => {
-      if (this._event.isTransport !== offer.isTransport) {
-        return;
-      }
+    for (let i = 0; i < this._avalibleOfferList.length; i++) {
+      const isChecked = this._point.offers.some((offer) => {
+        return offer.title === this._avalibleOfferList[i].title &&
+               offer.price === this._avalibleOfferList[i].price;
+      });
 
       template += `
               <div class="event__offer-selector">
                 <input
                     class="event__offer-checkbox  visually-hidden"
-                    id="event-${this._event.id}-offer-${offer.id}"
+                    id="event-${this._point.id}-offer-${i}"
                     type="checkbox"
-                    name="event-${this._event.id}-offer"
-                    value="${offer.id}" ${(this._event.offers.indexOf(offer.id) >= 0) ? `checked` : ``}>
-                <label class="event__offer-label" for="event-${this._event.id}-offer-${offer.id}">
-                  <span class="event__offer-title">${offer.title}</span>
+                    name="event-${this._point.id}-offer"
+                    value="${this._avalibleOfferList[i].title}" ${isChecked ? `checked` : ``}>
+                <label class="event__offer-label" for="event-${this._point.id}-offer-${i}">
+                  <span class="event__offer-title">${this._avalibleOfferList[i].title}</span>
                   &plus;
-                  &euro;&nbsp;<span class="event__offer-price">${offer.price}</span>
+                  &euro;&nbsp;<span class="event__offer-price">${this._avalibleOfferList[i].price}</span>
                 </label>
               </div>`;
-    });
+    }
 
     template += `
             </div>
@@ -429,12 +462,12 @@ export default class EventFormView extends UpdatableView {
   }
 
   /**
-   * Шаблон кнопки добавления в избранное.
+   * Создание шаблона кнопки добавления в избранное.
    *
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   _makeFavoriteButton() {
-    const {id, isFavorite} = this._event;
+    const {id, isFavorite} = this._point;
 
     return `
       <input
@@ -455,16 +488,35 @@ export default class EventFormView extends UpdatableView {
   /**
    * Получение списка выбранных предложений.
    *
-   * @return {Array} - Массив с id выбранных предложений
+   * @return {Array} - Массив с объектами выбранных предложений.
    */
   _getSelectedOffers() {
-    const selectedOffers = this.element.querySelectorAll(`.event__available-offers input:checked`);
+    const selectedOfferList = this.element
+      .querySelectorAll(`.event__available-offers input:checked`);
     const newOffers = [];
-    for (const offer of selectedOffers) {
-      newOffers.push(parseInt(offer.value, 10));
+
+    for (const offerItem of selectedOfferList) {
+      const selectedOffer = this._avalibleOfferList.find((offer) => {
+        return offer.title === offerItem.value;
+      });
+      newOffers.push(selectedOffer);
     }
 
     return newOffers;
+  }
+
+  /**
+   * Получение списка доступных спец. предложений по типу.
+   *
+   * @param  {String} type - Типа события.
+   * @return {Array}       - Массив спец. предложений (пустой, если
+   *                         предложений нет).
+   */
+  _getAvalibleOffers(type) {
+    const offerTypeObject = this._offerList.find((offer) => {
+      return offer.type === type;
+    });
+    return offerTypeObject ? offerTypeObject.offers : [];
   }
 
   /**
@@ -507,11 +559,17 @@ export default class EventFormView extends UpdatableView {
       return false;
     }
 
-    return true;
+    if (this._destinationList.find((destinationObject) => {
+      return destinationObject.name === destination;
+    })) {
+      return true;
+    }
+
+    return false;
   }
 
   /**
-   * Вадидатор введеного времени начала события.
+   * Вадидатор введеного времени начала нахождения в точке.
    *
    * @param  {Date/String} beginTime - Значение точки назначения для проверки.
    * @return {Boolean}               - Результат проверки. True — если значение
@@ -522,7 +580,7 @@ export default class EventFormView extends UpdatableView {
       return false;
     }
 
-    const endTime = this.element.querySelector(`#event-end-time-${this._event.id}`).value;
+    const endTime = this.element.querySelector(`#event-end-time-${this._point.id}`).value;
     if (parseDate(endTime, DATETIME_FORMAT) > parseDate(beginTime, DATETIME_FORMAT)) {
       return true;
     }
@@ -531,7 +589,7 @@ export default class EventFormView extends UpdatableView {
   }
 
   /**
-   * Вадидатор введеного времени завершения события.
+   * Вадидатор введеного времени завершения нахождения в точке.
    *
    * @param  {Date/String} endTime   - Значение точки назначения для проверки.
    * @return {Boolean}               - Результат проверки. True — если значение
@@ -542,7 +600,7 @@ export default class EventFormView extends UpdatableView {
       return false;
     }
 
-    const beginTime = this.element.querySelector(`#event-start-time-${this._event.id}`).value;
+    const beginTime = this.element.querySelector(`#event-start-time-${this._point.id}`).value;
     if (parseDate(endTime, DATETIME_FORMAT) > parseDate(beginTime, DATETIME_FORMAT)) {
       return true;
     }
@@ -566,12 +624,12 @@ export default class EventFormView extends UpdatableView {
       return false;
     }
 
-    const beginTimeInput = this.element.querySelector(`#event-start-time-${this._event.id}`);
+    const beginTimeInput = this.element.querySelector(`#event-start-time-${this._point.id}`);
     if (!this._validateBeginTime(beginTimeInput.value)) {
       return false;
     }
 
-    const endTimeInput = this.element.querySelector(`#event-end-time-${this._event.id}`);
+    const endTimeInput = this.element.querySelector(`#event-end-time-${this._point.id}`);
     if (!this._validateEndTime(endTimeInput.value)) {
       return false;
     }
@@ -582,7 +640,7 @@ export default class EventFormView extends UpdatableView {
   /**
    * Обработчик закрытия формы редактирования.
    *
-   * @param  {Object} evt - Объект события в DOM.
+   * @param  {Event} evt - Объект события в DOM.
    */
   _closeHandler(evt) {
     evt.preventDefault();
@@ -592,7 +650,7 @@ export default class EventFormView extends UpdatableView {
   /**
    * Обработчик сабмита формы.
    *
-   * @param  {Object} evt - Объект события в DOM.
+   * @param  {Event} evt - Объект события в DOM.
    */
   _submitHandler(evt) {
     evt.preventDefault();
@@ -602,13 +660,13 @@ export default class EventFormView extends UpdatableView {
     }
 
     this.updateData({offers: this._getSelectedOffers()});
-    this._callback.submit(this._event);
+    this._callback.submit(this._point);
   }
 
   /**
    * Обработчик ввода места назначения
    *
-   * @param  {Object} evt - Объект события в DOM.
+   * @param  {Event} evt - Объект события в DOM.
    */
   _inputDestinationHandler(evt) {
     if (!this._validateDestination(evt.target.value)) {
@@ -616,18 +674,18 @@ export default class EventFormView extends UpdatableView {
       return;
     }
 
-    this.updateData({city: evt.target.value});
+    this.updateData({destination: evt.target.value});
     this._updateSubmitStatus(this._validateForm());
   }
 
   /**
-   * Обработчик ввода времени начала события. Используется и в качестве
-   * обработчика для инпута, и как коллбек для флэтпикера, поэтому зачение
-   * берется не из объекта события, а через запрос к DOM.
+   * Обработчик ввода времени начала нахождения в точке. Используется
+   * и в качестве обработчика для инпута, и как коллбек для флэтпикера,
+   * поэтому зачение берется не из объекта точки, а через запрос к DOM.
    */
   _inputBeginTimeHandler() {
     const inputBeginTime = this.element
-        .querySelector(`#event-start-time-${this._event.id}`).value;
+        .querySelector(`#event-start-time-${this._point.id}`).value;
 
     this.updateData({
       beginTime: parseDate(inputBeginTime, DATETIME_FORMAT)
@@ -637,13 +695,13 @@ export default class EventFormView extends UpdatableView {
   }
 
   /**
-   * Обработчик ввода времени окончания события. Используется и в качестве
-   * обработчика для инпута, и как коллбек для флэтпикера, поэтому зачение
-   * берется не из объекта события, а через запрос к DOM.
+   * Обработчик ввода времени окончания нахождения в точке. Используется
+   * и в качестве обработчика для инпута, и как коллбек для флэтпикера,
+   * поэтому зачение берется не из объекта точки, а через запрос к DOM.
    */
   _inputEndTimeHandler() {
     const inputEndTime = this.element
-        .querySelector(`#event-end-time-${this._event.id}`).value;
+        .querySelector(`#event-end-time-${this._point.id}`).value;
 
     this.updateData({
       endTime: parseDate(inputEndTime, DATETIME_FORMAT)
@@ -652,9 +710,9 @@ export default class EventFormView extends UpdatableView {
   }
 
   /**
-   * Обработчик ввода стоимости события.
+   * Обработчик ввода стоимости точки.
    *
-   * @param  {Object} evt - Объект события в DOM.
+   * @param  {Event} evt - Объект события в DOM.
    */
   _inputPriceHandler(evt) {
     if (!this._validatePrice(evt.target.value)) {
@@ -667,17 +725,22 @@ export default class EventFormView extends UpdatableView {
   }
 
   /**
-   * Обработчик выбора типа события.
+   * Обработчик выбора типа точки.
    *
-   * @param  {Object} evt - Объект события в DOM.
+   * @param  {Event} evt - Объект события в DOM.
    */
   _selectTypeHandler(evt) {
-    const eventIcon = this.element.querySelector(`.event__type-icon`);
-    eventIcon.setAttribute(`src`, `img/icons/${evt.target.value.toLowerCase()}.png`);
+    const selectedType = this._typeList.find((type) => type.id === evt.target.value);
+
+    const typeIcon = this.element.querySelector(`.event__type-icon`);
+    typeIcon.setAttribute(`src`, selectedType.icon);
     this.updateData({
-      type: evt.target.value,
-      isTransport: TRANSPORTS.indexOf(evt.target.value) >= 0
+      type: selectedType.id,
+      isTransport: selectedType.isTransport
     });
+
+    this._avalibleOfferList = this._getAvalibleOffers(selectedType.id);
+
     this.updateElement();
   }
 
@@ -692,17 +755,17 @@ export default class EventFormView extends UpdatableView {
   /**
    * Обработчик нажатия на кнопку удаления.
    *
-   * @param  {Object} evt - Объект события в DOM.
+   * @param  {Event} evt - Объект события в DOM.
    */
   _deleteHandler() {
-    this._callback.delete(this._event);
+    this._callback.delete(this._point);
   }
 
   /**
    * Обработчик добавления/удаления из избранного.
    */
   _toggleFavoriteHandler() {
-    this.updateData({isFavorite: !this._event.isFavorite});
+    this.updateData({isFavorite: !this._point.isFavorite});
     this._callback.toggleFavorite();
   }
 }

@@ -15,6 +15,7 @@ export default class SortingView extends AbstractView {
 
   /**
    * Геттер шаблона заголовков сортировки таблицы.
+   *
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   get template() {
@@ -55,8 +56,8 @@ export default class SortingView extends AbstractView {
    *
    * @param  {Function} callback - Коллбек сортировки.
    */
-  set sortEventsHandler(callback) {
-    this._callback.sortEvents = callback;
+  set sortPointsHandler(callback) {
+    this._callback.sortPoints = callback;
     const sortingLabels = this.element.querySelectorAll(`.trip-sort__btn`);
     sortingLabels.forEach((label) => {
       label.addEventListener(`click`, this._sortHandler);
@@ -67,10 +68,10 @@ export default class SortingView extends AbstractView {
   /**
    * Обработчик нажатия на заголовок для сортровки.
    *
-   * @param  {Object} evt - Объект события в DOM.
+   * @param  {Event} evt - Объект события в DOM.
    */
   _sortHandler(evt) {
-    this._callback.sortEvents(evt.target.getAttribute(`for`));
+    this._callback.sortPoints(evt.target.getAttribute(`for`));
 
     const dayColumn = this.element.querySelector(`.trip-sort__item--day`);
 
@@ -83,6 +84,7 @@ export default class SortingView extends AbstractView {
 
   /**
    * Проверка показывать ли заголовок стобца Day.
+   *
    * @param  {String}  selectedSorting - Id выбранной сортировки.
    * @return {Boolean}                 - True если нужно показывать,
    *                                     False — если нет.

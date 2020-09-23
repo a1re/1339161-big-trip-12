@@ -1,25 +1,32 @@
-import {getRandomInt, generateId} from "../utils/common.js";
+import {getRandomInt} from "../utils/common.js";
 
-const transportOfferTitles = [`Add luggage`, `Comfort class`, `Add meal`, `Choose seats`, `Travel by train`];
-const stopOfferTitles = [`Add breakfast`, `Book tickets`, `Lunch in the city`];
+const titles = [
+  `Add luggage`, `Comfort class`, `Add meal`,
+  `Choose seats`, `Travel by train`, `Add breakfast`,
+  `Book tickets`, `Lunch in the city`
+];
 
-export const generateOffers = () => {
+const getRandomOffers = () => {
+  const randomTitles = titles.slice().sort(() => Math.random() - 0.5);
+  const randomAmount = getRandomInt(1, randomTitles.length);
+  const randomOffers = [];
+
+  for (let i = 0; i < randomAmount; i++) {
+    randomOffers.push({
+      title: randomTitles[i],
+      price: getRandomInt(5, 100)
+    });
+  }
+
+  return randomOffers;
+};
+
+export const generateOffers = (typeList) => {
   const offers = [];
-  transportOfferTitles.forEach((offer) => {
-    offers.push({
-      id: generateId(),
-      title: offer,
-      price: getRandomInt(5, 100),
-      isTransport: true
-    });
-  });
-  stopOfferTitles.forEach((offer) => {
-    offers.push({
-      id: generateId(),
-      title: offer,
-      price: getRandomInt(5, 100),
-      isTransport: false
-    });
+  typeList.forEach((type) => {
+    offers.push({type: type.id, offers: getRandomOffers()});
   });
   return offers;
 };
+
+

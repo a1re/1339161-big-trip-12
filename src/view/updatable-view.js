@@ -1,14 +1,16 @@
 import AbstractView from "./abstract-view.js";
 
 export default class UpdatableView extends AbstractView {
+  /**
+   * Конструктор асбтрактного класса обновляемого отбражения для форм
+   * добавления и редактирования точки.
+   */
   constructor() {
     super();
   }
 
   /**
    * Перерисовка шаблона.
-   *
-   * @return {void}
    */
   updateElement() {
     let prevElement = this.element;
@@ -22,10 +24,18 @@ export default class UpdatableView extends AbstractView {
     this.setHandlers();
   }
 
+  /**
+   * Интерфейс обновления данных (абстрактный метод, его необходимо
+   * переопределить в дочернем классе).
+   */
   updateData() {
     throw new Error(`Abstract method not implemented: updateData`);
   }
 
+  /**
+   * Интерфейс установки обработчиков (абстрактный метод, его необходимо
+   * переопределить в дочернем классе).
+   */
   setHandlers() {
     throw new Error(`Abstract method not implemented: setHandlers`);
   }
