@@ -35,7 +35,7 @@ const typesModel = new TypesModel(types);
 const pointsModel = new PointsModel(pointList, typesModel.getList());
 const offersModel = new OffersModel(offerList);
 const sortingsModel = new SortingsModel(sortings);
-const filtersModel = new FiltersModel(filters);
+const filtersModel = new FiltersModel(filters, pointsModel);
 
 const headerElement = document.querySelector(`.trip-main`);
 const pageContainerElement = document.querySelector(`.page-main .page-body__container`);

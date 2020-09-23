@@ -27,9 +27,9 @@ export default class FiltersView extends AbstractView {
                   id="${filter.id}"
                   class="trip-filters__filter-input  visually-hidden"
                   type="radio" name="trip-filter"
-                  value="${filter.id}" ${filter.isActive ? `checked` : ``}>
+                  value="${filter.id}" ${filter.isActive ? `checked` : ``} disabled>
                 <label
-                  class="trip-filters__filter-label"
+                  class="trip-filters__filter-label ${filter.count === 0 ? `trip-filters__filter-label--disabled` : ``}"
                   for="${filter.id}">${filter.title}</label>
               </div>`;
     });

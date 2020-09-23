@@ -9,37 +9,35 @@ export default class FiltersModel extends Observer {
   /**
    * Конструктор класса
    *
-   * @param  {Array} filterList - Массив со списком видов фильтраций.
+   * @param  {Array} filterList     - Массив со списком видов фильтраций.
+   * @param  {Observer} pointsModel - Модель списка точек.
    */
-  constructor(filterList = []) {
+  constructor(filterList, pointsModel) {
     super();
-    this._filterMap = new Map();
+    this._pointsModel = pointsModel;
     this._activeFilter = null;
-    this._defaultFilter = null;
+    this._defaultFilter = filterList.find((filter) => filter.isDefault).id;
+    this._filterMap = new Map();
     filterList.forEach((filter) => {
-      this._filterMap.set(filter.id, Object.assign({}, filter));
-      if (filter.isDefault) {
-        this._defaultFilter = filter.id;
-      }
+      this._filterMap.set(filter.id, Object.assign({}, filter, {
+        count: this._countPoints(filter.callback)
+      }));
     });
+
+    this._updateCounters = this._updateCounters.bind(this);
+
+    this._pointsModel.subscribe(this._updateCounters);
     this.reset();
   }
 
   /**
-   * Геттер списка доступных фильтраций в виде массива.
+   * Подсчет количества точек по фильтру.
    *
-   * @return {Array} - Массив со списком точек.
+   * @param  {Function} filter - Функция фильтрации для списка точек.
+   * @return {Number}          - Количество точек после фильтрации.
    */
-  get list() {
-    const filterList = [];
-    this._filterMap.forEach((filter) => {
-      filterList.push({
-        id: filter.id,
-        title: filter.title,
-        isActive: filter.id === this.active
-      });
-    });
-    return filterList;
+  _countPoints(filter) {
+    return this._pointsModel.pointList.filter(filter).length;
   }
 
   /**
@@ -52,8 +50,10 @@ export default class FiltersModel extends Observer {
       throw new Error(`Unknown filter ${filterId}`);
     }
 
-    this._activeFilter = filterId;
-    this._notify(UpdateMode.MAJOR);
+    if (this._filterMap.get(filterId).count > 0) {
+      this._activeFilter = filterId;
+      this._notify(UpdateMode.MAJOR);
+    }
   }
 
   /**
@@ -89,5 +89,33 @@ export default class FiltersModel extends Observer {
     }
     this._activeFilter = this._defaultFilter;
     this._notify(UpdateMode.MAJOR);
+  }
+
+  /**
+   * Геттер списка доступных фильтраций в виде массива.
+   *
+   * @return {Array} - Массив со списком точек.
+   */
+  get list() {
+    const filterList = [];
+    this._filterMap.forEach((filter) => {
+      filterList.push({
+        id: filter.id,
+        title: filter.title,
+        count: filter.count,
+        isActive: filter.id === this.active
+      });
+    });
+    return filterList;
+  }
+
+  /**
+   * Обновление количества точек во всех фльтрах.
+   */
+  _updateCounters() {
+    for (const [filterId, filter] of this._filterMap) {
+      filter.count = this._countPoints(filter.callback);
+      this._filterMap.set(filterId, filter);
+    }
   }
 }
