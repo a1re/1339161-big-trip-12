@@ -44,7 +44,7 @@ export default class EventSummaryView extends AbstractView {
             <h3 class="event__title">
               ${this._type.title}
               ${(this._type.isTransport) ? `to` : `in`}
-              ${he.encode(this._event.city)}
+              ${he.encode(this._event.destination)}
             </h3>
 
             ${scheduleElement}

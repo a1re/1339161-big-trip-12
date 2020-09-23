@@ -13,16 +13,18 @@ export default class EventPresenter {
    * @param  {Node} eventListContainer      - Контейнер для вставки события
    * @param  {Object} eventData             - Объект с данными события
    * @param  {Observer} eventsModel         - Модель для работы с событиями.
-   * @param  {Observer} typesModel          - Модель для работы с типами событий.
-   * @param  {Observer} offersModel         - Модель для работы с спец. предложениями.
+   * @param  {Object} destinationsModel     - Модель для работы с городами.
+   * @param  {Object} typesModel            - Модель для работы с типами событий.
+   * @param  {Object} offersModel           - Модель для работы с спец. предложениями.
    * @param  {Function} switchAllEventsMode - Метод переключючения режима всех
    *                                          событий маршрута.
    */
-  constructor(eventListContainer, eventData, eventsModel, typesModel, offersModel, switchAllEventsMode) {
+  constructor(eventListContainer, eventData, eventsModel, destinationsModel, typesModel, offersModel, switchAllEventsMode) {
     this._eventListContainer = eventListContainer;
     this._event = eventData;
 
     this._eventsModel = eventsModel;
+    this._destinationsModel = destinationsModel;
     this._typesModel = typesModel;
     this._offersModel = offersModel;
     this._switchAllEventsMode = switchAllEventsMode;
@@ -122,6 +124,7 @@ export default class EventPresenter {
       this._eventFormComponent = new EventFormView(
           this._offersModel.getList(),
           this._typesModel.getList(),
+          this._destinationsModel.getList(),
           this._event
       );
 

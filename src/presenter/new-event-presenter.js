@@ -8,14 +8,16 @@ export default class NewEventPresenter {
   /**
    * Конструктор презентера новой точки маршрута
    *
-   * @param  {Node} dayListElement  - Узел DOM, относительно которого нужно
-   *                                  разместить форму.
-   * @param  {Observer} eventsModel - Модель событий.
-   * @param  {Observer} typesModel  - Модель типов событий.
-   * @param  {Observer} offersModel - Модель спец. предложений.
+   * @param  {Node} dayListElement      - Узел DOM, относительно которого нужно
+   *                                      разместить форму.
+   * @param  {Observer} eventsModel     - Модель для работы с cобытиями
+   * @param  {Object} destinationsModel - Модель для работы с городами.
+   * @param  {Object} typesModel        - Модель для работы с типами событий
+   * @param  {Object} offersModel       - Модель для работы со спец. предложениями.
    */
-  constructor(dayListElement, eventsModel, typesModel, offersModel) {
+  constructor(dayListElement, eventsModel, destinationsModel, typesModel, offersModel) {
     this._eventsModel = eventsModel;
+    this._destinationsModel = destinationsModel;
     this._offersModel = offersModel;
     this._typesModel = typesModel;
 
@@ -55,7 +57,8 @@ export default class NewEventPresenter {
   _createElement() {
     this._eventFormComponent = new EventFormView(
         this._offersModel.getList(),
-        this._typesModel.getList()
+        this._typesModel.getList(),
+        this._destinationsModel.getList()
     );
 
     this._closeFormByEsc = new EscHandler(this.destroy);

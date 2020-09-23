@@ -1,4 +1,4 @@
-import {CITIES, DATETIME_FORMAT, DEFAULT_FLATPICKR_SETTINGS} from "../const.js";
+import {DATETIME_FORMAT, DEFAULT_FLATPICKR_SETTINGS} from "../const.js";
 import {getRandomInt, generateId, formatDate, isValidDate, parseDate} from "../utils/common.js";
 import UpdatableView from "./updatable-view.js";
 
@@ -16,18 +16,19 @@ export default class EventFormView extends UpdatableView {
   /**
    * Конструктор класса отображения формы добавления/редактирования события.
    *
-   * @param  {Array} offerList - Массив со списком спц. предложений.
-   * @param  {Array} typeList  - Массив со списком типов событий.
-   * @param  {Object} [event]  - Объект с информацие о событии, если это
-   *                             форма редактирования, а не добавления.
+   * @param  {Array} offerList        - Массив со списком спц. предложений.
+   * @param  {Array} typeList         - Массив со списком типов событий.
+   * @param  {Array} destinationList  - Массив со списком типов гороодв.
+   * @param  {Object} [event]         - Объект с информацие о событии, если это
+   *                                    форма редактирования, а не добавления.
    */
-  constructor(offerList, typeList, event = null) {
+  constructor(offerList, typeList, destinationList, event = null) {
     super();
     if (!event) {
       const randomType = typeList[getRandomInt(0, typeList.length - 1)];
       this._event = {
         id: generateId(),
-        city: ``,
+        destination: ``,
         type: randomType.id,
         beginTime: moment().startOf(`hour`).toDate(),
         endTime: moment().startOf(`hour`).add(2, `hours`).toDate(),
@@ -51,6 +52,7 @@ export default class EventFormView extends UpdatableView {
     this._endTimePicker = null;
     this._offerList = offerList;
     this._typeList = typeList;
+    this._destinationList = destinationList;
 
     this._closeHandler = this._closeHandler.bind(this);
     this._submitHandler = this._submitHandler.bind(this);
@@ -337,12 +339,12 @@ export default class EventFormView extends UpdatableView {
             id="event-destination-${this._event.id}"
             type="text"
             name="event-destination"
-            value="${he.encode(this._event.city)}"
+            value="${he.encode(this._event.destination)}"
             list="destination-list-${this._event.id}">
         <datalist id="destination-list-${this._event.id}">`;
 
-    CITIES.forEach((cityName) => {
-      template += `<option value="${cityName}"></option>`;
+    this._destinationList.forEach((destination) => {
+      template += `<option value="${destination.name}"></option>`;
     });
 
     template += `

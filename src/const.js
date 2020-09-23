@@ -1,5 +1,3 @@
-export const CITIES = [`Amsterdam`, `Geneva`, `Chamonix`, `Saint Petersburg`];
-
 export const MAX_OFFERS_TO_SHOW = 3;
 
 export const UpdateMode = {

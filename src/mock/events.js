@@ -1,4 +1,3 @@
-import {CITIES} from "../const.js";
 import {types} from "../utils/types.js";
 import {getRandomInt, generateId} from "../utils/common.js";
 
@@ -24,46 +23,6 @@ const EVENT_OFFERS_MAX = 5;
 const EVENT_BASIC_PRICE_MIN = 30;
 const EVENT_BASIC_PRICE_MAX = 120;
 const EVENT_BASIC_PRICE_DIV = 5;
-
-// Мин. и макс. кол-во фотографий
-const TRIP_DESC_PHOTOS_MIN = 1;
-const TRIP_DESC_PHOTOS_MAX = 5;
-
-// Мин. и макс. кол-во предложений в описании
-const TRIP_DESC_SENTENCES_MIN = 1;
-const TRIP_DESC_SENTENCES_MAX = 5;
-
-// Рыбный текст для генерации описания
-const TRIP_DESC_TEXT = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. `
-  + `Cras aliquet varius magna, non porta ligula feugiat eget. Fusce tristique `
-  + `felis at fermentum pharetra. Aliquam id orci ut lectus varius viverra. Nullam `
-  + `nunc ex, convallis sed finibus eget, sollicitudin eget ante. Phasellus eros `
-  + `mauris, condimentum sed nibh vitae, sodales efficitur ipsum. Sed blandit, `
-  + `eros vel aliquam faucibus, purus ex euismod diam, eu luctus nunc ante ut dui. `
-  + `Sed sed nisi sed augue convallis suscipit in sed felis. Aliquam erat volutpat. `
-  + `Nunc fermentum tortor ac porta dapibus. In rutrum ac purus sit amet tempus.`;
-
-/**
- * Генерация описания из рыбного текста. Технология простая — берется базовый рыбный
- * текст, делится на предложения с помощью split, затем собирается обратно, выдергивая
- * из массива по случайному предложению и собирается обратно в строку. Есть два бага —
- * может вернуться текст с одинаковыми предложениями (или даже и вовсе состоящий из пяти
- * одинаковых предложенй подряд) и в конце последнего предложения из исходного текста
- * будет оказываться двойная точка. Кажется, это довольно несущественные вещи, чтобы
- * их править в генерации моков.
- *
- * @return {string} - случайное описание.
- */
-const generateDescription = () => {
-  const sentencesAmount = getRandomInt(TRIP_DESC_SENTENCES_MIN, TRIP_DESC_SENTENCES_MAX);
-  const sentencesList = TRIP_DESC_TEXT.split(`. `);
-  const sentencesSelected = [];
-  for (let i = 0; i < sentencesAmount; i++) {
-    sentencesSelected.push(sentencesList[getRandomInt(0, sentencesList.length - 1)] + `.`);
-  }
-
-  return sentencesSelected.join(` `);
-};
 
 /**
  * Генерация начала путешествия. Выбирает дату относительно текущего момента
@@ -108,7 +67,7 @@ const getAppliedOffers = (offerList, isTransfer) => {
   return appliedOfferList;
 };
 
-export const generateEvents = (eventsAmount, offerList) => {
+export const generateEvents = (eventsAmount, offerList, destinationList) => {
   const transports = types.filter((type) => type.isTransport).map((type) => type.id);
   const stops = types.filter((type) => !type.isTransport).map((type) => type.id);
 
@@ -117,7 +76,7 @@ export const generateEvents = (eventsAmount, offerList) => {
   const avgEventsPerDay = eventsAmount / tripDuration; // Среднее количество событий в день
   const activeHours = EVENT_HOURS_MAX - EVENT_HOURS_MIN; // Исключение ночных часов для реалистичности
 
-  let currentCity = CITIES[getRandomInt(0, CITIES.length - 1)]; // Изначальная точку маршрута
+  let currentCity = destinationList[getRandomInt(0, destinationList.length - 1)]; // Изначальная точку маршрута
   let transfersLeft = MAX_TRANSFERS_PER_DAY; // Огранчение трансферов, чтобы на 15 событий не вышло 15 переездов
 
   const events = [];
@@ -167,18 +126,12 @@ export const generateEvents = (eventsAmount, offerList) => {
       // нет — остается старый город и тип выбирается из остановок
       let type;
       if (isTransfer) {
-        const remainedCities = CITIES.filter((element) => !(element === currentCity));
+        const remainedCities = destinationList.filter((element) => !(element === currentCity));
         currentCity = remainedCities[getRandomInt(0, remainedCities.length - 1)];
         type = transports[getRandomInt(0, transports.length - 1)];
         transfersLeft--;
       } else {
         type = stops[getRandomInt(0, stops.length - 1)];
-      }
-
-      const photosAmount = getRandomInt(TRIP_DESC_PHOTOS_MIN, TRIP_DESC_PHOTOS_MAX);
-      const photos = [];
-      for (let i = 0; i < photosAmount; i++) {
-        photos.push(`http://picsum.photos/248/152?r=` + getRandomInt(10, 100));
       }
 
       // Рандомизация базовой стоимости
@@ -187,11 +140,10 @@ export const generateEvents = (eventsAmount, offerList) => {
       // Итоговый объект
       const eventInfo = {
         id: generateId(),
-        city: currentCity,
+        destination: currentCity,
         type,
         beginTime,
         endTime,
-        description: generateDescription(),
         price,
         offers: getAppliedOffers(offerList, isTransfer),
         isFavorite: false

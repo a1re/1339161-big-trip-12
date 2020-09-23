@@ -14,17 +14,19 @@ export default class TripPresenter {
    * Конструктор презентера. Заведение экземпляров отображений и установка
    * ключевого узла DOM для рендеринга компонентов.
    *
-   * @param  {Node} container         - Узел документа для презентера.
-   * @param  {Observer} eventsModel   - Модель для работы с событиями.
-   * @param  {Object} typesModel      - Модель для работы с типамм событий.
-   * @param  {Object} offersModel     - Модель для работы с спец. предложениями.
-   * @param  {Observer} filtersModel  - Модель для работы с фильтрациями.
-   * @param  {Observer} sortingsModel - Модель для работы с сортировками.
+   * @param  {Node} container           - Узел документа для презентера.
+   * @param  {Observer} eventsModel     - Модель для работы с событиями.
+   * @param  {Object} destinationsModel - Модель для работы с городами.
+   * @param  {Object} typesModel        - Модель для работы с типамм событий.
+   * @param  {Object} offersModel       - Модель для работы с спец. предложениями.
+   * @param  {Observer} filtersModel    - Модель для работы с фильтрациями.
+   * @param  {Observer} sortingsModel   - Модель для работы с сортировками.
    */
-  constructor(container, eventsModel, typesModel, offersModel, filtersModel, sortingsModel) {
+  constructor(container, eventsModel, destinationsModel, typesModel, offersModel, filtersModel, sortingsModel) {
     this._container = container;
 
     this._eventsModel = eventsModel;
+    this._destinationsModel = destinationsModel;
     this._typesModel = typesModel;
     this._offersModel = offersModel;
     this._sortingsModel = sortingsModel;
@@ -86,6 +88,7 @@ export default class TripPresenter {
     this._newEventPresenter = new NewEventPresenter(
         this._dayListComponent.element,
         this._eventsModel,
+        this._destinationsModel,
         this._typesModel,
         this._offersModel,
         this._switchAllEventsMode
@@ -188,6 +191,7 @@ export default class TripPresenter {
               dayComponent.eventsContainer,
               event,
               this._eventsModel,
+              this._destinationsModel,
               this._typesModel,
               this._offersModel,
               this._switchAllEventsMode

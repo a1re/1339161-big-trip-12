@@ -65,21 +65,21 @@ export default class TripInfoView extends AbstractView {
     }
 
     const uniquePoints = this._eventList.filter((element, index, array) => {
-      return index === 0 || element.city !== array[index - 1].city;
+      return index === 0 || element.destination !== array[index - 1].destination;
     });
 
     if (uniquePoints.length === 1) {
-      return he.encode(uniquePoints[0].city);
+      return he.encode(uniquePoints[0].destination);
     }
 
     const route = [];
-    route.push(he.encode(uniquePoints[0].city));
+    route.push(he.encode(uniquePoints[0].destination));
     if (uniquePoints.length === 3) {
-      route.push(he.encode(uniquePoints[1].city));
+      route.push(he.encode(uniquePoints[1].destination));
     } else if (uniquePoints.length > 3) {
       route.push(`...`);
     }
-    route.push(uniquePoints[uniquePoints.length - 1].city);
+    route.push(uniquePoints[uniquePoints.length - 1].destination);
 
     return route.join(` &mdash; `);
   }
