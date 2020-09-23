@@ -4,7 +4,8 @@ import he from "he";
 
 export default class TripInfoView extends AbstractView {
   /**
-   * Конструктор отображения
+   * Конструктор отображения информации о маршруте.
+   *
    * @param  {Array} pointList - Список всех точек.
    * @param  {Array} offerList - Список всех спец. предложений.
    */
@@ -15,7 +16,9 @@ export default class TripInfoView extends AbstractView {
   }
 
   /**
-   * Геттер шаблона.
+   * Геттер шаблона отображения информации о маршруте.
+   *
+   * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   get template() {
     const totalPrice = this._getTotalPrice();
@@ -34,7 +37,7 @@ export default class TripInfoView extends AbstractView {
   }
 
   /**
-   * Подсчет стоимости поездки по списку событий (включая доп. опции).
+   * Подсчет стоимости поездки по списку точек (включая доп. опции).
    *
    * @return {Number} - Итоговая стоимость.
    */
@@ -52,7 +55,7 @@ export default class TripInfoView extends AbstractView {
   }
 
   /**
-   * Опеределние общего маршрута по списку событий.
+   * Опеределние общего маршрута по списку точек.
    *
    * @return {string} - Итоговый маршрут.
    */
@@ -82,7 +85,7 @@ export default class TripInfoView extends AbstractView {
   }
 
   /**
-   * Опеределние дат начала и конца путешествия по списку событий. В случае,
+   * Опеределние дат начала и конца путешествия по списку точек. В случае,
    * если даты остаются в рамках одного месяца, он пишется только один раз,
    * в конце (т.е. `30 MAR - 2 APR` или `28 - 30 MAR`);
    *

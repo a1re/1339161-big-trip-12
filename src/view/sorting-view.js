@@ -15,6 +15,7 @@ export default class SortingView extends AbstractView {
 
   /**
    * Геттер шаблона заголовков сортировки таблицы.
+   *
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   get template() {
@@ -67,7 +68,7 @@ export default class SortingView extends AbstractView {
   /**
    * Обработчик нажатия на заголовок для сортровки.
    *
-   * @param  {Object} evt - Объект события в DOM.
+   * @param  {Event} evt - Объект события в DOM.
    */
   _sortHandler(evt) {
     this._callback.sortPoints(evt.target.getAttribute(`for`));
@@ -83,6 +84,7 @@ export default class SortingView extends AbstractView {
 
   /**
    * Проверка показывать ли заголовок стобца Day.
+   *
    * @param  {String}  selectedSorting - Id выбранной сортировки.
    * @return {Boolean}                 - True если нужно показывать,
    *                                     False — если нет.

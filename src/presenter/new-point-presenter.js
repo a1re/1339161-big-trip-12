@@ -12,7 +12,7 @@ export default class NewPointPresenter {
    *                                      разместить форму.
    * @param  {Observer} pointsModel     - Модель для работы с cобытиями
    * @param  {Object} destinationsModel - Модель для работы с городами.
-   * @param  {Object} typesModel        - Модель для работы с типами событий
+   * @param  {Object} typesModel        - Модель для работы с типами точек.
    * @param  {Object} offersModel       - Модель для работы со спец. предложениями.
    */
   constructor(dayListElement, pointsModel, destinationsModel, typesModel, offersModel) {
@@ -35,7 +35,7 @@ export default class NewPointPresenter {
   }
 
   /**
-   * Удаление формы создания события.
+   * Удаление формы создания точки.
    */
   destroy() {
     if (this._pointFormComponent) {
@@ -50,7 +50,7 @@ export default class NewPointPresenter {
   }
 
   /**
-   * Создаение элементы формы создания события.
+   * Создаение элементы формы создания точки.
    *
    * @return {Node} - Элемент DOM, доступный для вставки в документ.
    */
@@ -69,7 +69,7 @@ export default class NewPointPresenter {
   }
 
   /**
-   * Добавление нового события через сабмит формы.
+   * Добавление новой точки через сабмит формы.
    *
    * @param  {Object} pointData - Данные формы для сохранения.
    */

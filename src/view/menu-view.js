@@ -2,7 +2,7 @@ import AbstractView from "./abstract-view.js";
 
 export default class MenuView extends AbstractView {
   /**
-   * Конструктор класса отображения меню.
+   * Конструктор отображения меню.
    */
   constructor() {
     super();

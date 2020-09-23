@@ -11,9 +11,9 @@ export default class HeaderPresenter {
    * ключевого узла DOM для рендеринга компонентов.
    *
    * @param  {Node} container        - Узел документа для презентера.
-   * @param  {Observer} pointsModel  - Модель для работы с событиями.
+   * @param  {Observer} pointsModel  - Модель для работы с точками.
    * @param  {Observer} filtersModel - Модель для работы с фильтрациями.
-   * @param  {Function} displayTable - Коллбек открытия списка событий.
+   * @param  {Function} displayTable - Коллбек открытия списка точек.
    * @param  {Function} displayStats - Коллбек открытия статистики.
    */
   constructor(container, pointsModel, filtersModel, displayTable, displayStats) {
@@ -29,7 +29,7 @@ export default class HeaderPresenter {
     this._menuComponent = null;
 
     this._updatePresenter = this._updatePresenter.bind(this);
-    this._filterEvents = this._filterEvents.bind(this);
+    this._filterPoints = this._filterPoints.bind(this);
 
     this._menuContainer = container.querySelector(`.trip-controls h2:first-child`);
     this._filtersContainer = container.querySelector(`.trip-controls h2:last-child`);
@@ -93,7 +93,7 @@ export default class HeaderPresenter {
    */
   _renderFilters() {
     this._filtersComponent = new FiltersView(this._filtersModel.list);
-    this._filtersComponent.filterEventsHandler = this._filterEvents;
+    this._filtersComponent.filterPointsHandler = this._filterPoints;
     render(this._filtersContainer, this._filtersComponent, RenderPosition.AFTEREND);
   }
 
@@ -108,12 +108,11 @@ export default class HeaderPresenter {
   }
 
   /**
-   * Хендлер для метода фильтрации событий.
+   * Хендлер для метода фильтрации точек.
    *
    * @param  {String} filterId - Id метода фильтрации.
-   * @return {void}
    */
-  _filterEvents(filterId) {
+  _filterPoints(filterId) {
     if (this._filtersModel.active === filterId) {
       return;
     }

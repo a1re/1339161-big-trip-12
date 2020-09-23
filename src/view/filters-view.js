@@ -1,6 +1,11 @@
 import AbstractView from "./abstract-view.js";
 
 export default class FiltersView extends AbstractView {
+  /**
+   * Конструктор отображения списка фильтров.
+   *
+   * @param  {Array} filterList - Список фильтров для вывода.
+   */
   constructor(filterList) {
     super();
 
@@ -8,6 +13,11 @@ export default class FiltersView extends AbstractView {
     this._filterList = filterList;
   }
 
+  /**
+   * Геттер шаблона списка фильтров.
+   *
+   * @return {String} - Шаблон в виде строки с HTML-кодом.
+   */
   get template() {
     let template = `<form class="trip-filters" action="#" method="get">`;
 
@@ -29,8 +39,12 @@ export default class FiltersView extends AbstractView {
 
     return template;
   }
-
-  set filterEventsHandler(callback) {
+  /**
+   * Сеттер обработчика клика на фильтр.
+   *
+   * @param  {Function} callback - Коллбек по нажатию на фильтр.
+   */
+  set filterPointsHandler(callback) {
     this._callback.filterEvents = callback;
     const filterLabels = this.element.querySelectorAll(`.trip-filters__filter-label`);
     filterLabels.forEach((label) => {
@@ -38,6 +52,11 @@ export default class FiltersView extends AbstractView {
     });
   }
 
+  /**
+   * Обработчик нажатия на фильтр.
+   *
+   * @param  {Event} evt - Объект события в DOM.
+   */
   _filterHandler(evt) {
     this._callback.filterEvents(evt.target.getAttribute(`for`));
   }

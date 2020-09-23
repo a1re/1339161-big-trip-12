@@ -9,10 +9,10 @@ import he from "he";
 
 export default class PointSummaryView extends AbstractView {
   /**
-   * Конструктор класса отображения краткой сводки о собыиии..
+   * Конструктор класса отображения краткой сводки о точке
    *
-   * @param  {Object} type     - Объект с описанием типа события.
-   * @param  {Object} point    - Объект с данными события.
+   * @param  {Object} type     - Объект с описанием типа точки.
+   * @param  {Object} point    - Объект с данными точки.
    */
   constructor(type, point) {
     super();
@@ -24,7 +24,9 @@ export default class PointSummaryView extends AbstractView {
   }
 
   /**
-   * Геттер шаблона отобрадения.
+   * Геттер шаблона отображения.
+   *
+   * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   get template() {
     const priceElement = this._makePriceElement();
@@ -60,7 +62,7 @@ export default class PointSummaryView extends AbstractView {
   }
 
   /**
-   * Сеттер коллбека открытия формы редактирования.
+   * Сеттер обработчика открытия формы редактирования.
    *
    * @param  {Function} callback - Коллбек открытия формы редактирования.
    */
@@ -71,7 +73,7 @@ export default class PointSummaryView extends AbstractView {
   }
 
   /**
-   * Подготовка элемента вывода временных рамок события.
+   * Создание шаблона элемента вывода временных рамок нахождения в точке.
    *
    * @return {String} - HTML-строка с шаблоном для создания элемента.
    */
@@ -95,7 +97,7 @@ export default class PointSummaryView extends AbstractView {
   }
 
   /**
-   * Подготовка элемента вывода временных рамок события.
+   * Создание шаблона элемента вывода стоимости точки
    *
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
@@ -108,7 +110,7 @@ export default class PointSummaryView extends AbstractView {
   }
 
   /**
-   * Подготовка элемента вывода выбранных спец. предложений для события.
+   * Создание шаблона элемента вывода выбранных спец. предложений для точки.
    *
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
@@ -137,13 +139,10 @@ export default class PointSummaryView extends AbstractView {
   }
 
   /**
-   * Вычисление длительности события по времени начала и конца. Чтобы не
-   * потеряться в часовых поясах, вычисление примитивно-математическое —
-   * вначале берутся таймстемпы обеих дат, вычисляется разница между ними,
-   * затем поочереди делится на целые дни, целые часы и целые минуты.
+   * Вычисление длительности нахождения в точке по времени начала и конца.
    *
-   * @return {String}         - Длительность события в формате строки вида
-   *                           `01D 02H 03M`
+   * @return {String} - Длительность нахождения в точке в формате строки
+   *                    вида `01D 02H 03M`
    */
   _getDuration() {
     const beginMoment = moment(this._point.beginTime);
@@ -175,9 +174,9 @@ export default class PointSummaryView extends AbstractView {
   }
 
   /**
-   * Обработчик открытия формы редактирования события.
+   * Обработчик открытия формы редактирования точки.
    *
-   * @param  {Object} evt - Объект события в DOM.
+   * @param  {Event} evt - Объект события в DOM.
    */
   _openHandler(evt) {
     evt.preventDefault();

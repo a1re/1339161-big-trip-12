@@ -10,18 +10,17 @@ export default class PointPresenter {
    * Конструктор презентера. Заведение экземпляров отображений и установка
    * ключевого узла DOM для рендеринга компонентов.
    *
-   * @param  {Node} pointListContainer      - Контейнер для вставки события
-   * @param  {Object} pointData             - Объект с данными события
-   * @param  {Observer} pointsModel         - Модель для работы с событиями.
+   * @param  {Node} pointListContainer      - Контейнер для вставки точек.
+   * @param  {Object} point                 - Объект с данными точки.
+   * @param  {Observer} pointsModel         - Модель для работы с точками.
    * @param  {Object} destinationsModel     - Модель для работы с городами.
-   * @param  {Object} typesModel            - Модель для работы с типами событий.
+   * @param  {Object} typesModel            - Модель для работы с типами точек.
    * @param  {Object} offersModel           - Модель для работы с спец. предложениями.
-   * @param  {Function} switchAllPointsMode - Метод переключючения режима всех
-   *                                          событий маршрута.
+   * @param  {Function} switchAllPointsMode - Метод переключючения режима всех точек маршрута.
    */
-  constructor(pointListContainer, pointData, pointsModel, destinationsModel, typesModel, offersModel, switchAllPointsMode) {
+  constructor(pointListContainer, point, pointsModel, destinationsModel, typesModel, offersModel, switchAllPointsMode) {
     this._pointListContainer = pointListContainer;
-    this._point = pointData;
+    this._point = point;
 
     this._pointsModel = pointsModel;
     this._destinationsModel = destinationsModel;
@@ -79,7 +78,7 @@ export default class PointPresenter {
   }
 
   /**
-   * Переключает событие в нужный режим (должен соответствовать одному
+   * Переключает точку в нужный режим (должен соответствовать одному
    * из значений перечисления PointMode).
    *
    * @param  {String} pointMode - Режим отображения.
@@ -98,7 +97,7 @@ export default class PointPresenter {
   }
 
   /**
-   * Удаление события с обеими формами представления (сводки и редактрирования).
+   * Удаление точки с обеими формами представления (сводки и редактрирования).
    */
   destroy() {
     if (this._mode === PointMode.EDITING) {
@@ -110,7 +109,7 @@ export default class PointPresenter {
   }
 
   /**
-   * Создание отображения о событии в соответствии с текущим режимом (должен
+   * Создание отображения точки в соответствии с текущим режимом (должен
    * соответствовать одному из значений перечисления PointMode).
    *
    *  Вместе с отображением создается также и обработчики открытия/закрытия
@@ -207,7 +206,7 @@ export default class PointPresenter {
   }
 
   /**
-   * Удаение события.
+   * Удаение точки.
    */
   _delete() {
     this._closePointForm();

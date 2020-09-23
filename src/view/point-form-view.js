@@ -14,12 +14,12 @@ const PointFormMode = {
 
 export default class PointFormView extends UpdatableView {
   /**
-   * Конструктор класса отображения формы добавления/редактирования события.
+   * Конструктор класса отображения формы добавления/редактирования точки.
    *
-   * @param  {Array} typeList         - Массив со списком типов событий.
+   * @param  {Array} typeList         - Массив со списком типов точек.
    * @param  {Array} offerList        - Массив со списком спец. предложений.
    * @param  {Array} destinationList  - Массив со списком типов гороодв.
-   * @param  {Object} [point]         - Объект с информацие о событии, если это
+   * @param  {Object} [point]         - Объект с информацие о точке, если это
    *                                    форма редактирования, а не добавления.
    */
   constructor(typeList, offerList, destinationList, point = null) {
@@ -71,7 +71,7 @@ export default class PointFormView extends UpdatableView {
   }
 
   /**
-   * Получение общего шаблона отображения.
+   * Геттер общего шаблона отображения.
    *
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
@@ -126,9 +126,9 @@ export default class PointFormView extends UpdatableView {
   }
 
   /**
-   * Сеттер обработчика удаления события в форме редактирования.
+   * Сеттер обработчика удаления точки в форме редактирования.
    *
-   * @param  {Function} callback - Коллбек сохранения события.
+   * @param  {Function} callback - Коллбек удаления точки.
    */
   set deleteHandler(callback) {
     this._callback.delete = callback;
@@ -138,7 +138,7 @@ export default class PointFormView extends UpdatableView {
   }
 
   /**
-   * Сеттер обработчика для кнопки добавления/удаления события в избранное.
+   * Сеттер обработчика для кнопки добавления/удаления точки в избранное.
    *
    * @param  {Function} callback - Коллбек нажатия на кнопку.
    */
@@ -150,9 +150,9 @@ export default class PointFormView extends UpdatableView {
   }
 
   /**
-   * Сеттер обработчика сохранения события в форме редактирования.
+   * Сеттер обработчика сохранения точки в форме редактирования.
    *
-   * @param  {Function} callback - Коллбек сохранения события.
+   * @param  {Function} callback - Коллбек сохранения точки.
    */
   set submitHandler(callback) {
     this._callback.submit = callback;
@@ -170,16 +170,16 @@ export default class PointFormView extends UpdatableView {
   }
 
   /**
-   * Обновление данных объекта события.
+   * Обновление данных объекта точки.
    *
-   * @param  {Object} newData - Обновленные данные
+   * @param  {Object} updatedPointData - Обновленные данные.
    */
-  updateData(newData) {
-    if (!newData) {
+  updateData(updatedPointData) {
+    if (!updatedPointData) {
       return;
     }
 
-    this._point = Object.assign({}, this._point, newData);
+    this._point = Object.assign({}, this._point, updatedPointData);
   }
 
   /**
@@ -256,7 +256,7 @@ export default class PointFormView extends UpdatableView {
   }
 
   /**
-   * Шаблон формы выбора типа события.
+   * Создание шаблона формы выбора типа точки.
    *
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
@@ -330,7 +330,7 @@ export default class PointFormView extends UpdatableView {
   }
 
   /**
-   * Шаблон инпута места назначения.
+   * Создание шаблона инпута места назначения.
    *
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
@@ -363,7 +363,7 @@ export default class PointFormView extends UpdatableView {
   }
 
   /**
-   * Шаблон ввода времени.
+   * Создание шаблона ввода времени.
    *
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
@@ -394,7 +394,7 @@ export default class PointFormView extends UpdatableView {
   }
 
   /**
-   * Шаблон ввода стоимости.
+   * Создание шаблона ввода стоимости.
    *
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
@@ -416,7 +416,7 @@ export default class PointFormView extends UpdatableView {
   }
 
   /**
-   * Шаблон списка специальных предложений.
+   * Создание шаблона списка специальных предложений.
    *
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
@@ -462,7 +462,7 @@ export default class PointFormView extends UpdatableView {
   }
 
   /**
-   * Шаблон кнопки добавления в избранное.
+   * Создание шаблона кнопки добавления в избранное.
    *
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
@@ -510,7 +510,7 @@ export default class PointFormView extends UpdatableView {
    *
    * @param  {String} type - Типа события.
    * @return {Array}       - Массив спец. предложений (пустой, если
-   *                         предложений нет)
+   *                         предложений нет).
    */
   _getAvalibleOffers(type) {
     const offerTypeObject = this._offerList.find((offer) => {
@@ -569,7 +569,7 @@ export default class PointFormView extends UpdatableView {
   }
 
   /**
-   * Вадидатор введеного времени начала события.
+   * Вадидатор введеного времени начала нахождения в точке.
    *
    * @param  {Date/String} beginTime - Значение точки назначения для проверки.
    * @return {Boolean}               - Результат проверки. True — если значение
@@ -589,7 +589,7 @@ export default class PointFormView extends UpdatableView {
   }
 
   /**
-   * Вадидатор введеного времени завершения события.
+   * Вадидатор введеного времени завершения нахождения в точке.
    *
    * @param  {Date/String} endTime   - Значение точки назначения для проверки.
    * @return {Boolean}               - Результат проверки. True — если значение
@@ -640,7 +640,7 @@ export default class PointFormView extends UpdatableView {
   /**
    * Обработчик закрытия формы редактирования.
    *
-   * @param  {Object} evt - Объект события в DOM.
+   * @param  {Event} evt - Объект события в DOM.
    */
   _closeHandler(evt) {
     evt.preventDefault();
@@ -650,7 +650,7 @@ export default class PointFormView extends UpdatableView {
   /**
    * Обработчик сабмита формы.
    *
-   * @param  {Object} evt - Объект события в DOM.
+   * @param  {Event} evt - Объект события в DOM.
    */
   _submitHandler(evt) {
     evt.preventDefault();
@@ -666,7 +666,7 @@ export default class PointFormView extends UpdatableView {
   /**
    * Обработчик ввода места назначения
    *
-   * @param  {Object} evt - Объект события в DOM.
+   * @param  {Event} evt - Объект события в DOM.
    */
   _inputDestinationHandler(evt) {
     if (!this._validateDestination(evt.target.value)) {
@@ -679,9 +679,9 @@ export default class PointFormView extends UpdatableView {
   }
 
   /**
-   * Обработчик ввода времени начала события. Используется и в качестве
-   * обработчика для инпута, и как коллбек для флэтпикера, поэтому зачение
-   * берется не из объекта события, а через запрос к DOM.
+   * Обработчик ввода времени начала нахождения в точке. Используется
+   * и в качестве обработчика для инпута, и как коллбек для флэтпикера,
+   * поэтому зачение берется не из объекта точки, а через запрос к DOM.
    */
   _inputBeginTimeHandler() {
     const inputBeginTime = this.element
@@ -695,9 +695,9 @@ export default class PointFormView extends UpdatableView {
   }
 
   /**
-   * Обработчик ввода времени окончания события. Используется и в качестве
-   * обработчика для инпута, и как коллбек для флэтпикера, поэтому зачение
-   * берется не из объекта события, а через запрос к DOM.
+   * Обработчик ввода времени окончания нахождения в точке. Используется
+   * и в качестве обработчика для инпута, и как коллбек для флэтпикера,
+   * поэтому зачение берется не из объекта точки, а через запрос к DOM.
    */
   _inputEndTimeHandler() {
     const inputEndTime = this.element
@@ -710,9 +710,9 @@ export default class PointFormView extends UpdatableView {
   }
 
   /**
-   * Обработчик ввода стоимости события.
+   * Обработчик ввода стоимости точки.
    *
-   * @param  {Object} evt - Объект события в DOM.
+   * @param  {Event} evt - Объект события в DOM.
    */
   _inputPriceHandler(evt) {
     if (!this._validatePrice(evt.target.value)) {
@@ -725,9 +725,9 @@ export default class PointFormView extends UpdatableView {
   }
 
   /**
-   * Обработчик выбора типа события.
+   * Обработчик выбора типа точки.
    *
-   * @param  {Object} evt - Объект события в DOM.
+   * @param  {Event} evt - Объект события в DOM.
    */
   _selectTypeHandler(evt) {
     const selectedType = this._typeList.find((type) => type.id === evt.target.value);
@@ -755,7 +755,7 @@ export default class PointFormView extends UpdatableView {
   /**
    * Обработчик нажатия на кнопку удаления.
    *
-   * @param  {Object} evt - Объект события в DOM.
+   * @param  {Event} evt - Объект события в DOM.
    */
   _deleteHandler() {
     this._callback.delete(this._point);

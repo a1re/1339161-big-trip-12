@@ -28,7 +28,7 @@ export default class FiltersModel extends Observer {
   /**
    * Геттер списка доступных фильтраций в виде массива.
    *
-   * @return {Array} - Массив со список событий
+   * @return {Array} - Массив со списком точек.
    */
   get list() {
     const filterList = [];

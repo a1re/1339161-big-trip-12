@@ -2,16 +2,16 @@ import Observer from "../utils/observer.js";
 import moment from "moment";
 
 /**
- * Модель событий. Для инициализации в конструтор класса необходимо передать
- * массив со списом событий, где каждый элемент — объект со списком свойств
- * события.
+ * Модель точек. Для инициализации в конструтор класса необходимо передать
+ * массив со списом точек, где каждый элемент — объект со списком свойств
+ * точки.
  */
 export default class PointsModel extends Observer {
   /**
    * Конструктор класса
    *
-   * @param  {Array} pointList - Массив со списком событий.
-   * @param  {Array} typeList  - Массив со списком типов событий.
+   * @param  {Array} pointList - Массив со списком точек.
+   * @param  {Array} typeList  - Массив со списком типов точек.
    */
   constructor(pointList = [], typeList) {
     super();
@@ -20,9 +20,9 @@ export default class PointsModel extends Observer {
   }
 
   /**
-   * Геттер списка событий.
+   * Геттер списка точек.
    *
-   * @return {Array} - Массив со списком событий
+   * @return {Array} - Массив со списком точек.
    */
   get pointList() {
     return this._pointList;
@@ -36,7 +36,6 @@ export default class PointsModel extends Observer {
    * @param  {String} updateMode - Режим обновления. Должен соответствовать
    *                               константе из перечисления UpdateMode.
    * @param  {Object} pointData  - Объект с обновленными данными.
-   * @return {void}
    */
   update(updateMode, pointData) {
     const index = this._pointList.findIndex((point) => point.id === pointData.id);
@@ -96,8 +95,8 @@ export default class PointsModel extends Observer {
    * Обработка исходных данных и добавление необходимых для работы
    * дополнительных флагов и значений.
    *
-   * @param  {Array} pointList - Список событий в исходном виде.
-   * @return {Array}           - Список событий в подготовленном для работы виде.
+   * @param  {Array} pointList - Список точек в исходном виде.
+   * @return {Array}           - Список точек в подготовленном для работы виде.
    */
   _processData(pointList) {
     if (pointList.length === 0) {

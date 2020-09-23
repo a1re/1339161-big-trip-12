@@ -15,9 +15,9 @@ export default class TripPresenter {
    * ключевого узла DOM для рендеринга компонентов.
    *
    * @param  {Node} container           - Узел документа для презентера.
-   * @param  {Observer} pointsModel     - Модель для работы с событиями.
+   * @param  {Observer} pointsModel     - Модель для работы с точками.
    * @param  {Object} destinationsModel - Модель для работы с городами.
-   * @param  {Object} typesModel        - Модель для работы с типамм событий.
+   * @param  {Object} typesModel        - Модель для работы с типамм точек.
    * @param  {Object} offersModel       - Модель для работы с спец. предложениями.
    * @param  {Observer} filtersModel    - Модель для работы с фильтрациями.
    * @param  {Observer} sortingsModel   - Модель для работы с сортировками.
@@ -54,7 +54,7 @@ export default class TripPresenter {
   }
 
   /**
-   * Инициализация и первичная отрисовка списка событий.
+   * Инициализация и первичная отрисовка списка точек.
    */
   init() {
     if (this._isInitialized) {
@@ -66,7 +66,7 @@ export default class TripPresenter {
   }
 
   /**
-   * Очистка презентера - удаление списка событий и заголовка с сортировками.
+   * Очистка презентера - удаление списка точек и заголовка с сортировками.
    */
   destroy() {
     if (!this._isInitialized) {
@@ -78,7 +78,7 @@ export default class TripPresenter {
   }
 
   /**
-   * Открытие формы добавления нового события.
+   * Открытие формы добавления новой точки.
    */
   createNewPoint() {
     this._sortingsModel.reset();
@@ -99,7 +99,7 @@ export default class TripPresenter {
    * Коллбек уведомления об обновлении модели
    * @param  {String} updateMode - Режим обновления согласно перечислению
    *                               UpdateMode.
-   * @param  {Object} pointData  - Объект с обновленной информацией о событии.
+   * @param  {Object} pointData  - Объект с обновленной информацией о точке.
    */
   _updatePresenter(updateMode, pointData) {
     switch (updateMode) {
@@ -121,10 +121,10 @@ export default class TripPresenter {
   }
 
   /**
-   * Получение упорядоченного согласно заданной сортировке списка события
+   * Получение упорядоченного согласно заданной сортировке списка точек
    * в виде массива.
    *
-   * @return {Array} - Карта событий.
+   * @return {Array} - Карта точек.
    */
   _getPointList() {
     const pointList = this._pointsModel.pointList.slice()
@@ -134,7 +134,7 @@ export default class TripPresenter {
   }
 
   /**
-   * Рендеринг шаблона заглушки для состояния списка без событий.
+   * Рендеринг шаблона заглушки для состояния списка без точек.
    */
   _renderFallback() {
     this._noPointsComponent = new NoPointsView();
@@ -154,7 +154,7 @@ export default class TripPresenter {
   }
 
   /**
-   * Рендеринг списка событий согласно выбранной сортировке.
+   * Рендеринг списка точек согласно выбранной сортировке.
    */
   _renderPoints() {
     if (this._noPointsComponent) {
@@ -203,12 +203,12 @@ export default class TripPresenter {
   }
 
   /**
-   * Хендлер обновления данных списка событий. Передается объект
-   * с обновленными данными одного из события в списке, обновляется весь
+   * Обработчик обновления данных списка точек. Передается объект
+   * с обновленными данными одной из точек в списке, обновляется весь
    * список.
    *
-   * @param  {Object} newEventData - Объект с обновленными данными события.
-   * @param  {Boolean} updateView      - Флаг перерисовки отображения.
+   * @param  {Object} newEventData  - Объект с обновленными данными точки.
+   * @param  {Boolean} updateView   - Флаг перерисовки отображения.
    */
   _updatePoint(newEventData, updateView = true) {
     this._pointsModel.update(UpdateMode.DATA, newEventData);
@@ -218,7 +218,7 @@ export default class TripPresenter {
   }
 
   /**
-   * Очистка контейнера с событиями.
+   * Очистка контейнера с точками.
    */
   _clearPoints() {
     this._pointPresenterMap.forEach((point) => point.destroy());
@@ -244,7 +244,7 @@ export default class TripPresenter {
   }
 
   /**
-   * Хендлер для метода сортировки событий. Перед применением очищает список.
+   * Сортировка точек. Перед применением очищает список.
    *
    * @param  {String} sortingId - Id метода сортировки.
    */
@@ -260,8 +260,8 @@ export default class TripPresenter {
   }
 
   /**
-   * Переключает все события в нужный режим (должен соответствовать одному
-   * из значений перечисления EventMode).
+   * Переключает все точки в нужный режим (должен соответствовать одному
+   * из значений перечисления PointMode).
    *
    * @param  {String} pointMode - Режим отображения.
    */
