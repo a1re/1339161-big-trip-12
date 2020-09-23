@@ -82,7 +82,8 @@ const headerPresenter = new HeaderPresenter(
 
 const statsPresenter = new StatsPresenter(
     tripPointsComponent.element,
-    pointsModel
+    pointsModel,
+    typesModel
 );
 
 tripPresenter.init();
