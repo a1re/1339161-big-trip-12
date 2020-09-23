@@ -29,10 +29,12 @@ const TRIP_DESC_SENTENCES_MAX = 5;
  * будет оказываться двойная точка. Кажется, это довольно несущественные вещи, чтобы
  * их править в генерации моков.
  *
- * @return {string} - случайное описание.
+ * @param  {Number} minSentencesAmount - Минимальное количество предложений в описании.
+ * @param  {Number} maxSentencesAmount - Максмальное количество предложений в описании.
+ * @return {string}                    - Случайное описание.
  */
-const generateDescription = () => {
-  const sentencesAmount = getRandomInt(TRIP_DESC_SENTENCES_MIN, TRIP_DESC_SENTENCES_MAX);
+const generateDescription = (minSentencesAmount, maxSentencesAmount) => {
+  const sentencesAmount = getRandomInt(minSentencesAmount, maxSentencesAmount);
   const sentencesList = TRIP_DESC_TEXT.split(`. `);
   const sentencesSelected = [];
   for (let i = 0; i < sentencesAmount; i++) {
@@ -49,11 +51,14 @@ export const generateDestinations = () => {
     const photosAmount = getRandomInt(TRIP_DESC_PHOTOS_MIN, TRIP_DESC_PHOTOS_MAX);
     const photos = [];
     for (let i = 0; i < photosAmount; i++) {
-      photos.push(`http://picsum.photos/248/152?r=` + getRandomInt(10, 100));
+      photos.push({
+        src: `http://picsum.photos/248/152?r=` + getRandomInt(10, 100),
+        description: generateDescription(1, 1)
+      });
     }
     destinations.push({
       name: city,
-      description: generateDescription(),
+      description: generateDescription(TRIP_DESC_SENTENCES_MIN, TRIP_DESC_SENTENCES_MAX),
       photos
     });
   });

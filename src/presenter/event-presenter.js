@@ -122,8 +122,8 @@ export default class EventPresenter {
   _createElement(eventMode) {
     if (eventMode === EventMode.EDITING) {
       this._eventFormComponent = new EventFormView(
-          this._offersModel.getList(),
           this._typesModel.getList(),
+          this._offersModel.getList(),
           this._destinationsModel.getList(),
           this._event
       );
@@ -140,7 +140,6 @@ export default class EventPresenter {
 
     // По умочанию — режим EventMode.SUMMARY
     this._eventSummaryComponent = new EventSummaryView(
-        this._offersModel.getList(this._event.isTransport),
         this._typesModel.getById(this._event.type),
         this._event
     );

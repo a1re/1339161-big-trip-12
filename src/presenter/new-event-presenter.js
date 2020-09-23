@@ -56,8 +56,8 @@ export default class NewEventPresenter {
    */
   _createElement() {
     this._eventFormComponent = new EventFormView(
-        this._offersModel.getList(),
         this._typesModel.getList(),
+        this._offersModel.getList(),
         this._destinationsModel.getList()
     );
 

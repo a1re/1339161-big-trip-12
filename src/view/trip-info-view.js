@@ -43,11 +43,8 @@ export default class TripInfoView extends AbstractView {
 
     this._eventList.forEach((event) => {
       totalPrice += event.price;
-      event.offers.forEach((offerId) => {
-        const selectedOffer = this._offerList.find((offer) => offer.id === offerId);
-        if (selectedOffer) {
-          totalPrice += selectedOffer.price;
-        }
+      event.offers.forEach((offer) => {
+        totalPrice += offer.price;
       });
     });
 

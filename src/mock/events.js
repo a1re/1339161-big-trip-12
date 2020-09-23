@@ -41,12 +41,12 @@ const generateBeginDate = () => {
 /**
  * Генерация случайного набора дополнительных опций из списка доступных.
  *
- * @param  {Array} offerList    - Список доступных опций в виде массива объектов.
- * @param  {Boolean} isTransfer - Является ли событие трансфером.
+ * @param  {Array} offerList - Список доступных опций в виде массива объектов.
+ * @param  {String} type     - Тип точки маршрута
  *
- * @return {Array}              - Массив id предложений.
+ * @return {Array}           - Массив с предложениями
  */
-const getAppliedOffers = (offerList, isTransfer) => {
+const getAppliedOffers = (offerList, type) => {
   const appliedOfferList = [];
   // Простой рандом от 0 до EVENT_OFFERS_MAX значительно уменьшает шансы увидеть
   // событие без доп. опций, поэтому в начале работы функции жеребим возможность
@@ -56,12 +56,12 @@ const getAppliedOffers = (offerList, isTransfer) => {
     return appliedOfferList;
   }
 
-  const avalibleOffers = offerList.filter((offer) => offer.isTransport === isTransfer);
+  const avalibleOffers = offerList.find((offer) => offer.type === type).offers;
   const offersAmount = getRandomInt(EVENT_OFFERS_MIN, Math.min(avalibleOffers.length, EVENT_OFFERS_MAX));
   avalibleOffers.sort(() => Math.random() - 0.5);
 
   for (let i = 0; i < offersAmount; i++) {
-    appliedOfferList.push(avalibleOffers[i].id);
+    appliedOfferList.push(avalibleOffers[i]);
   }
 
   return appliedOfferList;
@@ -145,7 +145,7 @@ export const generateEvents = (eventsAmount, offerList, destinationList) => {
         beginTime,
         endTime,
         price,
-        offers: getAppliedOffers(offerList, isTransfer),
+        offers: getAppliedOffers(offerList, type),
         isFavorite: false
       };
 

@@ -15,18 +15,9 @@ export default class OffersModel {
   /**
    * Получение списка предложений для трансфера/точки в виде массива.
    *
-   * @param  {Boolean} isTransport - Флаг ограничения вывода. Если он установлен
-   *                                 true, то вернется массив предложений для
-   *                                 транспортных событий. Если false — массив
-   *                                 предложений для остановок. Если не задавать,
-   *                                 вернутся все.
-   * @return {Array}               - Список предложений в виде массива объектов.
+   * @return {Array}       - Список предложений в виде массива объектов.
    */
-  getList(isTransport) {
-    if (typeof isTransport !== `undefined`) {
-      this._offerList.filter((offer) => offer.isTransport === isTransport);
-    }
-
+  getList() {
     return this._offerList;
   }
 

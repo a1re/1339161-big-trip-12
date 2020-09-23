@@ -11,14 +11,12 @@ export default class EventSummaryView extends AbstractView {
   /**
    * Конструктор класса отображения краткой сводки о собыиии..
    *
-   * @param  {Array} offerList - Массив со списком спц. предложений.
    * @param  {Object} type     - Объект с описанием типа события.
    * @param  {Object} event    - Объект с данными события.
    */
-  constructor(offerList, type, event) {
+  constructor(type, event) {
     super();
 
-    this._offerList = offerList;
     this._event = event;
     this._type = type;
 
@@ -115,8 +113,7 @@ export default class EventSummaryView extends AbstractView {
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   _makeOffersList() {
-    const shownOffers = this._offerList.filter((offer) => this._event.offers.indexOf(offer.id) >= 0);
-    if (shownOffers.length === 0) {
+    if (this._event.offers.length === 0) {
       return ``;
     }
 
@@ -124,12 +121,12 @@ export default class EventSummaryView extends AbstractView {
         <h4 class="visually-hidden">Offers:</h4>
         <ul class="event__selected-offers">`;
 
-    for (let i = 0; i < MAX_OFFERS_TO_SHOW && i < shownOffers.length; i++) {
+    for (let i = 0; i < MAX_OFFERS_TO_SHOW && i < this._event.offers.length; i++) {
       template += `
           <li class="event__offer">
-            <span class="event__offer-title">${shownOffers[i].title}</span>
+            <span class="event__offer-title">${this._event.offers[i].title}</span>
             &plus;
-            &euro;&nbsp;<span class="event__offer-price">${shownOffers[i].price}</span>
+            &euro;&nbsp;<span class="event__offer-price">${this._event.offers[i].price}</span>
           </li>`;
     }
 

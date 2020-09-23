@@ -28,8 +28,9 @@ import StatsPresenter from "./presenter/stats-presenter.js";
 const destinationsModel = new DestinationsModel(generateDestinations());
 const destinationList = destinationsModel.getList().map((destination) => destination.name);
 
-const offerList = generateOffers();
+const offerList = generateOffers(types);
 const eventList = generateEvents(getRandomInt(EVENTS_MIN, EVENTS_MAX), offerList, destinationList);
+
 const typesModel = new TypesModel(types);
 const eventsModel = new EventsModel(eventList, typesModel.getList());
 const offersModel = new OffersModel(offerList);
@@ -66,7 +67,6 @@ const tripPresenter = new TripPresenter(
 const headerPresenter = new HeaderPresenter(
     headerElement,
     eventsModel,
-    offersModel,
     filtersModel,
     displayTable,
     displayStats

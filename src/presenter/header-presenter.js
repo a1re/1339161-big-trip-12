@@ -12,15 +12,13 @@ export default class HeaderPresenter {
    *
    * @param  {Node} container        - Узел документа для презентера.
    * @param  {Observer} eventsModel  - Модель для работы с событиями.
-   * @param  {Object} offersModel    - Модель для работы с спец. предложениями.
    * @param  {Observer} filtersModel - Модель для работы с фильтрациями.
    * @param  {Function} displayTable - Коллбек открытия списка событий.
    * @param  {Function} displayStats - Коллбек открытия статистики.
    */
-  constructor(container, eventsModel, offersModel, filtersModel, displayTable, displayStats) {
+  constructor(container, eventsModel, filtersModel, displayTable, displayStats) {
     this._container = container;
     this._eventsModel = eventsModel;
-    this._offersModel = offersModel;
     this._filtersModel = filtersModel;
 
     this._displayTable = displayTable;
@@ -86,7 +84,7 @@ export default class HeaderPresenter {
    * Отрисовка сводки о машруте, датах и общей стооимости поездки.
    */
   _renderTripInfo() {
-    this._tripInfoComponent = new TripInfoView(this._eventsModel.eventList, this._offersModel.getList());
+    this._tripInfoComponent = new TripInfoView(this._eventsModel.eventList);
     render(this._container, this._tripInfoComponent, RenderPosition.AFTERBEGIN);
   }
 

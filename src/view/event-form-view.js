@@ -16,14 +16,19 @@ export default class EventFormView extends UpdatableView {
   /**
    * Конструктор класса отображения формы добавления/редактирования события.
    *
-   * @param  {Array} offerList        - Массив со списком спц. предложений.
    * @param  {Array} typeList         - Массив со списком типов событий.
+   * @param  {Array} offerList        - Массив со списком спец. предложений.
    * @param  {Array} destinationList  - Массив со списком типов гороодв.
    * @param  {Object} [event]         - Объект с информацие о событии, если это
    *                                    форма редактирования, а не добавления.
    */
-  constructor(offerList, typeList, destinationList, event = null) {
+  constructor(typeList, offerList, destinationList, event = null) {
     super();
+
+    this._typeList = typeList;
+    this._offerList = offerList;
+    this._destinationList = destinationList;
+
     if (!event) {
       const randomType = typeList[getRandomInt(0, typeList.length - 1)];
       this._event = {
@@ -39,10 +44,12 @@ export default class EventFormView extends UpdatableView {
       };
       this._mode = EventFormMode.ADDING;
       this._isSubmitEnabled = false;
+      this._avalibleOfferList = [];
     } else {
       this._event = event;
       this._mode = EventFormMode.EDITING;
       this._isSubmitEnabled = true;
+      this._avalibleOfferList = this._getAvalibleOffers(this._event.type);
 
       this._deleteHandler = this._deleteHandler.bind(this);
       this._toggleFavoriteHandler = this._toggleFavoriteHandler.bind(this);
@@ -50,9 +57,6 @@ export default class EventFormView extends UpdatableView {
 
     this._beginTimePicker = null;
     this._endTimePicker = null;
-    this._offerList = offerList;
-    this._typeList = typeList;
-    this._destinationList = destinationList;
 
     this._closeHandler = this._closeHandler.bind(this);
     this._submitHandler = this._submitHandler.bind(this);
@@ -190,8 +194,12 @@ export default class EventFormView extends UpdatableView {
       .addEventListener(`input`, this._inputPriceHandler);
     this.element.querySelector(`.event__type-list`)
       .addEventListener(`change`, this._selectTypeHandler);
-    this.element.querySelector(`.event__available-offers`)
-      .addEventListener(`change`, this._selectOfferHandler);
+
+    // Обработчик клика на спец. предложения ставим только если они есть
+    if (this._avalibleOfferList.length > 0) {
+      this.element.querySelector(`.event__available-offers`)
+        .addEventListener(`change`, this._selectOfferHandler);
+    }
 
     this.closeHandler = this._callback.close;
     this.submitHandler = this._callback.submit;
@@ -413,32 +421,37 @@ export default class EventFormView extends UpdatableView {
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   _makeOffersList() {
+    if (this._avalibleOfferList.length === 0) {
+      return ``;
+    }
+
     let template = `
         <section class="event__details">
           <section class="event__section  event__section--offers">
             <h3 class="event__section-title  event__section-title--offers">Offers</h3>
             <div class="event__available-offers">`;
 
-    this._offerList.forEach((offer) => {
-      if (this._event.isTransport !== offer.isTransport) {
-        return;
-      }
+    for (let i = 0; i < this._avalibleOfferList.length; i++) {
+      const isChecked = this._event.offers.some((offer) => {
+        return offer.title === this._avalibleOfferList[i].title &&
+               offer.price === this._avalibleOfferList[i].price;
+      });
 
       template += `
               <div class="event__offer-selector">
                 <input
                     class="event__offer-checkbox  visually-hidden"
-                    id="event-${this._event.id}-offer-${offer.id}"
+                    id="event-${this._event.id}-offer-${i}"
                     type="checkbox"
                     name="event-${this._event.id}-offer"
-                    value="${offer.id}" ${(this._event.offers.indexOf(offer.id) >= 0) ? `checked` : ``}>
-                <label class="event__offer-label" for="event-${this._event.id}-offer-${offer.id}">
-                  <span class="event__offer-title">${offer.title}</span>
+                    value="${this._avalibleOfferList[i].title}" ${isChecked ? `checked` : ``}>
+                <label class="event__offer-label" for="event-${this._event.id}-offer-${i}">
+                  <span class="event__offer-title">${this._avalibleOfferList[i].title}</span>
                   &plus;
-                  &euro;&nbsp;<span class="event__offer-price">${offer.price}</span>
+                  &euro;&nbsp;<span class="event__offer-price">${this._avalibleOfferList[i].price}</span>
                 </label>
               </div>`;
-    });
+    }
 
     template += `
             </div>
@@ -475,16 +488,35 @@ export default class EventFormView extends UpdatableView {
   /**
    * Получение списка выбранных предложений.
    *
-   * @return {Array} - Массив с id выбранных предложений
+   * @return {Array} - Массив с объектами выбранных предложений.
    */
   _getSelectedOffers() {
-    const selectedOffers = this.element.querySelectorAll(`.event__available-offers input:checked`);
+    const selectedOfferList = this.element
+      .querySelectorAll(`.event__available-offers input:checked`);
     const newOffers = [];
-    for (const offer of selectedOffers) {
-      newOffers.push(parseInt(offer.value, 10));
+
+    for (const offerItem of selectedOfferList) {
+      const selectedOffer = this._avalibleOfferList.find((offer) => {
+        return offer.title === offerItem.value;
+      });
+      newOffers.push(selectedOffer);
     }
 
     return newOffers;
+  }
+
+  /**
+   * Получение списка доступных спец. предложений по типу.
+   *
+   * @param  {String} type - Типа события.
+   * @return {Array}       - Массив спец. предложений (пустой, если
+   *                         предложений нет)
+   */
+  _getAvalibleOffers(type) {
+    const offerTypeObject = this._offerList.find((offer) => {
+      return offer.type === type;
+    });
+    return offerTypeObject ? offerTypeObject.offers : [];
   }
 
   /**
@@ -706,6 +738,9 @@ export default class EventFormView extends UpdatableView {
       type: selectedType.id,
       isTransport: selectedType.isTransport
     });
+
+    this._avalibleOfferList = this._getAvalibleOffers(selectedType.id);
+
     this.updateElement();
   }
 
