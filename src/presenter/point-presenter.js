@@ -102,6 +102,8 @@ export default class PointPresenter {
   destroy() {
     if (this._mode === PointMode.EDITING) {
       this._pointFormComponent.remove();
+      this._closeFormByEsc.unbind();
+      this._closeFormByEsc = null;
     }
     if (this._mode === PointMode.SUMMARY) {
       this._pointSummaryComponent.remove();

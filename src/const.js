@@ -16,6 +16,11 @@ export const MenuItem = {
   STATS: `Stats`
 };
 
+export const ButtonState = {
+  ENABLED: false,
+  DISABLED: true
+};
+
 export const TIME_FORMAT = `HH:mm`;
 export const DATETIME_FORMAT = `DD/MM/YY HH:mm`;
 

@@ -2,7 +2,7 @@ import PointFormView from "../view/point-form-view.js";
 
 import {render, RenderPosition} from "../utils/render.js";
 import {EscHandler} from "../utils/common.js";
-import {UpdateMode} from "../const.js";
+import {UpdateMode, ButtonState} from "../const.js";
 
 export default class NewPointPresenter {
   /**
@@ -14,8 +14,17 @@ export default class NewPointPresenter {
    * @param  {Object} destinationsModel - Модель для работы с городами.
    * @param  {Object} typesModel        - Модель для работы с типами точек.
    * @param  {Object} offersModel       - Модель для работы со спец. предложениями.
+   * @param  {Function} setNewPointButtonState
+   *                                    - Коллбек обновления состояния кнопки новой точки.
    */
-  constructor(dayListElement, pointsModel, destinationsModel, typesModel, offersModel) {
+  constructor(
+      dayListElement,
+      pointsModel,
+      destinationsModel,
+      typesModel,
+      offersModel,
+      setNewPointButtonState
+  ) {
     this._pointsModel = pointsModel;
     this._destinationsModel = destinationsModel;
     this._offersModel = offersModel;
@@ -23,6 +32,7 @@ export default class NewPointPresenter {
 
     this._pointFormComponent = null;
     this._closeFormByEsc = null;
+    this._setNewPointButtonState = setNewPointButtonState;
 
     this._submitForm = this._submitForm.bind(this);
     this.destroy = this.destroy.bind(this);
@@ -47,6 +57,8 @@ export default class NewPointPresenter {
       this._closeFormByEsc.unbind();
       this._closeFormByEsc = null;
     }
+
+    this._setNewPointButtonState(ButtonState.ENABLED);
   }
 
   /**

@@ -21,8 +21,19 @@ export default class TripPresenter {
    * @param  {Object} offersModel       - Модель для работы с спец. предложениями.
    * @param  {Observer} filtersModel    - Модель для работы с фильтрациями.
    * @param  {Observer} sortingsModel   - Модель для работы с сортировками.
+   * @param  {Function} setNewPointButtonState
+   *                                    - Коллбек обновления состояния кнопки новой точки.
    */
-  constructor(container, pointsModel, destinationsModel, typesModel, offersModel, filtersModel, sortingsModel) {
+  constructor(
+      container,
+      pointsModel,
+      destinationsModel,
+      typesModel,
+      offersModel,
+      filtersModel,
+      sortingsModel,
+      setNewPointButtonState
+  ) {
     this._container = container;
 
     this._pointsModel = pointsModel;
@@ -40,6 +51,7 @@ export default class TripPresenter {
     this._pointPresenterMap = new Map();
 
     this._newPointPresenter = null;
+    this._setNewPointButtonState = setNewPointButtonState;
 
     this._updatePoint = this._updatePoint.bind(this);
     this._updatePresenter = this._updatePresenter.bind(this);
@@ -91,7 +103,7 @@ export default class TripPresenter {
         this._destinationsModel,
         this._typesModel,
         this._offersModel,
-        this._switchAllPointsMode
+        this._setNewPointButtonState
     );
   }
 

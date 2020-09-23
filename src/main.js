@@ -11,6 +11,7 @@ import {getRandomInt} from "./utils/common.js";
 import {sortings} from "./utils/sortings.js";
 import {filters} from "./utils/filters.js";
 import {types} from "./utils/types.js";
+import {ButtonState} from "./const.js";
 
 import PointsModel from "./model/points-model.js";
 import SortingsModel from "./model/sortings-model.js";
@@ -54,6 +55,10 @@ const displayStats = () => {
   statsPresenter.init();
 };
 
+const setNewPointButtonState = (state) => {
+  newPointElement.disabled = state;
+};
+
 const tripPresenter = new TripPresenter(
     tripPointsComponent.element,
     pointsModel,
@@ -61,7 +66,8 @@ const tripPresenter = new TripPresenter(
     typesModel,
     offersModel,
     filtersModel,
-    sortingsModel
+    sortingsModel,
+    setNewPointButtonState
 );
 
 const headerPresenter = new HeaderPresenter(
@@ -83,5 +89,6 @@ headerPresenter.init();
 newPointElement.addEventListener(`click`, (evt) => {
   evt.preventDefault();
   displayTable();
+  setNewPointButtonState(ButtonState.DISABLED);
   tripPresenter.createNewPoint();
 });
