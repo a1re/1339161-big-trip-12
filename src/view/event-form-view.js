@@ -527,7 +527,13 @@ export default class EventFormView extends UpdatableView {
       return false;
     }
 
-    return true;
+    if (this._destinationList.find((destinationObject) => {
+      return destinationObject.name === destination;
+    })) {
+      return true;
+    }
+
+    return false;
   }
 
   /**
@@ -636,7 +642,7 @@ export default class EventFormView extends UpdatableView {
       return;
     }
 
-    this.updateData({city: evt.target.value});
+    this.updateData({destination: evt.target.value});
     this._updateSubmitStatus(this._validateForm());
   }
 
