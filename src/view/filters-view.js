@@ -22,14 +22,21 @@ export default class FiltersView extends AbstractView {
     let template = `<form class="trip-filters" action="#" method="get">`;
 
     this._filterList.forEach((filter) => {
+      let state = ``;
+      if (filter.isAvalible && filter.isActive) {
+        state = `checked`;
+      }
+      if (!filter.isAvalible) {
+        state = `disabled`;
+      }
       template += `<div class="trip-filters__filter">
                 <input
                   id="${filter.id}"
                   class="trip-filters__filter-input  visually-hidden"
                   type="radio" name="trip-filter"
-                  value="${filter.id}" ${filter.isActive ? `checked` : ``} disabled>
+                  value="${filter.id}" ${state}>
                 <label
-                  class="trip-filters__filter-label ${filter.count === 0 ? `trip-filters__filter-label--disabled` : ``}"
+                  class="trip-filters__filter-label ${!filter.isAvalible ? `trip-filters__filter-label--disabled` : ``}"
                   for="${filter.id}">${filter.title}</label>
               </div>`;
     });

@@ -47,11 +47,13 @@ render(pageContainerElement, tripPointsComponent, RenderPosition.BEFOREEND);
 
 const displayTable = () => {
   statsPresenter.destroy();
+  headerPresenter.enableFilters();
   tripPresenter.init();
 };
 
 const displayStats = () => {
   tripPresenter.destroy();
+  headerPresenter.disableFilters();
   statsPresenter.init();
 };
 

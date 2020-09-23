@@ -64,6 +64,24 @@ export default class HeaderPresenter {
   }
 
   /**
+   * Включение фильтров.
+   */
+  enableFilters() {
+    this._filtersModel.enable();
+    this._filtersComponent.remove();
+    this._renderFilters();
+  }
+
+  /**
+   * Отключение фильтров (требуется при переходе в экран статистики).
+   */
+  disableFilters() {
+    this._filtersModel.disable();
+    this._filtersComponent.remove();
+    this._renderFilters();
+  }
+
+  /**
    * Коллбек уведомления об обновлении от модели
    *
    * @param  {String} updateMode - Режим обновления согласно перечислению
@@ -108,7 +126,7 @@ export default class HeaderPresenter {
   }
 
   /**
-   * Хендлер для метода фильтрации точек.
+   * Обработчик метода фильтрации точек.
    *
    * @param  {String} filterId - Id метода фильтрации.
    */

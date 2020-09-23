@@ -20,13 +20,13 @@ export default class FiltersModel extends Observer {
     this._filterMap = new Map();
     filterList.forEach((filter) => {
       this._filterMap.set(filter.id, Object.assign({}, filter, {
-        count: this._countPoints(filter.callback)
+        isAvalible: this._getAvalibilty(filter.callback)
       }));
     });
 
-    this._updateCounters = this._updateCounters.bind(this);
+    this.enable = this.enable.bind(this);
 
-    this._pointsModel.subscribe(this._updateCounters);
+    this._pointsModel.subscribe(this.enable);
     this.reset();
   }
 
@@ -40,7 +40,7 @@ export default class FiltersModel extends Observer {
       throw new Error(`Unknown filter ${filterId}`);
     }
 
-    if (this._filterMap.get(filterId).count > 0) {
+    if (this._filterMap.get(filterId).isAvalible) {
       this._activeFilter = filterId;
       this._notify(UpdateMode.MAJOR);
     }
@@ -71,6 +71,24 @@ export default class FiltersModel extends Observer {
   }
 
   /**
+   * Геттер списка доступных фильтраций в виде массива.
+   *
+   * @return {Array} - Массив со списком точек.
+   */
+  get list() {
+    const filterList = [];
+    this._filterMap.forEach((filter) => {
+      filterList.push({
+        id: filter.id,
+        title: filter.title,
+        isAvalible: filter.isAvalible,
+        isActive: filter.id === this.active
+      });
+    });
+    return filterList;
+  }
+
+  /**
    * Сброс фильтрации до метода по умолчанию.
    */
   reset() {
@@ -82,29 +100,22 @@ export default class FiltersModel extends Observer {
   }
 
   /**
-   * Геттер списка доступных фильтраций в виде массива.
-   *
-   * @return {Array} - Массив со списком точек.
+   * Отключение всех фильтров.
    */
-  get list() {
-    const filterList = [];
-    this._filterMap.forEach((filter) => {
-      filterList.push({
-        id: filter.id,
-        title: filter.title,
-        count: filter.count,
-        isActive: filter.id === this.active
-      });
-    });
-    return filterList;
+  disable() {
+    for (const [filterId, filter] of this._filterMap) {
+      filter.isAvalible = false;
+      this._filterMap.set(filterId, filter);
+    }
   }
 
   /**
-   * Обновление количества точек во всех фльтрах.
+   * Установка статусов фильтрв. Те фильтры, которые отфильтровывают все точки,
+   * получают статус отключенных.
    */
-  _updateCounters() {
+  enable() {
     for (const [filterId, filter] of this._filterMap) {
-      filter.count = this._countPoints(filter.callback);
+      filter.isAvalible = this._getAvalibilty(filter.callback);
       this._filterMap.set(filterId, filter);
     }
   }
@@ -115,7 +126,7 @@ export default class FiltersModel extends Observer {
    * @param  {Function} filter - Функция фильтрации для списка точек.
    * @return {Number}          - Количество точек после фильтрации.
    */
-  _countPoints(filter) {
-    return this._pointsModel.list.filter(filter).length;
+  _getAvalibilty(filter) {
+    return this._pointsModel.list.filter(filter).length > 0;
   }
 }
