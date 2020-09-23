@@ -6,7 +6,7 @@ export const UpdateMode = {
   MAJOR: `MAJOR`
 };
 
-export const EventMode = {
+export const PointMode = {
   SUMMARY: `SUMMARY`,
   EDITING: `EDITING`
 };

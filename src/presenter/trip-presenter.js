@@ -1,10 +1,10 @@
 import SortingView from "../view/sorting-view.js";
-import NoEventsView from "../view/no-events-view.js";
+import NoPointsView from "../view/no-points-view.js";
 import DayListView from "../view/day-list-view.js";
 import DayView from "../view/day-view.js";
 
-import EventPresenter from "./event-presenter.js";
-import NewEventPresenter from "./new-event-presenter.js";
+import PointPresenter from "./point-presenter.js";
+import NewPointPresenter from "./new-point-presenter.js";
 
 import {render, RenderPosition} from "../utils/render.js";
 import {UpdateMode} from "../const.js";
@@ -15,38 +15,38 @@ export default class TripPresenter {
    * ключевого узла DOM для рендеринга компонентов.
    *
    * @param  {Node} container           - Узел документа для презентера.
-   * @param  {Observer} eventsModel     - Модель для работы с событиями.
+   * @param  {Observer} pointsModel     - Модель для работы с событиями.
    * @param  {Object} destinationsModel - Модель для работы с городами.
    * @param  {Object} typesModel        - Модель для работы с типамм событий.
    * @param  {Object} offersModel       - Модель для работы с спец. предложениями.
    * @param  {Observer} filtersModel    - Модель для работы с фильтрациями.
    * @param  {Observer} sortingsModel   - Модель для работы с сортировками.
    */
-  constructor(container, eventsModel, destinationsModel, typesModel, offersModel, filtersModel, sortingsModel) {
+  constructor(container, pointsModel, destinationsModel, typesModel, offersModel, filtersModel, sortingsModel) {
     this._container = container;
 
-    this._eventsModel = eventsModel;
+    this._pointsModel = pointsModel;
     this._destinationsModel = destinationsModel;
     this._typesModel = typesModel;
     this._offersModel = offersModel;
     this._sortingsModel = sortingsModel;
     this._filtersModel = filtersModel;
 
-    this._noEventsComponent = null;
+    this._noPointsComponent = null;
     this._sortingComponent = null;
     this._dayListComponent = null;
 
     this._dayComponentMap = new Map();
-    this._eventPresenterMap = new Map();
+    this._pointPresenterMap = new Map();
 
-    this._newEventPresenter = null;
+    this._newPointPresenter = null;
 
-    this._updateEvent = this._updateEvent.bind(this);
+    this._updatePoint = this._updatePoint.bind(this);
     this._updatePresenter = this._updatePresenter.bind(this);
-    this._sortEvents = this._sortEvents.bind(this);
-    this._switchAllEventsMode = this._switchAllEventsMode.bind(this);
+    this._sortPoints = this._sortPoints.bind(this);
+    this._switchAllPointsMode = this._switchAllPointsMode.bind(this);
 
-    this._eventsModel.subscribe(this._updatePresenter);
+    this._pointsModel.subscribe(this._updatePresenter);
     this._sortingsModel.subscribe(this._updatePresenter);
     this._filtersModel.subscribe(this._updatePresenter);
 
@@ -61,7 +61,7 @@ export default class TripPresenter {
       this.destroy();
     }
     this._renderCaption();
-    this._renderEvents();
+    this._renderPoints();
     this._isInitialized = true;
   }
 
@@ -72,7 +72,7 @@ export default class TripPresenter {
     if (!this._isInitialized) {
       return;
     }
-    this._clearEvents();
+    this._clearPoints();
     this._clearCaption();
     this._isInitialized = false;
   }
@@ -80,18 +80,18 @@ export default class TripPresenter {
   /**
    * Открытие формы добавления нового события.
    */
-  createNewEvent() {
+  createNewPoint() {
     this._sortingsModel.reset();
     this._filtersModel.reset();
     this.init();
 
-    this._newEventPresenter = new NewEventPresenter(
+    this._newPointPresenter = new NewPointPresenter(
         this._dayListComponent.element,
-        this._eventsModel,
+        this._pointsModel,
         this._destinationsModel,
         this._typesModel,
         this._offersModel,
-        this._switchAllEventsMode
+        this._switchAllPointsMode
     );
   }
 
@@ -99,23 +99,23 @@ export default class TripPresenter {
    * Коллбек уведомления об обновлении модели
    * @param  {String} updateMode - Режим обновления согласно перечислению
    *                               UpdateMode.
-   * @param  {Object} eventData  - Объект с обновленной информацией о событии.
+   * @param  {Object} pointData  - Объект с обновленной информацией о событии.
    */
-  _updatePresenter(updateMode, eventData) {
+  _updatePresenter(updateMode, pointData) {
     switch (updateMode) {
       case UpdateMode.PATCH:
-        this._eventPresenterMap.get(eventData.id).refresh(eventData);
+        this._pointPresenterMap.get(pointData.id).refresh(pointData);
         break;
       case UpdateMode.MINOR:
-        this._clearEvents();
-        this._renderEvents();
+        this._clearPoints();
+        this._renderPoints();
         break;
       case UpdateMode.MAJOR:
-        this._clearEvents();
+        this._clearPoints();
         this._clearCaption();
         this._sortingsModel.reset();
         this._renderCaption();
-        this._renderEvents();
+        this._renderPoints();
         break;
     }
   }
@@ -126,19 +126,19 @@ export default class TripPresenter {
    *
    * @return {Array} - Карта событий.
    */
-  _getEventList() {
-    const eventList = this._eventsModel.eventList.slice()
+  _getPointList() {
+    const pointList = this._pointsModel.pointList.slice()
       .filter(this._filtersModel.callback);
 
-    return eventList.sort(this._sortingsModel.callback);
+    return pointList.sort(this._sortingsModel.callback);
   }
 
   /**
    * Рендеринг шаблона заглушки для состояния списка без событий.
    */
   _renderFallback() {
-    this._noEventsComponent = new NoEventsView();
-    render(this._container, this._noEventsComponent, RenderPosition.BEFOREEND);
+    this._noPointsComponent = new NoPointsView();
+    render(this._container, this._noPointsComponent, RenderPosition.BEFOREEND);
   }
 
   /**
@@ -146,7 +146,7 @@ export default class TripPresenter {
    */
   _renderCaption() {
     this._sortingComponent = new SortingView(this._sortingsModel.list, this._sortingsModel.isGrouped);
-    this._sortingComponent.sortEventsHandler = this._sortEvents;
+    this._sortingComponent.sortPointsHandler = this._sortPoints;
     render(this._container, this._sortingComponent, RenderPosition.BEFOREEND);
 
     this._dayListComponent = new DayListView();
@@ -156,23 +156,23 @@ export default class TripPresenter {
   /**
    * Рендеринг списка событий согласно выбранной сортировке.
    */
-  _renderEvents() {
-    if (this._noEventsComponent) {
-      this._noEventsComponent.remove();
-      this._noEventsComponent = null;
+  _renderPoints() {
+    if (this._noPointsComponent) {
+      this._noPointsComponent.remove();
+      this._noPointsComponent = null;
     }
 
-    const eventList = this._getEventList();
+    const pointList = this._getPointList();
     let previousDay;
     let dayComponent;
 
-    if (eventList.length === 0) {
+    if (pointList.length === 0) {
       this._renderFallback();
     }
 
-    eventList.forEach((event) => {
-      let dayNumber = event.dayNumber;
-      let dayDate = event.dayDate;
+    pointList.forEach((point) => {
+      let dayNumber = point.dayNumber;
+      let dayDate = point.dayDate;
 
       if (!this._sortingsModel.isGrouped) {
         dayNumber = null;
@@ -185,16 +185,16 @@ export default class TripPresenter {
         render(this._dayListComponent, dayComponent, RenderPosition.BEFOREEND);
       }
 
-      this._eventPresenterMap.set(
-          event.id,
-          new EventPresenter(
-              dayComponent.eventsContainer,
-              event,
-              this._eventsModel,
+      this._pointPresenterMap.set(
+          point.id,
+          new PointPresenter(
+              dayComponent.pointsContainer,
+              point,
+              this._pointsModel,
               this._destinationsModel,
               this._typesModel,
               this._offersModel,
-              this._switchAllEventsMode
+              this._switchAllPointsMode
           )
       );
 
@@ -210,19 +210,19 @@ export default class TripPresenter {
    * @param  {Object} newEventData - Объект с обновленными данными события.
    * @param  {Boolean} updateView      - Флаг перерисовки отображения.
    */
-  _updateEvent(newEventData, updateView = true) {
-    this._eventsModel.update(UpdateMode.DATA, newEventData);
+  _updatePoint(newEventData, updateView = true) {
+    this._pointsModel.update(UpdateMode.DATA, newEventData);
     if (updateView) {
-      this._eventPresenterMap.get(newEventData.id).update(newEventData);
+      this._pointPresenterMap.get(newEventData.id).update(newEventData);
     }
   }
 
   /**
    * Очистка контейнера с событиями.
    */
-  _clearEvents() {
-    this._eventPresenterMap.forEach((event) => event.destroy());
-    this._eventPresenterMap.clear();
+  _clearPoints() {
+    this._pointPresenterMap.forEach((point) => point.destroy());
+    this._pointPresenterMap.clear();
     this._dayComponentMap.forEach((day) => day.remove());
     this._dayComponentMap.clear();
   }
@@ -231,9 +231,9 @@ export default class TripPresenter {
    * Очистка заголовка и контейнера таблицы
    */
   _clearCaption() {
-    if (this._newEventPresenter) {
-      this._newEventPresenter.destroy();
-      this._newEventPresenter = null;
+    if (this._newPointPresenter) {
+      this._newPointPresenter.destroy();
+      this._newPointPresenter = null;
     }
 
     this._dayListComponent.remove();
@@ -248,31 +248,31 @@ export default class TripPresenter {
    *
    * @param  {String} sortingId - Id метода сортировки.
    */
-  _sortEvents(sortingId) {
+  _sortPoints(sortingId) {
     if (this._sortingsModel.active === sortingId) {
       return;
     }
 
     this._sortingsModel.active = sortingId;
 
-    this._clearEvents();
-    this._renderEvents();
+    this._clearPoints();
+    this._renderPoints();
   }
 
   /**
    * Переключает все события в нужный режим (должен соответствовать одному
    * из значений перечисления EventMode).
    *
-   * @param  {String} eventMode - Режим отображения.
+   * @param  {String} pointMode - Режим отображения.
    */
-  _switchAllEventsMode(eventMode) {
-    this._eventPresenterMap.forEach((eventPresenter) => {
-      eventPresenter.switchMode(eventMode);
+  _switchAllPointsMode(pointMode) {
+    this._pointPresenterMap.forEach((pointPresenter) => {
+      pointPresenter.switchMode(pointMode);
     });
 
-    if (this._newEventPresenter) {
-      this._newEventPresenter.destroy();
-      this._newEventPresenter = null;
+    if (this._newPointPresenter) {
+      this._newPointPresenter.destroy();
+      this._newPointPresenter = null;
     }
   }
 }

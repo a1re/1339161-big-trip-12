@@ -5,7 +5,7 @@ export default class DayView extends AbstractView {
     super();
     this._number = dayNumber;
     this._date = dayDate;
-    this._eventsContainer = null;
+    this._pointsContainer = null;
   }
 
   get template() {
@@ -20,11 +20,11 @@ export default class DayView extends AbstractView {
     return template;
   }
 
-  get eventsContainer() {
-    if (!this._eventsContainer) {
-      this._eventsContainer = this.element.querySelector(`.trip-events__list`);
+  get pointsContainer() {
+    if (!this._pointsContainer) {
+      this._pointsContainer = this.element.querySelector(`.trip-events__list`);
     }
 
-    return this._eventsContainer;
+    return this._pointsContainer;
   }
 }

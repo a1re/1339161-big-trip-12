@@ -7,31 +7,31 @@ import moment from "moment";
 import flatpickr from "flatpickr";
 import "../../node_modules/flatpickr/dist/flatpickr.min.css";
 
-const EventFormMode = {
+const PointFormMode = {
   ADDING: `ADDING`,
   EDITING: `EDITING`
 };
 
-export default class EventFormView extends UpdatableView {
+export default class PointFormView extends UpdatableView {
   /**
    * Конструктор класса отображения формы добавления/редактирования события.
    *
    * @param  {Array} typeList         - Массив со списком типов событий.
    * @param  {Array} offerList        - Массив со списком спец. предложений.
    * @param  {Array} destinationList  - Массив со списком типов гороодв.
-   * @param  {Object} [event]         - Объект с информацие о событии, если это
+   * @param  {Object} [point]         - Объект с информацие о событии, если это
    *                                    форма редактирования, а не добавления.
    */
-  constructor(typeList, offerList, destinationList, event = null) {
+  constructor(typeList, offerList, destinationList, point = null) {
     super();
 
     this._typeList = typeList;
     this._offerList = offerList;
     this._destinationList = destinationList;
 
-    if (!event) {
+    if (!point) {
       const randomType = typeList[getRandomInt(0, typeList.length - 1)];
-      this._event = {
+      this._point = {
         id: generateId(),
         destination: ``,
         type: randomType.id,
@@ -42,14 +42,14 @@ export default class EventFormView extends UpdatableView {
         offers: [],
         isFavorite: false
       };
-      this._mode = EventFormMode.ADDING;
+      this._mode = PointFormMode.ADDING;
       this._isSubmitEnabled = false;
       this._avalibleOfferList = [];
     } else {
-      this._event = event;
-      this._mode = EventFormMode.EDITING;
+      this._point = point;
+      this._mode = PointFormMode.EDITING;
       this._isSubmitEnabled = true;
-      this._avalibleOfferList = this._getAvalibleOffers(this._event.type);
+      this._avalibleOfferList = this._getAvalibleOffers(this._point.type);
 
       this._deleteHandler = this._deleteHandler.bind(this);
       this._toggleFavoriteHandler = this._toggleFavoriteHandler.bind(this);
@@ -76,7 +76,7 @@ export default class EventFormView extends UpdatableView {
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   get template() {
-    const eventTypeSelector = this._makeEventTypeSelector();
+    const pointTypeSelector = this._makePointTypeSelector();
     const destinationSelector = this._makeDestinationSelector();
     const timeInput = this._makeTimeInput();
     const priceInput = this._makePriceInput();
@@ -85,7 +85,7 @@ export default class EventFormView extends UpdatableView {
 
     return `<form class="trip-events__item  event  event--edit" action="#" method="post">
         <header class="event__header">
-          ${eventTypeSelector}
+          ${pointTypeSelector}
 
           ${destinationSelector}
 
@@ -94,11 +94,11 @@ export default class EventFormView extends UpdatableView {
           ${priceInput}
 
           <button class="event__save-btn  btn  btn--blue" type="submit" ${this._isSubmitEnabled ? `` : `disabled`}>Save</button>
-          <button class="event__reset-btn" type="reset">${this._mode === EventFormMode.ADDING ? `Cancel` : `Delete`}</button>
+          <button class="event__reset-btn" type="reset">${this._mode === PointFormMode.ADDING ? `Cancel` : `Delete`}</button>
 
-          ${this._mode === EventFormMode.EDITING ? favoriteButton : ``}
+          ${this._mode === PointFormMode.EDITING ? favoriteButton : ``}
 
-          ${this._mode === EventFormMode.EDITING ? `<button class="event__rollup-btn" type="button">
+          ${this._mode === PointFormMode.EDITING ? `<button class="event__rollup-btn" type="button">
             <span class="visually-hidden">Open event</span>
           </button>` : ``}
         </header>
@@ -114,12 +114,12 @@ export default class EventFormView extends UpdatableView {
   set closeHandler(callback) {
     this._callback.close = callback;
 
-    if (this._mode === EventFormMode.ADDING) {
+    if (this._mode === PointFormMode.ADDING) {
       this.element.querySelector(`.event__reset-btn`)
         .addEventListener(`click`, this._closeHandler);
     }
 
-    if (this._mode === EventFormMode.EDITING) {
+    if (this._mode === PointFormMode.EDITING) {
       this.element.querySelector(`.event__rollup-btn`)
         .addEventListener(`click`, this._closeHandler);
     }
@@ -179,14 +179,14 @@ export default class EventFormView extends UpdatableView {
       return;
     }
 
-    this._event = Object.assign({}, this._event, newData);
+    this._point = Object.assign({}, this._point, newData);
   }
 
   /**
    * Групповая установка обработчиков разных элементов форм.
    */
   setHandlers() {
-    const id = this._event.id;
+    const id = this._point.id;
 
     this.element.querySelector(`.event__input--destination`)
       .addEventListener(`input`, this._inputDestinationHandler);
@@ -204,7 +204,7 @@ export default class EventFormView extends UpdatableView {
     this.closeHandler = this._callback.close;
     this.submitHandler = this._callback.submit;
 
-    if (this._mode === EventFormMode.EDITING) {
+    if (this._mode === PointFormMode.EDITING) {
       this.deleteHandler = this._callback.delete;
       this.toggleFavoriteHandler = this._callback.toggleFavorite;
     }
@@ -217,14 +217,14 @@ export default class EventFormView extends UpdatableView {
    */
   _setTimePicking() {
     this._destroyTimePicking();
-    const id = this._event.id;
+    const id = this._point.id;
 
     const beginTimeInput = this.element.querySelector(`#event-start-time-${id}`);
     this._beginTimePicker = flatpickr(beginTimeInput, Object.assign(
         {},
         DEFAULT_FLATPICKR_SETTINGS,
         {
-          defaultDate: this._event.beginTime,
+          defaultDate: this._point.beginTime,
           onChange: this._inputBeginTimeHandler
         }
     ));
@@ -234,7 +234,7 @@ export default class EventFormView extends UpdatableView {
         {},
         DEFAULT_FLATPICKR_SETTINGS,
         {
-          defaultDate: this._event.endTime,
+          defaultDate: this._point.endTime,
           onChange: this._inputEndTimeHandler
         }
     ));
@@ -260,14 +260,14 @@ export default class EventFormView extends UpdatableView {
    *
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
-  _makeEventTypeSelector() {
-    const selectedType = this._typeList.find((type) => type.id === this._event.type);
+  _makePointTypeSelector() {
+    const selectedType = this._typeList.find((type) => type.id === this._point.type);
     const transportTypeList = this._typeList.filter((type) => type.isTransport);
     const stopTypeList = this._typeList.filter((type) => !type.isTransport);
 
     let template = `
       <div class="event__type-wrapper">
-        <label class="event__type  event__type-btn" for="event-type-toggle-${this._event.id}">
+        <label class="event__type  event__type-btn" for="event-type-toggle-${this._point.id}">
           <span class="visually-hidden">Choose event type</span>
           <img
             class="event__type-icon"
@@ -277,7 +277,7 @@ export default class EventFormView extends UpdatableView {
         </label>
         <input
           class="event__type-toggle  visually-hidden"
-          id="event-type-toggle-${this._event.id}"
+          id="event-type-toggle-${this._point.id}"
           type="checkbox">
         <div class="event__type-list">
           <fieldset class="event__type-group">
@@ -335,21 +335,21 @@ export default class EventFormView extends UpdatableView {
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   _makeDestinationSelector() {
-    const selectedType = this._typeList.find((type) => type.id === this._event.type);
+    const selectedType = this._typeList.find((type) => type.id === this._point.type);
 
     let template = `
       <div class="event__field-group  event__field-group--destination">
-        <label class="event__label  event__type-output" for="event-destination-${this._event.id}">
+        <label class="event__label  event__type-output" for="event-destination-${this._point.id}">
           ${selectedType.title} ${(selectedType.isTransport) ? `to` : `in`}
         </label>
         <input
             class="event__input  event__input--destination"
-            id="event-destination-${this._event.id}"
+            id="event-destination-${this._point.id}"
             type="text"
             name="event-destination"
-            value="${he.encode(this._event.destination)}"
-            list="destination-list-${this._event.id}">
-        <datalist id="destination-list-${this._event.id}">`;
+            value="${he.encode(this._point.destination)}"
+            list="destination-list-${this._point.id}">
+        <datalist id="destination-list-${this._point.id}">`;
 
     this._destinationList.forEach((destination) => {
       template += `<option value="${destination.name}"></option>`;
@@ -368,10 +368,10 @@ export default class EventFormView extends UpdatableView {
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   _makeTimeInput() {
-    const {id} = this._event;
+    const {id} = this._point;
 
-    const beginTime = formatDate(this._event.beginTime, DATETIME_FORMAT);
-    const endTime = formatDate(this._event.endTime, DATETIME_FORMAT);
+    const beginTime = formatDate(this._point.beginTime, DATETIME_FORMAT);
+    const endTime = formatDate(this._point.endTime, DATETIME_FORMAT);
 
     return `
       <div class="event__field-group  event__field-group--time">
@@ -399,7 +399,7 @@ export default class EventFormView extends UpdatableView {
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   _makePriceInput() {
-    const {id, price} = this._event;
+    const {id, price} = this._point;
     return `
       <div class="event__field-group  event__field-group--price">
         <label class="event__label" for="event-price-${id}">
@@ -432,7 +432,7 @@ export default class EventFormView extends UpdatableView {
             <div class="event__available-offers">`;
 
     for (let i = 0; i < this._avalibleOfferList.length; i++) {
-      const isChecked = this._event.offers.some((offer) => {
+      const isChecked = this._point.offers.some((offer) => {
         return offer.title === this._avalibleOfferList[i].title &&
                offer.price === this._avalibleOfferList[i].price;
       });
@@ -441,11 +441,11 @@ export default class EventFormView extends UpdatableView {
               <div class="event__offer-selector">
                 <input
                     class="event__offer-checkbox  visually-hidden"
-                    id="event-${this._event.id}-offer-${i}"
+                    id="event-${this._point.id}-offer-${i}"
                     type="checkbox"
-                    name="event-${this._event.id}-offer"
+                    name="event-${this._point.id}-offer"
                     value="${this._avalibleOfferList[i].title}" ${isChecked ? `checked` : ``}>
-                <label class="event__offer-label" for="event-${this._event.id}-offer-${i}">
+                <label class="event__offer-label" for="event-${this._point.id}-offer-${i}">
                   <span class="event__offer-title">${this._avalibleOfferList[i].title}</span>
                   &plus;
                   &euro;&nbsp;<span class="event__offer-price">${this._avalibleOfferList[i].price}</span>
@@ -467,7 +467,7 @@ export default class EventFormView extends UpdatableView {
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   _makeFavoriteButton() {
-    const {id, isFavorite} = this._event;
+    const {id, isFavorite} = this._point;
 
     return `
       <input
@@ -580,7 +580,7 @@ export default class EventFormView extends UpdatableView {
       return false;
     }
 
-    const endTime = this.element.querySelector(`#event-end-time-${this._event.id}`).value;
+    const endTime = this.element.querySelector(`#event-end-time-${this._point.id}`).value;
     if (parseDate(endTime, DATETIME_FORMAT) > parseDate(beginTime, DATETIME_FORMAT)) {
       return true;
     }
@@ -600,7 +600,7 @@ export default class EventFormView extends UpdatableView {
       return false;
     }
 
-    const beginTime = this.element.querySelector(`#event-start-time-${this._event.id}`).value;
+    const beginTime = this.element.querySelector(`#event-start-time-${this._point.id}`).value;
     if (parseDate(endTime, DATETIME_FORMAT) > parseDate(beginTime, DATETIME_FORMAT)) {
       return true;
     }
@@ -624,12 +624,12 @@ export default class EventFormView extends UpdatableView {
       return false;
     }
 
-    const beginTimeInput = this.element.querySelector(`#event-start-time-${this._event.id}`);
+    const beginTimeInput = this.element.querySelector(`#event-start-time-${this._point.id}`);
     if (!this._validateBeginTime(beginTimeInput.value)) {
       return false;
     }
 
-    const endTimeInput = this.element.querySelector(`#event-end-time-${this._event.id}`);
+    const endTimeInput = this.element.querySelector(`#event-end-time-${this._point.id}`);
     if (!this._validateEndTime(endTimeInput.value)) {
       return false;
     }
@@ -660,7 +660,7 @@ export default class EventFormView extends UpdatableView {
     }
 
     this.updateData({offers: this._getSelectedOffers()});
-    this._callback.submit(this._event);
+    this._callback.submit(this._point);
   }
 
   /**
@@ -685,7 +685,7 @@ export default class EventFormView extends UpdatableView {
    */
   _inputBeginTimeHandler() {
     const inputBeginTime = this.element
-        .querySelector(`#event-start-time-${this._event.id}`).value;
+        .querySelector(`#event-start-time-${this._point.id}`).value;
 
     this.updateData({
       beginTime: parseDate(inputBeginTime, DATETIME_FORMAT)
@@ -701,7 +701,7 @@ export default class EventFormView extends UpdatableView {
    */
   _inputEndTimeHandler() {
     const inputEndTime = this.element
-        .querySelector(`#event-end-time-${this._event.id}`).value;
+        .querySelector(`#event-end-time-${this._point.id}`).value;
 
     this.updateData({
       endTime: parseDate(inputEndTime, DATETIME_FORMAT)
@@ -732,8 +732,8 @@ export default class EventFormView extends UpdatableView {
   _selectTypeHandler(evt) {
     const selectedType = this._typeList.find((type) => type.id === evt.target.value);
 
-    const eventIcon = this.element.querySelector(`.event__type-icon`);
-    eventIcon.setAttribute(`src`, selectedType.icon);
+    const typeIcon = this.element.querySelector(`.event__type-icon`);
+    typeIcon.setAttribute(`src`, selectedType.icon);
     this.updateData({
       type: selectedType.id,
       isTransport: selectedType.isTransport
@@ -758,14 +758,14 @@ export default class EventFormView extends UpdatableView {
    * @param  {Object} evt - Объект события в DOM.
    */
   _deleteHandler() {
-    this._callback.delete(this._event);
+    this._callback.delete(this._point);
   }
 
   /**
    * Обработчик добавления/удаления из избранного.
    */
   _toggleFavoriteHandler() {
-    this.updateData({isFavorite: !this._event.isFavorite});
+    this.updateData({isFavorite: !this._point.isFavorite});
     this._callback.toggleFavorite();
   }
 }

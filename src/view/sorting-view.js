@@ -55,8 +55,8 @@ export default class SortingView extends AbstractView {
    *
    * @param  {Function} callback - Коллбек сортировки.
    */
-  set sortEventsHandler(callback) {
-    this._callback.sortEvents = callback;
+  set sortPointsHandler(callback) {
+    this._callback.sortPoints = callback;
     const sortingLabels = this.element.querySelectorAll(`.trip-sort__btn`);
     sortingLabels.forEach((label) => {
       label.addEventListener(`click`, this._sortHandler);
@@ -70,7 +70,7 @@ export default class SortingView extends AbstractView {
    * @param  {Object} evt - Объект события в DOM.
    */
   _sortHandler(evt) {
-    this._callback.sortEvents(evt.target.getAttribute(`for`));
+    this._callback.sortPoints(evt.target.getAttribute(`for`));
 
     const dayColumn = this.element.querySelector(`.trip-sort__item--day`);
 

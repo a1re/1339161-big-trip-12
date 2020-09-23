@@ -7,17 +7,17 @@ import {MAX_OFFERS_TO_SHOW} from "../const.js";
 import moment from "moment";
 import he from "he";
 
-export default class EventSummaryView extends AbstractView {
+export default class PointSummaryView extends AbstractView {
   /**
    * Конструктор класса отображения краткой сводки о собыиии..
    *
    * @param  {Object} type     - Объект с описанием типа события.
-   * @param  {Object} event    - Объект с данными события.
+   * @param  {Object} point    - Объект с данными события.
    */
-  constructor(type, event) {
+  constructor(type, point) {
     super();
 
-    this._event = event;
+    this._point = point;
     this._type = type;
 
     this._openHandler = this._openHandler.bind(this);
@@ -42,7 +42,7 @@ export default class EventSummaryView extends AbstractView {
             <h3 class="event__title">
               ${this._type.title}
               ${(this._type.isTransport) ? `to` : `in`}
-              ${he.encode(this._event.destination)}
+              ${he.encode(this._point.destination)}
             </h3>
 
             ${scheduleElement}
@@ -76,11 +76,11 @@ export default class EventSummaryView extends AbstractView {
    * @return {String} - HTML-строка с шаблоном для создания элемента.
    */
   _makeScheduleElement() {
-    const beginDateTime = this._event.beginTime.toISOString();
-    const beginTime = formatDate(this._event.beginTime, TIME_FORMAT);
+    const beginDateTime = this._point.beginTime.toISOString();
+    const beginTime = formatDate(this._point.beginTime, TIME_FORMAT);
 
-    const endDateTime = this._event.endTime.toISOString();
-    const endTime = formatDate(this._event.endTime, TIME_FORMAT);
+    const endDateTime = this._point.endTime.toISOString();
+    const endTime = formatDate(this._point.endTime, TIME_FORMAT);
 
     const duration = this._getDuration();
 
@@ -100,7 +100,7 @@ export default class EventSummaryView extends AbstractView {
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   _makePriceElement() {
-    const {price} = this._event;
+    const {price} = this._point;
 
     return `<p class="event__price">
           &euro;&nbsp;<span class="event__price-value">${price}</span>
@@ -113,7 +113,7 @@ export default class EventSummaryView extends AbstractView {
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   _makeOffersList() {
-    if (this._event.offers.length === 0) {
+    if (this._point.offers.length === 0) {
       return ``;
     }
 
@@ -121,12 +121,12 @@ export default class EventSummaryView extends AbstractView {
         <h4 class="visually-hidden">Offers:</h4>
         <ul class="event__selected-offers">`;
 
-    for (let i = 0; i < MAX_OFFERS_TO_SHOW && i < this._event.offers.length; i++) {
+    for (let i = 0; i < MAX_OFFERS_TO_SHOW && i < this._point.offers.length; i++) {
       template += `
           <li class="event__offer">
-            <span class="event__offer-title">${this._event.offers[i].title}</span>
+            <span class="event__offer-title">${this._point.offers[i].title}</span>
             &plus;
-            &euro;&nbsp;<span class="event__offer-price">${this._event.offers[i].price}</span>
+            &euro;&nbsp;<span class="event__offer-price">${this._point.offers[i].price}</span>
           </li>`;
     }
 
@@ -146,8 +146,8 @@ export default class EventSummaryView extends AbstractView {
    *                           `01D 02H 03M`
    */
   _getDuration() {
-    const beginMoment = moment(this._event.beginTime);
-    const endMoment = moment(this._event.endTime);
+    const beginMoment = moment(this._point.beginTime);
+    const endMoment = moment(this._point.endTime);
 
     let days = parseInt(endMoment.diff(beginMoment, `days`), 10);
     let hours = parseInt(endMoment.diff(beginMoment, `hours`) % 24, 10);

@@ -9,20 +9,20 @@ const TRIP_DURATION_DAYS_MIN = 2;
 const TRIP_DURATION_DAYS_MAX = 5;
 
 // Границы активного времени событий
-const EVENT_HOURS_MIN = 10;
-const EVENT_HOURS_MAX = 23;
+const POINT_HOURS_MIN = 10;
+const POINT_HOURS_MAX = 23;
 
 // Максимальное количество трансферов в день
 const MAX_TRANSFERS_PER_DAY = 2;
 
 // Минимальное и максимальное количество доп. опций
-const EVENT_OFFERS_MIN = 1;
-const EVENT_OFFERS_MAX = 5;
+const POINT_OFFERS_MIN = 1;
+const POINT_OFFERS_MAX = 5;
 
 // Мин., макс. и кратной базовой стоимости события
-const EVENT_BASIC_PRICE_MIN = 30;
-const EVENT_BASIC_PRICE_MAX = 120;
-const EVENT_BASIC_PRICE_DIV = 5;
+const POINT_BASIC_PRICE_MIN = 30;
+const POINT_BASIC_PRICE_MAX = 120;
+const POINT_BASIC_PRICE_DIV = 5;
 
 /**
  * Генерация начала путешествия. Выбирает дату относительно текущего момента
@@ -48,7 +48,7 @@ const generateBeginDate = () => {
  */
 const getAppliedOffers = (offerList, type) => {
   const appliedOfferList = [];
-  // Простой рандом от 0 до EVENT_OFFERS_MAX значительно уменьшает шансы увидеть
+  // Простой рандом от 0 до POINT_OFFERS_MAX значительно уменьшает шансы увидеть
   // событие без доп. опций, поэтому в начале работы функции жеребим возможность
   // увидеть событие без функций как 1 к 1.
   const isNoOffers = getRandomInt(0, 1);
@@ -57,7 +57,7 @@ const getAppliedOffers = (offerList, type) => {
   }
 
   const avalibleOffers = offerList.find((offer) => offer.type === type).offers;
-  const offersAmount = getRandomInt(EVENT_OFFERS_MIN, Math.min(avalibleOffers.length, EVENT_OFFERS_MAX));
+  const offersAmount = getRandomInt(POINT_OFFERS_MIN, Math.min(avalibleOffers.length, POINT_OFFERS_MAX));
   avalibleOffers.sort(() => Math.random() - 0.5);
 
   for (let i = 0; i < offersAmount; i++) {
@@ -67,48 +67,48 @@ const getAppliedOffers = (offerList, type) => {
   return appliedOfferList;
 };
 
-export const generateEvents = (eventsAmount, offerList, destinationList) => {
+export const generatePoints = (pointsAmount, offerList, destinationList) => {
   const transports = types.filter((type) => type.isTransport).map((type) => type.id);
   const stops = types.filter((type) => !type.isTransport).map((type) => type.id);
 
   const tripStart = generateBeginDate(); // Время начало путешествия
   const tripDuration = getRandomInt(TRIP_DURATION_DAYS_MIN, TRIP_DURATION_DAYS_MAX); // Длительность в днях
-  const avgEventsPerDay = eventsAmount / tripDuration; // Среднее количество событий в день
-  const activeHours = EVENT_HOURS_MAX - EVENT_HOURS_MIN; // Исключение ночных часов для реалистичности
+  const avgPointsPerDay = pointsAmount / tripDuration; // Среднее количество событий в день
+  const activeHours = POINT_HOURS_MAX - POINT_HOURS_MIN; // Исключение ночных часов для реалистичности
 
   let currentCity = destinationList[getRandomInt(0, destinationList.length - 1)]; // Изначальная точку маршрута
   let transfersLeft = MAX_TRANSFERS_PER_DAY; // Огранчение трансферов, чтобы на 15 событий не вышло 15 переездов
 
-  const events = [];
-  let eventsLeft = eventsAmount;
+  const points = [];
+  let pointsLeft = pointsAmount;
   for (let day = 0; day < tripDuration; day++) {
-    if (eventsLeft === 0) {
+    if (pointsLeft === 0) {
       break;
     }
 
     // Расчет количества событий в день. Если это последний день, то в него переносятся все
     // оставшиеся события, если любой дрeгой, то берется среднее кол-во событий в день,
     // округляется и немного рандомизируется (±1).
-    const dayEvents = (day === tripDuration - 1) ? eventsLeft : (Math.round(avgEventsPerDay + getRandomInt(-1, 1)));
+    const dayPoints = (day === tripDuration - 1) ? pointsLeft : (Math.round(avgPointsPerDay + getRandomInt(-1, 1)));
 
     // Вычисление даты начала событий в рамках дня.
     const dayDate = new Date(tripStart);
     dayDate.setDate(dayDate.getDate() + day);
 
     // Максимальное количество времени на каждое событие, чтобы они не пересекались.
-    const avgHoursPerEvent = activeHours / dayEvents;
+    const avgHoursPerPoint = activeHours / dayPoints;
 
     // Итератор по событиям внутри дня
-    for (let eventOfDay = 0; eventOfDay < dayEvents; eventOfDay++) {
+    for (let pointOfDay = 0; pointOfDay < dayPoints; pointOfDay++) {
       //  Вычисление времени начала события. Для этого берется активное время в течение дня,
       //  в нем вычисляется промежуток, в котором событие должно состояться, делится пополам
       //  и рандомизируется время начала в первой половине и время окончания во второй. Минуты
-      //  делаются кратными EVENT_MINUTES_DIV.
-      const beginHours = EVENT_HOURS_MIN + eventOfDay * avgHoursPerEvent;
+      //  делаются кратными POINT_MINUTES_DIV.
+      const beginHours = POINT_HOURS_MIN + pointOfDay * avgHoursPerPoint;
       const beginMinutes = Math.floor(beginHours % 1 * 60);
       const beginTimeGap = new Date(dayDate.setHours(Math.floor(beginHours), beginMinutes, 0, 0));
 
-      const endHours = EVENT_HOURS_MIN + (eventOfDay + 1) * avgHoursPerEvent;
+      const endHours = POINT_HOURS_MIN + (pointOfDay + 1) * avgHoursPerPoint;
       const endMinutes = Math.floor(endHours % 1 * 60);
       const endTimeGap = new Date(dayDate.setHours(Math.floor(endHours), endMinutes, 59, 999));
 
@@ -135,10 +135,10 @@ export const generateEvents = (eventsAmount, offerList, destinationList) => {
       }
 
       // Рандомизация базовой стоимости
-      let price = getRandomInt(EVENT_BASIC_PRICE_MIN, EVENT_BASIC_PRICE_MAX, EVENT_BASIC_PRICE_DIV);
+      let price = getRandomInt(POINT_BASIC_PRICE_MIN, POINT_BASIC_PRICE_MAX, POINT_BASIC_PRICE_DIV);
 
       // Итоговый объект
-      const eventInfo = {
+      const pointInfo = {
         id: generateId(),
         destination: currentCity,
         type,
@@ -149,12 +149,12 @@ export const generateEvents = (eventsAmount, offerList, destinationList) => {
         isFavorite: false
       };
 
-      events.push(eventInfo);
+      points.push(pointInfo);
     }
 
-    eventsLeft -= dayEvents;
+    pointsLeft -= dayPoints;
     transfersLeft = MAX_TRANSFERS_PER_DAY;
   }
 
-  return events;
+  return points;
 };

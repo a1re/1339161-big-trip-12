@@ -1,13 +1,13 @@
 export const sortings = [
-  {id: `event`, title: `Event`, isGrouped: true, isDefault: true, callback: (eventA, eventB) => {
-    return eventA.beginTime.valueOf() - eventB.beginTime.valueOf();
+  {id: `event`, title: `Event`, isGrouped: true, isDefault: true, callback: (pointA, pointB) => {
+    return pointA.beginTime.valueOf() - pointB.beginTime.valueOf();
   }},
-  {id: `time`, title: `Time`, isGrouped: false, isDefault: false, callback: (eventA, eventB) => {
-    const durationA = eventA.endTime.valueOf() - eventA.beginTime.valueOf();
-    const durationB = eventB.endTime.valueOf() - eventB.beginTime.valueOf();
+  {id: `time`, title: `Time`, isGrouped: false, isDefault: false, callback: (pointA, pointB) => {
+    const durationA = pointA.endTime.valueOf() - pointA.beginTime.valueOf();
+    const durationB = pointB.endTime.valueOf() - pointB.beginTime.valueOf();
     return durationB - durationA;
   }},
-  {id: `price`, title: `Price`, isGrouped: false, isDefault: false, callback: (eventA, eventB) => {
-    return eventB.price - eventA.price;
+  {id: `price`, title: `Price`, isGrouped: false, isDefault: false, callback: (pointA, pointB) => {
+    return pointB.price - pointA.price;
   }}
 ];

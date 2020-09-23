@@ -11,14 +11,14 @@ export default class HeaderPresenter {
    * ключевого узла DOM для рендеринга компонентов.
    *
    * @param  {Node} container        - Узел документа для презентера.
-   * @param  {Observer} eventsModel  - Модель для работы с событиями.
+   * @param  {Observer} pointsModel  - Модель для работы с событиями.
    * @param  {Observer} filtersModel - Модель для работы с фильтрациями.
    * @param  {Function} displayTable - Коллбек открытия списка событий.
    * @param  {Function} displayStats - Коллбек открытия статистики.
    */
-  constructor(container, eventsModel, filtersModel, displayTable, displayStats) {
+  constructor(container, pointsModel, filtersModel, displayTable, displayStats) {
     this._container = container;
-    this._eventsModel = eventsModel;
+    this._pointsModel = pointsModel;
     this._filtersModel = filtersModel;
 
     this._displayTable = displayTable;
@@ -34,7 +34,7 @@ export default class HeaderPresenter {
     this._menuContainer = container.querySelector(`.trip-controls h2:first-child`);
     this._filtersContainer = container.querySelector(`.trip-controls h2:last-child`);
 
-    this._eventsModel.subscribe(this._updatePresenter);
+    this._pointsModel.subscribe(this._updatePresenter);
     this._filtersModel.subscribe(this._updatePresenter);
 
     this._isInitialized = false;
@@ -84,7 +84,7 @@ export default class HeaderPresenter {
    * Отрисовка сводки о машруте, датах и общей стооимости поездки.
    */
   _renderTripInfo() {
-    this._tripInfoComponent = new TripInfoView(this._eventsModel.eventList);
+    this._tripInfoComponent = new TripInfoView(this._pointsModel.pointList);
     render(this._container, this._tripInfoComponent, RenderPosition.AFTERBEGIN);
   }
 

@@ -5,12 +5,12 @@ import he from "he";
 export default class TripInfoView extends AbstractView {
   /**
    * Конструктор отображения
-   * @param  {Array} eventList - Список всех событий.
+   * @param  {Array} pointList - Список всех точек.
    * @param  {Array} offerList - Список всех спец. предложений.
    */
-  constructor(eventList, offerList) {
+  constructor(pointList, offerList) {
     super();
-    this._eventList = eventList;
+    this._pointList = pointList;
     this._offerList = offerList;
   }
 
@@ -41,9 +41,9 @@ export default class TripInfoView extends AbstractView {
   _getTotalPrice() {
     let totalPrice = 0;
 
-    this._eventList.forEach((event) => {
-      totalPrice += event.price;
-      event.offers.forEach((offer) => {
+    this._pointList.forEach((point) => {
+      totalPrice += point.price;
+      point.offers.forEach((offer) => {
         totalPrice += offer.price;
       });
     });
@@ -57,11 +57,11 @@ export default class TripInfoView extends AbstractView {
    * @return {string} - Итоговый маршрут.
    */
   _getTripSummary() {
-    if (this._eventList.length === 0) {
+    if (this._pointList.length === 0) {
       return ``;
     }
 
-    const uniquePoints = this._eventList.filter((element, index, array) => {
+    const uniquePoints = this._pointList.filter((element, index, array) => {
       return index === 0 || element.destination !== array[index - 1].destination;
     });
 
@@ -89,18 +89,18 @@ export default class TripInfoView extends AbstractView {
    * @return {String}  - Строка с датами.
    */
   _getTiming() {
-    const eventList = this._eventList.slice().sort((a, b) => {
+    const pointList = this._pointList.slice().sort((a, b) => {
       return a.beginTime.valueOf() - b.beginTime.valueOf();
     });
 
-    if (eventList.length === 0) {
+    if (pointList.length === 0) {
       return ``;
     }
 
-    const dayStart = eventList[0].beginTime.toLocaleString(`en-US`, {day: `numeric`});
-    const monthStart = eventList[0].beginTime.toLocaleString(`en-US`, {month: `short`});
-    const dayFinish = eventList[eventList.length - 1].endTime.toLocaleString(`en-US`, {day: `numeric`});
-    const monthFinish = eventList[eventList.length - 1].endTime.toLocaleString(`en-US`, {month: `short`});
+    const dayStart = pointList[0].beginTime.toLocaleString(`en-US`, {day: `numeric`});
+    const monthStart = pointList[0].beginTime.toLocaleString(`en-US`, {month: `short`});
+    const dayFinish = pointList[pointList.length - 1].endTime.toLocaleString(`en-US`, {day: `numeric`});
+    const monthFinish = pointList[pointList.length - 1].endTime.toLocaleString(`en-US`, {month: `short`});
 
     return `${dayStart}${(monthFinish !== monthStart) ? monthStart : ``}&nbsp;&mdash;&nbsp;${dayFinish} ${monthFinish}`;
   }
