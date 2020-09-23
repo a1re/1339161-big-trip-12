@@ -13,12 +13,12 @@ export default class OffersModel {
   }
 
   /**
-   * Получение списка предложений для трансфера/точки в виде массива.
+   * Геттар списка предложений для трансфера/точки в виде массива.
    *
-   * @return {Array}       - Список предложений в виде массива объектов.
+   * @return {Array} - Список предложений в виде массива объектов.
    */
-  getList() {
-    return this._offerList;
+  get list() {
+    return this._offerList.slice();
   }
 
   /**

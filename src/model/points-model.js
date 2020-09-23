@@ -24,8 +24,8 @@ export default class PointsModel extends Observer {
    *
    * @return {Array} - Массив со списком точек.
    */
-  get pointList() {
-    return this._pointList;
+  get list() {
+    return this._pointList.slice();
   }
 
   /**

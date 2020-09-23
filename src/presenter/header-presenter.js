@@ -84,7 +84,7 @@ export default class HeaderPresenter {
    * Отрисовка сводки о машруте, датах и общей стооимости поездки.
    */
   _renderTripInfo() {
-    this._tripInfoComponent = new TripInfoView(this._pointsModel.pointList);
+    this._tripInfoComponent = new TripInfoView(this._pointsModel.list);
     render(this._container, this._tripInfoComponent, RenderPosition.AFTERBEGIN);
   }
 

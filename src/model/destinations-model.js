@@ -12,12 +12,12 @@ export default class DestinationsModel {
   }
 
   /**
-   * Получение списка пунктов назначения.
+   * Геттер списка пунктов назначения.
    *
    * @return {Array} Массив пунктов назначения.
    */
-  getList() {
-    return this._destinationList;
+  get list() {
+    return this._destinationList.slice();
   }
 
   /**

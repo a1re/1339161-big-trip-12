@@ -26,13 +26,13 @@ import HeaderPresenter from "./presenter/header-presenter.js";
 import StatsPresenter from "./presenter/stats-presenter.js";
 
 const destinationsModel = new DestinationsModel(generateDestinations());
-const destinationList = destinationsModel.getList().map((destination) => destination.name);
+const destinationList = destinationsModel.list.map((destination) => destination.name);
 
 const offerList = generateOffers(types);
 const pointList = generatePoints(getRandomInt(POINTS_MIN, POINTS_MAX), offerList, destinationList);
 
 const typesModel = new TypesModel(types);
-const pointsModel = new PointsModel(pointList, typesModel.getList());
+const pointsModel = new PointsModel(pointList, typesModel.list);
 const offersModel = new OffersModel(offerList);
 const sortingsModel = new SortingsModel(sortings);
 const filtersModel = new FiltersModel(filters, pointsModel);

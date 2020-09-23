@@ -121,9 +121,9 @@ export default class PointPresenter {
   _createElement(pointMode) {
     if (pointMode === PointMode.EDITING) {
       this._pointFormComponent = new PointFormView(
-          this._typesModel.getList(),
-          this._offersModel.getList(),
-          this._destinationsModel.getList(),
+          this._typesModel.list,
+          this._offersModel.list,
+          this._destinationsModel.list,
           this._point
       );
 

@@ -13,20 +13,12 @@ export default class TypesModel {
   }
 
   /**
-   * Получение списка предложений для трансфера/точки в виде массива.
+   * Геттер списка предложений для трансфера/точки в виде массива.
    *
-   * @param  {Boolean} isTransport - Флаг ограничения вывода. Если он установлен
-   *                                 true, то вернется массив транспортных типов,
-   *                                 Если false — остановочных типовю Если не
-   *                                 задавать, вернутся все.
-   * @return {Array}               - Список предложений в виде массива объектов.
+   * @return {Array} - Список предложений в виде массива объектов.
    */
-  getList(isTransport) {
-    if (typeof isTransport !== `undefined`) {
-      this._typeList.filter((type) => type.isTransport === isTransport);
-    }
-
-    return this._typeList;
+  get list() {
+    return this._typeList.slice();
   }
 
   /**

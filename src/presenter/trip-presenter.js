@@ -127,8 +127,7 @@ export default class TripPresenter {
    * @return {Array} - Карта точек.
    */
   _getPointList() {
-    const pointList = this._pointsModel.pointList.slice()
-      .filter(this._filtersModel.callback);
+    const pointList = this._pointsModel.list.filter(this._filtersModel.callback);
 
     return pointList.sort(this._sortingsModel.callback);
   }

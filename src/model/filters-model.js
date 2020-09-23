@@ -31,16 +31,6 @@ export default class FiltersModel extends Observer {
   }
 
   /**
-   * Подсчет количества точек по фильтру.
-   *
-   * @param  {Function} filter - Функция фильтрации для списка точек.
-   * @return {Number}          - Количество точек после фильтрации.
-   */
-  _countPoints(filter) {
-    return this._pointsModel.pointList.filter(filter).length;
-  }
-
-  /**
    * Сеттер активного метода фильтрации.
    *
    * @param {String} filterId - Id фильтрации (должна существовать).
@@ -117,5 +107,15 @@ export default class FiltersModel extends Observer {
       filter.count = this._countPoints(filter.callback);
       this._filterMap.set(filterId, filter);
     }
+  }
+
+  /**
+   * Подсчет количества точек по фильтру.
+   *
+   * @param  {Function} filter - Функция фильтрации для списка точек.
+   * @return {Number}          - Количество точек после фильтрации.
+   */
+  _countPoints(filter) {
+    return this._pointsModel.list.filter(filter).length;
   }
 }
