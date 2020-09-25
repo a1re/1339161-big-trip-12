@@ -44,7 +44,7 @@ export default class PointSummaryView extends AbstractView {
             <h3 class="event__title">
               ${this._type.title}
               ${(this._type.isTransport) ? `to` : `in`}
-              ${he.encode(this._point.destination)}
+              ${he.encode(this._point.destination.name)}
             </h3>
 
             ${scheduleElement}

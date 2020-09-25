@@ -197,8 +197,8 @@ export default class PointPresenter {
 
     this._pointsModel.update(UpdateMode.MINOR, Object.assign({}, this._point,
         {
+          destination: pointData.destination,
           type: pointData.type,
-          city: pointData.city,
           beginTime: pointData.beginTime,
           endTime: pointData.endTime,
           price: parseInt(pointData.price, 10),

@@ -33,7 +33,7 @@ export default class PointFormView extends UpdatableView {
       const randomType = typeList[getRandomInt(0, typeList.length - 1)];
       this._point = {
         id: generateId(),
-        destination: ``,
+        destination: {name: ``},
         type: randomType.id,
         beginTime: moment().startOf(`hour`).toDate(),
         endTime: moment().startOf(`hour`).add(2, `hours`).toDate(),
@@ -54,6 +54,8 @@ export default class PointFormView extends UpdatableView {
       this._deleteHandler = this._deleteHandler.bind(this);
       this._toggleFavoriteHandler = this._toggleFavoriteHandler.bind(this);
     }
+
+    this._displayDestinationDescription = false;
 
     this._beginTimePicker = null;
     this._endTimePicker = null;
@@ -80,8 +82,8 @@ export default class PointFormView extends UpdatableView {
     const destinationSelector = this._makeDestinationSelector();
     const timeInput = this._makeTimeInput();
     const priceInput = this._makePriceInput();
-    const offersList = this._makeOffersList();
     const favoriteButton = this._makeFavoriteButton();
+    const pointDetails = this._makePointDetails();
 
     return `<form class="trip-events__item  event  event--edit" action="#" method="post">
         <header class="event__header">
@@ -102,7 +104,7 @@ export default class PointFormView extends UpdatableView {
             <span class="visually-hidden">Open event</span>
           </button>` : ``}
         </header>
-        ${offersList}
+        ${pointDetails}
       </form>`;
   }
 
@@ -347,7 +349,7 @@ export default class PointFormView extends UpdatableView {
             id="event-destination-${this._point.id}"
             type="text"
             name="event-destination"
-            value="${he.encode(this._point.destination)}"
+            value="${he.encode(this._point.destination.name)}"
             list="destination-list-${this._point.id}">
         <datalist id="destination-list-${this._point.id}">`;
 
@@ -425,9 +427,7 @@ export default class PointFormView extends UpdatableView {
       return ``;
     }
 
-    let template = `
-        <section class="event__details">
-          <section class="event__section  event__section--offers">
+    let template = `<section class="event__section  event__section--offers">
             <h3 class="event__section-title  event__section-title--offers">Offers</h3>
             <div class="event__available-offers">`;
 
@@ -455,10 +455,55 @@ export default class PointFormView extends UpdatableView {
 
     template += `
             </div>
-          </section>
-        </section>`;
+          </section>`;
 
     return template;
+  }
+
+  /**
+   * Создание шаблона подбробной информации о точке назначения.
+   *
+   * @return {String} - Шаблон в виде строки с HTML-кодом.
+   */
+  _makeDestinationDescription() {
+    if (!this._displayDestinationDescription) {
+      return ``;
+    }
+
+    let template = `<section class="event__section  event__section--destination">
+          <h3 class="event__section-title  event__section-title--destination">Destination</h3>
+          <p class="event__destination-description">${this._point.destination.description}</p>`;
+
+    if (this._point.destination.photos.length > 0) {
+      template += `<div class="event__photos-container"><div class="event__photos-tape">`;
+      this._point.destination.photos.forEach((photo) => {
+        template += `<img class="event__photo" src="${photo.src}" alt="${photo.description}">`;
+      });
+      template += `</div></div>`;
+    }
+
+    template += `</section>`;
+
+    return template;
+  }
+
+  /**
+   * Создание шаблона дополнительноый информации о точке назначения.
+   *
+   * @return {String} - Шаблон в виде строки с HTML-кодом.
+   */
+  _makePointDetails() {
+    const offersList = this._makeOffersList();
+    const destinationDescription = this._makeDestinationDescription();
+
+    if (offersList.length === 0 && destinationDescription.length === 0) {
+      return ``;
+    }
+
+    return `<section class="event__details">
+              ${offersList}
+              ${destinationDescription}
+            </section>`;
   }
 
   /**
@@ -559,7 +604,7 @@ export default class PointFormView extends UpdatableView {
       return false;
     }
 
-    if (this._destinationList.find((destinationObject) => {
+    if (this._destinationList.some((destinationObject) => {
       return destinationObject.name === destination;
     })) {
       return true;
@@ -670,12 +715,18 @@ export default class PointFormView extends UpdatableView {
    */
   _inputDestinationHandler(evt) {
     if (!this._validateDestination(evt.target.value)) {
+      this.updateData({destination: {name: evt.target.value}});
       this._updateSubmitStatus(false);
       return;
     }
 
-    this.updateData({destination: evt.target.value});
+    this._displayDestinationDescription = true;
+    const destinationObject = this._destinationList
+        .find((destination) => destination.name === evt.target.value);
+
+    this.updateData({destination: destinationObject});
     this._updateSubmitStatus(this._validateForm());
+    this.updateElement();
   }
 
   /**
@@ -736,7 +787,8 @@ export default class PointFormView extends UpdatableView {
     typeIcon.setAttribute(`src`, selectedType.icon);
     this.updateData({
       type: selectedType.id,
-      isTransport: selectedType.isTransport
+      isTransport: selectedType.isTransport,
+      offers: []
     });
 
     this._avalibleOfferList = this._getAvalibleOffers(selectedType.id);

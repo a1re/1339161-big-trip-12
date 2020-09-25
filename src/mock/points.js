@@ -57,7 +57,9 @@ const getAppliedOffers = (offerList, type) => {
   }
 
   const avalibleOffers = offerList.find((offer) => offer.type === type).offers;
-  const offersAmount = getRandomInt(POINT_OFFERS_MIN, Math.min(avalibleOffers.length, POINT_OFFERS_MAX));
+  const offersAmount = avalibleOffers.length > 0
+    ? getRandomInt(POINT_OFFERS_MIN, Math.min(avalibleOffers.length, POINT_OFFERS_MAX))
+    : 0;
   avalibleOffers.sort(() => Math.random() - 0.5);
 
   for (let i = 0; i < offersAmount; i++) {

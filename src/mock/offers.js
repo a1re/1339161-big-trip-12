@@ -8,7 +8,7 @@ const titles = [
 
 const getRandomOffers = () => {
   const randomTitles = titles.slice().sort(() => Math.random() - 0.5);
-  const randomAmount = getRandomInt(1, randomTitles.length);
+  const randomAmount = getRandomInt(0, randomTitles.length);
   const randomOffers = [];
 
   for (let i = 0; i < randomAmount; i++) {

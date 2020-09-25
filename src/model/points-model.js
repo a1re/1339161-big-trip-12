@@ -109,7 +109,7 @@ export default class PointsModel extends Observer {
     const beginDate = moment(pointList[0].beginTime).startOf(`day`);
 
     pointList.forEach((point) => {
-      const pointDate = moment(point.beginTime, `YYYY-MM-DD`);
+      const pointDate = moment(point.beginTime).format(`YYYY-MM-DD`);
       if (pointDate !== lastDate) {
         lastDate = pointDate;
       }
