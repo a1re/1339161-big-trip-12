@@ -2,6 +2,7 @@ import SortingView from "../view/sorting-view.js";
 import NoPointsView from "../view/no-points-view.js";
 import DayListView from "../view/day-list-view.js";
 import DayView from "../view/day-view.js";
+import TripPointsView from "../view/trip-points-view.js";
 
 import PointPresenter from "./point-presenter.js";
 import NewPointPresenter from "./new-point-presenter.js";
@@ -46,6 +47,7 @@ export default class TripPresenter {
     this._noPointsComponent = null;
     this._sortingComponent = null;
     this._dayListComponent = null;
+    this._tripPointsComponent = null;
 
     this._dayComponentMap = new Map();
     this._pointPresenterMap = new Map();
@@ -72,6 +74,8 @@ export default class TripPresenter {
     if (this._isInitialized) {
       this.destroy();
     }
+    this._tripPointsComponent = new TripPointsView();
+    render(this._container, this._tripPointsComponent, RenderPosition.BEFOREEND);
     this._renderCaption();
     this._renderPoints();
     this._isInitialized = true;
@@ -86,6 +90,8 @@ export default class TripPresenter {
     }
     this._clearPoints();
     this._clearCaption();
+    this._tripPointsComponent.remove();
+    this._tripPointsComponent = null;
     this._isInitialized = false;
   }
 
@@ -149,7 +155,7 @@ export default class TripPresenter {
    */
   _renderFallback() {
     this._noPointsComponent = new NoPointsView();
-    render(this._container, this._noPointsComponent, RenderPosition.BEFOREEND);
+    render(this._tripPointsComponent, this._noPointsComponent, RenderPosition.BEFOREEND);
   }
 
   /**
@@ -158,10 +164,10 @@ export default class TripPresenter {
   _renderCaption() {
     this._sortingComponent = new SortingView(this._sortingsModel.list, this._sortingsModel.isGrouped);
     this._sortingComponent.sortPointsHandler = this._sortPoints;
-    render(this._container, this._sortingComponent, RenderPosition.BEFOREEND);
+    render(this._tripPointsComponent, this._sortingComponent, RenderPosition.BEFOREEND);
 
     this._dayListComponent = new DayListView();
-    render(this._container, this._dayListComponent, RenderPosition.BEFOREEND);
+    render(this._tripPointsComponent, this._dayListComponent, RenderPosition.BEFOREEND);
   }
 
   /**

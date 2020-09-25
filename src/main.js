@@ -1,8 +1,6 @@
 const POINTS_MIN = 15;
 const POINTS_MAX = 20;
 
-import {render, RenderPosition} from "./utils/render.js";
-
 import {generatePoints} from "./mock/points.js";
 import {generateOffers} from "./mock/offers.js";
 import {generateDestinations} from "./mock/destinations.js";
@@ -19,8 +17,6 @@ import FiltersModel from "./model/filters-model.js";
 import OffersModel from "./model/offers-model.js";
 import TypesModel from "./model/types-model.js";
 import DestinationsModel from "./model/destinations-model.js";
-
-import TripPointsView from "./view/trip-points-view.js";
 
 import TripPresenter from "./presenter/trip-presenter.js";
 import HeaderPresenter from "./presenter/header-presenter.js";
@@ -41,9 +37,6 @@ const headerElement = document.querySelector(`.trip-main`);
 const pageContainerElement = document.querySelector(`.page-main .page-body__container`);
 const newPointElement = document.querySelector(`.trip-main__event-add-btn`);
 
-const tripPointsComponent = new TripPointsView();
-render(pageContainerElement, tripPointsComponent, RenderPosition.BEFOREEND);
-
 const displayTable = () => {
   statsPresenter.destroy();
   headerPresenter.enableFilters();
@@ -61,7 +54,7 @@ const setNewPointButtonState = (state) => {
 };
 
 const tripPresenter = new TripPresenter(
-    tripPointsComponent.element,
+    pageContainerElement,
     pointsModel,
     destinationsModel,
     typesModel,
@@ -80,7 +73,7 @@ const headerPresenter = new HeaderPresenter(
 );
 
 const statsPresenter = new StatsPresenter(
-    tripPointsComponent.element,
+    pageContainerElement,
     pointsModel,
     typesModel
 );

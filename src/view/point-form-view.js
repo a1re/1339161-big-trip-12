@@ -717,6 +717,7 @@ export default class PointFormView extends UpdatableView {
     if (!this._validateDestination(evt.target.value)) {
       this.updateData({destination: {name: evt.target.value}});
       this._updateSubmitStatus(false);
+      this._displayDestinationDescription = false;
       return;
     }
 
