@@ -84,9 +84,12 @@ export default class NewPointPresenter {
    * Добавление новой точки через сабмит формы.
    *
    * @param  {Object} pointData - Данные формы для сохранения.
+   * @return {Promise}          - Объект Promise после запроса через fetch.
    */
   _submitForm(pointData) {
-    this._pointsModel.add(UpdateMode.MINOR, pointData);
-    this.destroy();
+    return this._pointsModel.add(UpdateMode.MINOR, pointData)
+      .then(() => {
+        this.destroy();
+      });
   }
 }

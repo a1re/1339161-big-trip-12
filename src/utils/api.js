@@ -52,6 +52,22 @@ export default class Api {
   }
 
   /**
+   * Отправка данных на удаленный сервер методом DELETE.
+   *
+   * @param  {String} url         - Часть адреса для запроса после endPoint.
+   * @param  {Number} id          - Id ресурса, добавляется в адрес для запроса
+   *                                после endPoint и url.
+   * @return {Object}             - Ответ сервера в формате JSON.
+   */
+  delete(url, id) {
+    return this._load({
+      url: url + `/` + id,
+      method: Method.DELETE,
+      header: new Headers({"Content-Type": `application/json`})
+    }).then(Api.toJSON);
+  }
+
+  /**
    * Отправка данных на удаленный сервер методом POST.
    *
    * @param  {String} url         - Часть адреса для запроса после endPoint.
@@ -103,7 +119,7 @@ export default class Api {
    */
   static checkStatus(response) {
     if (
-      response.status < SuccessHTTPStatusRange.MIN &&
+      response.status < SuccessHTTPStatusRange.MIN ||
       response.status > SuccessHTTPStatusRange.MAX
     ) {
       throw new Error(`${response.status}: ${response.statusText}`);

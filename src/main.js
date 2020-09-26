@@ -17,7 +17,8 @@ import TripPresenter from "./presenter/trip-presenter.js";
 import HeaderPresenter from "./presenter/header-presenter.js";
 import StatsPresenter from "./presenter/stats-presenter.js";
 
-const api = new Api(API_END_POINT, `Basic ` + getAuthString());
+// const api = new Api(API_END_POINT, `Basic ` + getAuthString());
+const api = new Api(API_END_POINT, `Basic co0w590ik29889a`);
 
 const destinationsModel = new DestinationsModel(api);
 const typesModel = new TypesModel(types);

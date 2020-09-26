@@ -82,6 +82,7 @@ export default class PointsModel extends Observer {
    * @param  {String} updateMode - Режим обновления. Должен соответствовать
    *                               константе из перечисления UpdateMode.
    * @param  {Object} pointData  - Объект с обновленными данными.
+   * @return {Promise}           - Объект Promise после запроса через fetch.
    */
   update(updateMode, pointData) {
     const index = this._pointList.findIndex((point) => point.id === pointData.id);
@@ -90,12 +91,15 @@ export default class PointsModel extends Observer {
       throw new Error(`Can't update unexisting point`);
     }
 
-    const updatedPointList = this._pointList.slice();
-    updatedPointList[index] = pointData;
+    const adaptedPointData = this._adaptPointToServer(pointData);
+    return this._api.put(Datatype.POINTS, pointData.id, adaptedPointData)
+      .then(() => {
+        const updatedPointList = this._pointList.slice();
+        updatedPointList[index] = pointData;
 
-    this._pointList = this._addLocalValues(updatedPointList);
-
-    this._notify(updateMode, pointData);
+        this._pointList = this._addLocalValues(updatedPointList);
+        this._notify(updateMode, pointData);
+      });
   }
 
   /**
@@ -104,12 +108,16 @@ export default class PointsModel extends Observer {
    * @param  {String} updateMode - Режим обновления. Должен соответствовать
    *                               константе из перечисления UpdateMode.
    * @param  {Object} pointData  - Объект с новой точкой маршрута.
-   * @return {void}
+   * @return {Promise}           - Объект Promise после запроса через fetch.
    */
   add(updateMode, pointData) {
-    this._pointList = this._addLocalValues([pointData, ...this._pointList]);
+    const adaptedPointData = this._adaptPointToServer(pointData);
 
-    this._notify(updateMode);
+    return this._api.post(Datatype.POINTS, adaptedPointData)
+      .then(() => {
+        this._pointList = this._addLocalValues([pointData, ...this._pointList]);
+        this._notify(updateMode);
+      });
   }
 
   /**
@@ -120,7 +128,7 @@ export default class PointsModel extends Observer {
    * @param  {String} updateMode - Режим обновления. Должен соответствовать
    *                               константе из перечисления UpdateMode.
    * @param  {Object} pointData  - Объект с обновленными данными.
-   * @return {void}
+   * @return {Promise}           - Объект Promise после запроса через fetch.
    */
   delete(updateMode, pointData) {
     const index = this._pointList.findIndex((point) => point.id === pointData.id);
@@ -129,12 +137,15 @@ export default class PointsModel extends Observer {
       throw new Error(`Can't delete unexisting point`);
     }
 
-    this._pointList = [
-      ...this._pointList.slice(0, index),
-      ...this._pointList.slice(index + 1)
-    ];
+    return this._api.delete(Datatype.POINTS, pointData.id)
+      .then(() => {
+        this._pointList = [
+          ...this._pointList.slice(0, index),
+          ...this._pointList.slice(index + 1)
+        ];
 
-    this._notify(updateMode);
+        this._notify(updateMode);
+      });
   }
 
   /**
@@ -212,6 +223,9 @@ export default class PointsModel extends Observer {
     delete adaptedPoint.endTime;
     delete adaptedPoint.isFavorite;
     delete adaptedPoint.price;
+    delete adaptedPoint.isTransport;
+    delete adaptedPoint.dayNumber;
+    delete adaptedPoint.dayDate;
 
     return adaptedPoint;
   }

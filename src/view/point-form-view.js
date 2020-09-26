@@ -749,22 +749,6 @@ export default class PointFormView extends UpdatableView {
   }
 
   /**
-   * Обработчик сабмита формы.
-   *
-   * @param  {Event} evt - Объект события в DOM.
-   */
-  _submitHandler(evt) {
-    evt.preventDefault();
-
-    if (!this._isSubmitEnabled) {
-      return;
-    }
-
-    this.updateData({offers: this._getSelectedOffers()});
-    this._callback.submit(this._point);
-  }
-
-  /**
    * Обработчик ввода места назначения
    *
    * @param  {Event} evt - Объект события в DOM.
@@ -862,19 +846,67 @@ export default class PointFormView extends UpdatableView {
   }
 
   /**
+   * Обработчик добавления/удаления из избранного.
+   */
+  _toggleFavoriteHandler() {
+    this.disable();
+    this._callback.toggleFavorite()
+        .then(() => {
+          this.enable();
+          this.updateData({isFavorite: !this._point.isFavorite});
+        })
+        .catch(() => {
+          this.enable();
+          this.element.classList.add(`shake`);
+        });
+  }
+
+  /**
+   * Обработчик сабмита формы.
+   *
+   * @param  {Event} evt - Объект события в DOM.
+   */
+  _submitHandler(evt) {
+    evt.preventDefault();
+    if (!this._isSubmitEnabled) {
+      return;
+    }
+
+    this.disable();
+
+    const saveButton = this.element.querySelector(`.event__save-btn`);
+    saveButton.textContent = `Saving...`;
+
+    this._callback.submit(this._point)
+        .then(() => {
+          this.enable();
+          this.updateData({offers: this._getSelectedOffers()});
+        })
+        .catch(() => {
+          // this.enable();
+          this.element.classList.add(`shake`);
+        });
+  }
+
+  /**
    * Обработчик нажатия на кнопку удаления.
    *
    * @param  {Event} evt - Объект события в DOM.
    */
   _deleteHandler() {
-    this._callback.delete(this._point);
-  }
+    this.disable();
 
-  /**
-   * Обработчик добавления/удаления из избранного.
-   */
-  _toggleFavoriteHandler() {
-    this.updateData({isFavorite: !this._point.isFavorite});
-    this._callback.toggleFavorite();
+    const deleteButton = this.element.querySelector(`.event__reset-btn`);
+    deleteButton.textContent = `Deleting...`;
+
+    this._callback.delete(this._point)
+        .then(() => {
+          this.enable();
+          this.updateData({offers: this._getSelectedOffers()});
+        })
+        .catch(() => {
+          // this.enable();
+          this.element.classList.add(`shake`);
+        });
   }
 }

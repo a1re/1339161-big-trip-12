@@ -206,6 +206,8 @@ export default class PointPresenter {
 
   /**
    * Обработчик нажатия на кнопку «Добавить в избранное».
+   *
+   * @return {Promise} - Результат запроса в виде объекта Promise.
    */
   _toggleFavorite() {
     this._point = Object.assign({}, this._point,
@@ -214,18 +216,18 @@ export default class PointPresenter {
         }
     );
 
-    this._pointsModel.update(UpdateMode.PATCH, Object.assign({}, this._point));
+    return this._pointsModel
+        .update(UpdateMode.PATCH, Object.assign({}, this._point));
   }
 
   /**
    * Cохранение данных формы
    *
    * @param  {Object} pointData - Данные формы для сохранения.
+   * @return {Promise} - Результат запроса в виде объекта Promise.
    */
   _submitForm(pointData) {
-    this._closePointForm();
-
-    this._pointsModel.update(UpdateMode.MINOR, Object.assign({}, this._point,
+    return this._pointsModel.update(UpdateMode.MINOR, Object.assign({}, this._point,
         {
           destination: pointData.destination,
           type: pointData.type,
@@ -234,15 +236,20 @@ export default class PointPresenter {
           price: parseInt(pointData.price, 10),
           offers: pointData.offers
         }
-    ));
+    )).then(() => {
+      this._closePointForm();
+    });
   }
 
   /**
    * Удаение точки.
+   *
+   * @return {Promise} - Результат запроса в виде объекта Promise.
    */
   _delete() {
-    this._closePointForm();
-
-    this._pointsModel.delete(UpdateMode.MINOR, this._point);
+    return this._pointsModel.delete(UpdateMode.MINOR, this._point)
+      .then(() => {
+        this._closePointForm();
+      });
   }
 }
