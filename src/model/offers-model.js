@@ -1,3 +1,5 @@
+import {Datatype} from "../const.js";
+
 /**
  * Модель дополнительных предложений. Для инициализации в конструтор класса
  * необходимо передать массив объектов с id, названием и ценой
@@ -6,10 +8,52 @@ export default class OffersModel {
   /**
    * Конструктор класса
    *
-   * @param  {Array} offerList - Массив со списком спец. предложений.
+   * @param  {Api} api - Объект API для доступа к данным.
    */
-  constructor(offerList = []) {
-    this._offerList = offerList.slice();
+  constructor(api) {
+    this._api = api;
+    this._isDelivered = false;
+    this._isLoading = false;
+    this._offerList = [];
+  }
+
+  /**
+   * Загрузка данных с сервера.
+   *
+   * @param {Function} [callback] - Колбек после загрузки данных.
+   */
+  loadData(callback = null) {
+    this._isLoading = true;
+    this._api.get(Datatype.OFFERS).
+      then((offerList) => {
+        this._offerList = offerList;
+        this._isLoading = false;
+        this._isDelivered = true;
+
+        if (callback) {
+          callback();
+        }
+      });
+  }
+
+  /**
+   * Получение статуса данных.
+   *
+   * @return {Boolean} - True - если данные загружены,
+   *                     False - если не грузились..
+   */
+  get isDelivered() {
+    return this._isDelivered;
+  }
+
+  /**
+   * Получение статуса загрузки данных.
+   *
+   * @return {Boolean} - True - если данные еще грузятся,
+   *                     False - если уже загружены.
+   */
+  get isLoading() {
+    return this._isLoading;
   }
 
   /**

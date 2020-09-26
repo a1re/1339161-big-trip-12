@@ -1,4 +1,6 @@
 import StatsView from "../view/stats-view.js";
+import TripPointsView from "../view/trip-points-view.js";
+import LoadingView from "../view/loading-view.js";
 
 import {render, RenderPosition} from "../utils/render.js";
 
@@ -15,7 +17,11 @@ export default class StatsPresenter {
     this._container = container;
     this._pointsModel = pointsModel;
     this._typesModel = typesModel;
+
     this._statsComponent = null;
+    this._tripPointsComponent = null;
+    this._loadingComponent = null;
+
     this._statsMap = null;
     this._isInitialized = false;
   }
@@ -27,9 +33,20 @@ export default class StatsPresenter {
     if (this._isInitialized) {
       this.destroy();
     }
-    this._statsMap = this._getStats();
-    this._renderStats();
-    this._isInitialized = true;
+
+    // В случае, если пользователь успел переключиться на экран статистики
+    // до того, как загрузились данные по маршруту
+    if (this._pointsModel.isDelivered) {
+      this._renderStats();
+      this._isInitialized = true;
+    } else {
+      this._renderFallback();
+      this._pointsModel.loadData(() => {
+        this._clearFallback();
+        this._renderStats();
+        this._isInitialized = true;
+      });
+    }
   }
 
   /**
@@ -39,14 +56,59 @@ export default class StatsPresenter {
     if (!this._isInitialized) {
       return;
     }
-    this._statsComponent.remove();
+
+    this._clearFallback();
+    this._clearStats();
+
     this._isInitialized = false;
+  }
+
+  /**
+   * Отрисовка заглушки загрузки данных.
+   */
+  _renderFallback() {
+    if (!this._tripPointsComponent) {
+      this._tripPointsComponent = new TripPointsView();
+    }
+
+    if (!this._loadingComponent) {
+      this._loadingComponent = new LoadingView();
+    }
+
+    render(this._container, this._tripPointsComponent, RenderPosition.BEFOREEND);
+    render(this._tripPointsComponent, this._loadingComponent, RenderPosition.BEFOREEND);
+  }
+
+  /**
+   * Очистка заглушки загрузки данных.
+   */
+  _clearFallback() {
+    if (this._tripPointsComponent) {
+      this._tripPointsComponent.remove();
+      this._tripPointsComponent = null;
+    }
+
+    if (this._loadingComponent) {
+      this._loadingComponent.remove();
+      this._loadingComponent = null;
+    }
+  }
+
+  /**
+   * Очистка экрана статистики.
+   */
+  _clearStats() {
+    if (this._statsComponent) {
+      this._statsComponent.remove();
+      this._statsComponent = null;
+    }
   }
 
   /**
    * Отрисовка экрана статистики
    */
   _renderStats() {
+    this._statsMap = this._getStats();
     this._statsComponent = new StatsView(
         this._getMoneySpending(),
         this._getTransportUsed(),

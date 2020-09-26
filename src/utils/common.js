@@ -1,4 +1,5 @@
 import moment from "moment";
+import {AUTH_STRING_LENGTH} from "../const.js";
 
 /**
  * Генерация случайного целого числе с небольшой надстройкой — его можно сделать
@@ -118,4 +119,20 @@ export const formatDate = (datetime, format) => {
  */
 export const parseDate = (datetime, format = ``) => {
   return moment(datetime, format).toDate();
+};
+
+/**
+ * Генерация строки для авторизации.
+ *
+ * @return {String}        - Строка заданной длины.
+ */
+export const getAuthString = () => {
+  let authString = ``;
+  const words = `0123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM`;
+  const maxPosition = words.length - 1;
+  for (let i = 0; i < AUTH_STRING_LENGTH; i++) {
+    const position = Math.floor(Math.random() * maxPosition);
+    authString = authString + words.substring(position, position + 1);
+  }
+  return authString;
 };

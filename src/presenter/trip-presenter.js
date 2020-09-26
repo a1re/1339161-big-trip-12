@@ -3,12 +3,18 @@ import NoPointsView from "../view/no-points-view.js";
 import DayListView from "../view/day-list-view.js";
 import DayView from "../view/day-view.js";
 import TripPointsView from "../view/trip-points-view.js";
+import LooadingView from "../view/loading-view.js";
 
 import PointPresenter from "./point-presenter.js";
 import NewPointPresenter from "./new-point-presenter.js";
 
 import {render, RenderPosition} from "../utils/render.js";
-import {UpdateMode} from "../const.js";
+import {UpdateMode, ButtonState} from "../const.js";
+
+const FallbackType = {
+  LOADING: `LOADING`,
+  NOPOINTS: `NOPOINTS`
+};
 
 export default class TripPresenter {
   /**
@@ -18,8 +24,8 @@ export default class TripPresenter {
    * @param  {Node} container           - Узел документа для презентера.
    * @param  {Observer} pointsModel     - Модель для работы с точками.
    * @param  {Object} destinationsModel - Модель для работы с городами.
-   * @param  {Object} typesModel        - Модель для работы с типамм точек.
    * @param  {Object} offersModel       - Модель для работы с спец. предложениями.
+   * @param  {Object} typesModel        - Модель для работы с типамм точек.
    * @param  {Observer} filtersModel    - Модель для работы с фильтрациями.
    * @param  {Observer} sortingsModel   - Модель для работы с сортировками.
    * @param  {Function} setNewPointButtonState
@@ -29,8 +35,8 @@ export default class TripPresenter {
       container,
       pointsModel,
       destinationsModel,
-      typesModel,
       offersModel,
+      typesModel,
       filtersModel,
       sortingsModel,
       setNewPointButtonState
@@ -39,8 +45,8 @@ export default class TripPresenter {
 
     this._pointsModel = pointsModel;
     this._destinationsModel = destinationsModel;
-    this._typesModel = typesModel;
     this._offersModel = offersModel;
+    this._typesModel = typesModel;
     this._sortingsModel = sortingsModel;
     this._filtersModel = filtersModel;
 
@@ -48,6 +54,7 @@ export default class TripPresenter {
     this._sortingComponent = null;
     this._dayListComponent = null;
     this._tripPointsComponent = null;
+    this._loadingComponent = null;
 
     this._dayComponentMap = new Map();
     this._pointPresenterMap = new Map();
@@ -74,8 +81,18 @@ export default class TripPresenter {
     if (this._isInitialized) {
       this.destroy();
     }
+
     this._tripPointsComponent = new TripPointsView();
     render(this._container, this._tripPointsComponent, RenderPosition.BEFOREEND);
+
+    if (!this._pointsModel.isDelivered) {
+      this._setNewPointButtonState(ButtonState.DISABLED);
+      this._renderFallback(FallbackType.LOADING);
+      return;
+    }
+
+    this._setNewPointButtonState(ButtonState.ENABLED);
+    this._clearFallback();
     this._renderCaption();
     this._renderPoints();
     this._isInitialized = true;
@@ -88,10 +105,19 @@ export default class TripPresenter {
     if (!this._isInitialized) {
       return;
     }
+
+    if (this._fallbackComponent) {
+      this._fallbackComponent.remove();
+      this._fallbackComponent = null;
+    }
+
+    this._clearFallback();
     this._clearPoints();
     this._clearCaption();
+
     this._tripPointsComponent.remove();
     this._tripPointsComponent = null;
+
     this._isInitialized = false;
   }
 
@@ -107,8 +133,8 @@ export default class TripPresenter {
         this._dayListComponent.element,
         this._pointsModel,
         this._destinationsModel,
-        this._typesModel,
         this._offersModel,
+        this._typesModel,
         this._setNewPointButtonState
     );
   }
@@ -129,11 +155,9 @@ export default class TripPresenter {
         this._renderPoints();
         break;
       case UpdateMode.MAJOR:
-        this._clearPoints();
-        this._clearCaption();
+        this.destroy();
         this._sortingsModel.reset();
-        this._renderCaption();
-        this._renderPoints();
+        this.init();
         break;
     }
   }
@@ -146,16 +170,25 @@ export default class TripPresenter {
    */
   _getPointList() {
     const pointList = this._pointsModel.list.filter(this._filtersModel.callback);
-
     return pointList.sort(this._sortingsModel.callback);
   }
 
   /**
-   * Рендеринг шаблона заглушки для состояния списка без точек.
+   * Рендеринг шаблона заглушки.
+   *
+   * @param  {String} fallbackType - тип заглушки согласно перечислению FallbackType;
    */
-  _renderFallback() {
-    this._noPointsComponent = new NoPointsView();
-    render(this._tripPointsComponent, this._noPointsComponent, RenderPosition.BEFOREEND);
+  _renderFallback(fallbackType) {
+    switch (fallbackType) {
+      case FallbackType.LOADING:
+        this._fallbackComponent = new LooadingView();
+        render(this._tripPointsComponent, this._fallbackComponent, RenderPosition.BEFOREEND);
+        break;
+      case FallbackType.NOPOINTS:
+        this._fallbackComponent = new NoPointsView();
+        render(this._tripPointsComponent, this._fallbackComponent, RenderPosition.BEFOREEND);
+        break;
+    }
   }
 
   /**
@@ -174,17 +207,12 @@ export default class TripPresenter {
    * Рендеринг списка точек согласно выбранной сортировке.
    */
   _renderPoints() {
-    if (this._noPointsComponent) {
-      this._noPointsComponent.remove();
-      this._noPointsComponent = null;
-    }
-
     const pointList = this._getPointList();
     let previousDay;
     let dayComponent;
 
     if (pointList.length === 0) {
-      this._renderFallback();
+      this._renderFallback(FallbackType.NOPOINTS);
     }
 
     pointList.forEach((point) => {
@@ -209,8 +237,8 @@ export default class TripPresenter {
               point,
               this._pointsModel,
               this._destinationsModel,
-              this._typesModel,
               this._offersModel,
+              this._typesModel,
               this._switchAllPointsMode
           )
       );
@@ -253,11 +281,27 @@ export default class TripPresenter {
       this._newPointPresenter = null;
     }
 
-    this._dayListComponent.remove();
-    this._dayListComponent = null;
+    if (this._dayListComponent) {
+      this._dayListComponent.remove();
+      this._dayListComponent = null;
+    }
 
-    this._sortingComponent.remove();
-    this._sortingComponent = null;
+    if (this._sortingComponent) {
+      this._sortingComponent.remove();
+      this._sortingComponent = null;
+    }
+  }
+
+  /**
+   * Удаление заглушки.
+   */
+  _clearFallback() {
+    if (!this._fallbackComponent) {
+      return;
+    }
+
+    this._fallbackComponent.remove();
+    this._fallbackComponent = null;
   }
 
   /**

@@ -14,18 +14,18 @@ export default class PointPresenter {
    * @param  {Object} point                 - Объект с данными точки.
    * @param  {Observer} pointsModel         - Модель для работы с точками.
    * @param  {Object} destinationsModel     - Модель для работы с городами.
-   * @param  {Object} typesModel            - Модель для работы с типами точек.
    * @param  {Object} offersModel           - Модель для работы с спец. предложениями.
+   * @param  {Object} typesModel            - Модель для работы с типами точек.
    * @param  {Function} switchAllPointsMode - Метод переключючения режима всех точек маршрута.
    */
-  constructor(pointListContainer, point, pointsModel, destinationsModel, typesModel, offersModel, switchAllPointsMode) {
+  constructor(pointListContainer, point, pointsModel, destinationsModel, offersModel, typesModel, switchAllPointsMode) {
     this._pointListContainer = pointListContainer;
     this._point = point;
 
     this._pointsModel = pointsModel;
     this._destinationsModel = destinationsModel;
-    this._typesModel = typesModel;
     this._offersModel = offersModel;
+    this._typesModel = typesModel;
     this._switchAllPointsMode = switchAllPointsMode;
 
     this._mode = PointMode.SUMMARY;
@@ -38,6 +38,7 @@ export default class PointPresenter {
     this._closePointForm = this._closePointForm.bind(this);
     this._submitForm = this._submitForm.bind(this);
     this._delete = this._delete.bind(this);
+    this._enablePointForm = this._enablePointForm.bind(this);
 
     render(
         this._pointListContainer,
@@ -114,8 +115,8 @@ export default class PointPresenter {
    * Создание отображения точки в соответствии с текущим режимом (должен
    * соответствовать одному из значений перечисления PointMode).
    *
-   *  Вместе с отображением создается также и обработчики открытия/закрытия
-   *  формы редактирования.
+   * Вместе с отображением создается также и обработчики открытия/закрытия
+   * формы редактирования.
    *
    * @param  {String} pointMode - Режим отображения.
    * @return {Node}             - Шаблон в виде DOM-элемента для размещения.
@@ -124,11 +125,10 @@ export default class PointPresenter {
     if (pointMode === PointMode.EDITING) {
       this._pointFormComponent = new PointFormView(
           this._typesModel.list,
-          this._offersModel.list,
-          this._destinationsModel.list,
           this._point
       );
 
+      this._setPointFormData();
       this._closeFormByEsc = new EscHandler(this._closePointForm);
       this._pointFormComponent.closeHandler = this._closePointForm;
       this._pointFormComponent.submitHandler = this._submitForm;
@@ -158,6 +158,36 @@ export default class PointPresenter {
     this._mode = PointMode.SUMMARY;
 
     return this._pointSummaryComponent.element;
+  }
+
+  /**
+   * Установка списков спец. предложений и точек назначения для модели.
+   */
+  _setPointFormData() {
+    if (this._offersModel.isDelivered && this._destinationsModel.isDelivered) {
+      this._enablePointForm();
+    }
+
+    if (!this._offersModel.isDelivered && !this._offersModel.isLoading) {
+      this._offersModel.loadData(this._enablePointForm);
+    }
+
+    if (!this._destinationsModel.isDelivered && !this._destinationsModel.isLoading) {
+      this._destinationsModel.loadData(this._enablePointForm);
+    }
+  }
+
+  /**
+   * Включение формы с загрузкой данных при необходимости.
+   */
+  _enablePointForm() {
+    if (!this._destinationsModel.isDelivered || !this._offersModel.isDelivered) {
+      return;
+    }
+
+    this._pointFormComponent.offerList = this._offersModel.list;
+    this._pointFormComponent.destinationList = this._destinationsModel.list;
+    this._pointFormComponent.enable();
   }
 
   /**

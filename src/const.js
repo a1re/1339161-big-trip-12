@@ -1,5 +1,8 @@
 export const MAX_OFFERS_TO_SHOW = 3;
 
+export const AUTH_STRING_LENGTH = 16;
+export const API_END_POINT = `https://12.ecmascript.pages.academy/big-trip`;
+
 export const UpdateMode = {
   PATCH: `PATCH`,
   MINOR: `MINOR`,
@@ -19,6 +22,12 @@ export const MenuItem = {
 export const ButtonState = {
   ENABLED: false,
   DISABLED: true
+};
+
+export const Datatype = {
+  POINTS: `points`,
+  DESTINATIONS: `destinations`,
+  OFFERS: `offers`
 };
 
 export const TIME_FORMAT = `HH:mm`;

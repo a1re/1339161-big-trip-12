@@ -1,15 +1,10 @@
-const POINTS_MIN = 15;
-const POINTS_MAX = 20;
-
-import {generatePoints} from "./mock/points.js";
-import {generateOffers} from "./mock/offers.js";
-import {generateDestinations} from "./mock/destinations.js";
-
-import {getRandomInt} from "./utils/common.js";
+import {getAuthString} from "./utils/common.js";
 import {sortings} from "./utils/sortings.js";
 import {filters} from "./utils/filters.js";
 import {types} from "./utils/types.js";
-import {ButtonState} from "./const.js";
+import {API_END_POINT, ButtonState} from "./const.js";
+
+import Api from "./utils/api.js";
 
 import PointsModel from "./model/points-model.js";
 import SortingsModel from "./model/sortings-model.js";
@@ -22,14 +17,12 @@ import TripPresenter from "./presenter/trip-presenter.js";
 import HeaderPresenter from "./presenter/header-presenter.js";
 import StatsPresenter from "./presenter/stats-presenter.js";
 
-const destinationsModel = new DestinationsModel(generateDestinations());
+const api = new Api(API_END_POINT, `Basic ` + getAuthString());
 
-const offerList = generateOffers(types);
-const pointList = generatePoints(getRandomInt(POINTS_MIN, POINTS_MAX), offerList, destinationsModel.list);
-
+const destinationsModel = new DestinationsModel(api);
 const typesModel = new TypesModel(types);
-const pointsModel = new PointsModel(pointList, typesModel.list);
-const offersModel = new OffersModel(offerList);
+const pointsModel = new PointsModel(api, typesModel.list);
+const offersModel = new OffersModel(api);
 const sortingsModel = new SortingsModel(sortings);
 const filtersModel = new FiltersModel(filters, pointsModel);
 
@@ -57,8 +50,8 @@ const tripPresenter = new TripPresenter(
     pageContainerElement,
     pointsModel,
     destinationsModel,
-    typesModel,
     offersModel,
+    typesModel,
     filtersModel,
     sortingsModel,
     setNewPointButtonState
@@ -80,6 +73,7 @@ const statsPresenter = new StatsPresenter(
 
 tripPresenter.init();
 headerPresenter.init();
+pointsModel.loadData();
 
 newPointElement.addEventListener(`click`, (evt) => {
   evt.preventDefault();

@@ -12,8 +12,8 @@ export default class NewPointPresenter {
    *                                      разместить форму.
    * @param  {Observer} pointsModel     - Модель для работы с cобытиями
    * @param  {Object} destinationsModel - Модель для работы с городами.
-   * @param  {Object} typesModel        - Модель для работы с типами точек.
    * @param  {Object} offersModel       - Модель для работы со спец. предложениями.
+   * @param  {Object} typesModel        - Модель для работы с типами точек.
    * @param  {Function} setNewPointButtonState
    *                                    - Коллбек обновления состояния кнопки новой точки.
    */
@@ -21,8 +21,8 @@ export default class NewPointPresenter {
       dayListElement,
       pointsModel,
       destinationsModel,
-      typesModel,
       offersModel,
+      typesModel,
       setNewPointButtonState
   ) {
     this._pointsModel = pointsModel;

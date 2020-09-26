@@ -1,5 +1,6 @@
-import Observer from "../utils/observer.js";
 import moment from "moment";
+import Observer from "../utils/observer.js";
+import {UpdateMode, Datatype} from "../const.js";
 
 /**
  * Модель точек. Для инициализации в конструтор класса необходимо передать
@@ -8,15 +9,40 @@ import moment from "moment";
  */
 export default class PointsModel extends Observer {
   /**
-   * Конструктор класса
+   * Конструктор класса.
    *
-   * @param  {Array} pointList - Массив со списком точек.
+   * @param  {Api} api         - Объект API для доступа к данным.
    * @param  {Array} typeList  - Массив со списком типов точек.
    */
-  constructor(pointList = [], typeList) {
+  constructor(api, typeList) {
     super();
+    this._api = api;
     this._typeList = typeList;
-    this._pointList = this._processData(pointList);
+    this._isDelivered = false;
+    this._isLoading = false;
+    this._pointList = [];
+  }
+
+  /**
+   * Загрузка данных с сервера.
+   *
+   * @param {Function} [callback] - Колбек после загрузки данных.
+   */
+  loadData(callback = null) {
+    this._isLoading = true;
+    this._api.get(Datatype.POINTS).
+      then((pointList) => {
+        this._pointList = this._addLocalValues(
+            pointList.map((point) => this._adaptPointToClient(point))
+        );
+        this._isLoading = false;
+        this._isDelivered = true;
+        this._notify(UpdateMode.MAJOR);
+
+        if (callback) {
+          callback();
+        }
+      });
   }
 
   /**
@@ -26,6 +52,26 @@ export default class PointsModel extends Observer {
    */
   get list() {
     return this._pointList.slice();
+  }
+
+  /**
+   * Получение статуса данных.
+   *
+   * @return {Boolean} - True - если данные загружены,
+   *                     False - если не грузились.
+   */
+  get isDelivered() {
+    return this._isDelivered;
+  }
+
+  /**
+   * Получение статуса загрузки данных.
+   *
+   * @return {Boolean} - True - если данные еще грузятся,
+   *                     False - если уже загружены.
+   */
+  get isLoading() {
+    return this._isLoading;
   }
 
   /**
@@ -47,7 +93,7 @@ export default class PointsModel extends Observer {
     const updatedPointList = this._pointList.slice();
     updatedPointList[index] = pointData;
 
-    this._pointList = this._processData(updatedPointList);
+    this._pointList = this._addLocalValues(updatedPointList);
 
     this._notify(updateMode, pointData);
   }
@@ -61,7 +107,7 @@ export default class PointsModel extends Observer {
    * @return {void}
    */
   add(updateMode, pointData) {
-    this._pointList = this._processData([pointData, ...this._pointList]);
+    this._pointList = this._addLocalValues([pointData, ...this._pointList]);
 
     this._notify(updateMode);
   }
@@ -98,7 +144,7 @@ export default class PointsModel extends Observer {
    * @param  {Array} pointList - Список точек в исходном виде.
    * @return {Array}           - Список точек в подготовленном для работы виде.
    */
-  _processData(pointList) {
+  _addLocalValues(pointList) {
     if (pointList.length === 0) {
       return [];
     }
@@ -124,5 +170,49 @@ export default class PointsModel extends Observer {
     });
 
     return processedData;
+  }
+
+  /**
+   * Адаптация точки под формат клиента.
+   *
+   * @param  {Object} serverPoint - Объект точки в формате, предоставленном
+   *                                сервером.
+   * @return {Object}             - Объект в формате клиентской модели.
+   */
+  _adaptPointToClient(serverPoint) {
+    const adaptedPoint = Object.assign({}, serverPoint, {
+      beginTime: new Date(serverPoint[`date_from`]),
+      endTime: new Date(serverPoint[`date_to`]),
+      price: parseInt(serverPoint[`base_price`], 10),
+      isFavorite: serverPoint[`is_favorite`]
+    });
+
+    delete adaptedPoint.date_from;
+    delete adaptedPoint.date_to;
+    delete adaptedPoint.is_favorite;
+
+    return adaptedPoint;
+  }
+
+  /**
+   * Адаптация точки под формат сервера.
+   *
+   * @param  {Object} clientPoint - Объект точки из клиентской модели.
+   * @return {Object}             - Объект в соответствие с протоколом сервера.
+   */
+  _adaptPointToServer(clientPoint) {
+    const adaptedPoint = Object.assign({}, clientPoint, {
+      "date_from": clientPoint.beginTime.toISOString(),
+      "date_to": clientPoint.endTime.toISOString(),
+      "price": clientPoint.base_price,
+      "is_favorite": clientPoint.isFavorite
+    });
+
+    delete adaptedPoint.beginTime;
+    delete adaptedPoint.endTime;
+    delete adaptedPoint.isFavorite;
+    delete adaptedPoint.price;
+
+    return adaptedPoint;
   }
 }
