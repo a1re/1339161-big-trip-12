@@ -134,5 +134,5 @@ export const getAuthString = () => {
     const position = Math.floor(Math.random() * maxPosition);
     authString = authString + words.substring(position, position + 1);
   }
-  return authString;
+  return `Basic ` + authString;
 };

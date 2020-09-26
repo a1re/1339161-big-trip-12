@@ -24,28 +24,6 @@ export default class PointsModel extends Observer {
   }
 
   /**
-   * Загрузка данных с сервера.
-   *
-   * @param {Function} [callback] - Колбек после загрузки данных.
-   */
-  loadData(callback = null) {
-    this._isLoading = true;
-    this._api.get(Datatype.POINTS).
-      then((pointList) => {
-        this._pointList = this._addLocalValues(
-            pointList.map((point) => this._adaptPointToClient(point))
-        );
-        this._isLoading = false;
-        this._isDelivered = true;
-        this._notify(UpdateMode.MAJOR);
-
-        if (callback) {
-          callback();
-        }
-      });
-  }
-
-  /**
    * Геттер списка точек.
    *
    * @return {Array} - Массив со списком точек.
@@ -72,6 +50,24 @@ export default class PointsModel extends Observer {
    */
   get isLoading() {
     return this._isLoading;
+  }
+
+  /**
+   * Загрузка данных с сервера.
+   *
+   * @return {Promise} - Объект Promise после запроса через fetch.
+   */
+  loadData() {
+    this._isLoading = true;
+    return this._api.get(Datatype.POINTS).
+      then((pointList) => {
+        this._pointList = this._addLocalValues(
+            pointList.map((point) => this._adaptPointToClient(point))
+        );
+        this._isLoading = false;
+        this._isDelivered = true;
+        this._notify(UpdateMode.MAJOR);
+      });
   }
 
   /**
@@ -114,8 +110,11 @@ export default class PointsModel extends Observer {
     const adaptedPointData = this._adaptPointToServer(pointData);
 
     return this._api.post(Datatype.POINTS, adaptedPointData)
-      .then(() => {
-        this._pointList = this._addLocalValues([pointData, ...this._pointList]);
+      .then((newPointData) => {
+        this._pointList = this._addLocalValues([
+          this._adaptPointToClient(newPointData),
+          ...this._pointList
+        ]);
         this._notify(updateMode);
       });
   }
@@ -127,7 +126,7 @@ export default class PointsModel extends Observer {
    *
    * @param  {String} updateMode - Режим обновления. Должен соответствовать
    *                               константе из перечисления UpdateMode.
-   * @param  {Object} pointData  - Объект с обновленными данными.
+   * @param  {Object} pointData  - Объект с данными точки для удаления
    * @return {Promise}           - Объект Promise после запроса через fetch.
    */
   delete(updateMode, pointData) {
@@ -215,7 +214,7 @@ export default class PointsModel extends Observer {
     const adaptedPoint = Object.assign({}, clientPoint, {
       "date_from": clientPoint.beginTime.toISOString(),
       "date_to": clientPoint.endTime.toISOString(),
-      "price": clientPoint.base_price,
+      "base_price": clientPoint.price,
       "is_favorite": clientPoint.isFavorite
     });
 

@@ -38,7 +38,6 @@ export default class PointPresenter {
     this._closePointForm = this._closePointForm.bind(this);
     this._submitForm = this._submitForm.bind(this);
     this._delete = this._delete.bind(this);
-    this._enablePointForm = this._enablePointForm.bind(this);
 
     render(
         this._pointListContainer,
@@ -169,11 +168,11 @@ export default class PointPresenter {
     }
 
     if (!this._offersModel.isDelivered && !this._offersModel.isLoading) {
-      this._offersModel.loadData(this._enablePointForm);
+      this._offersModel.loadData().then(() => this._enablePointForm());
     }
 
     if (!this._destinationsModel.isDelivered && !this._destinationsModel.isLoading) {
-      this._destinationsModel.loadData(this._enablePointForm);
+      this._destinationsModel.loadData().then(() => this._enablePointForm());
     }
   }
 
@@ -236,9 +235,7 @@ export default class PointPresenter {
           price: parseInt(pointData.price, 10),
           offers: pointData.offers
         }
-    )).then(() => {
-      this._closePointForm();
-    });
+    ));
   }
 
   /**

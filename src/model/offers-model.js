@@ -20,19 +20,15 @@ export default class OffersModel {
   /**
    * Загрузка данных с сервера.
    *
-   * @param {Function} [callback] - Колбек после загрузки данных.
+   * @return {Promise} - Объект Promise после запроса через fetch.
    */
-  loadData(callback = null) {
+  loadData() {
     this._isLoading = true;
-    this._api.get(Datatype.OFFERS).
+    return this._api.get(Datatype.OFFERS).
       then((offerList) => {
         this._offerList = offerList;
         this._isLoading = false;
         this._isDelivered = true;
-
-        if (callback) {
-          callback();
-        }
       });
   }
 

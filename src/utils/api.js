@@ -46,8 +46,7 @@ export default class Api {
     return this._load({
       url: url + `/` + id,
       method: Method.PUT,
-      body: JSON.stringify(updatedData),
-      header: new Headers({"Content-Type": `application/json`})
+      body: JSON.stringify(updatedData)
     }).then(Api.toJSON);
   }
 
@@ -62,9 +61,8 @@ export default class Api {
   delete(url, id) {
     return this._load({
       url: url + `/` + id,
-      method: Method.DELETE,
-      header: new Headers({"Content-Type": `application/json`})
-    }).then(Api.toJSON);
+      method: Method.DELETE
+    });
   }
 
   /**
@@ -78,8 +76,7 @@ export default class Api {
     return this._load({
       url,
       method: Method.POST,
-      body: JSON.stringify(updatedData),
-      header: new Headers({"Content-Type": `application/json`})
+      body: JSON.stringify(updatedData)
     }).then(Api.toJSON);
   }
 
@@ -101,6 +98,7 @@ export default class Api {
     headers = new Headers()
   }) {
     headers.append(`Authorization`, this._authorization);
+    headers.append(`Content-Type`, `application/json`);
 
     return fetch(
         `${this._endPoint}/${url}`,

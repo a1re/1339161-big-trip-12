@@ -143,13 +143,9 @@ export default class TripPresenter {
    * Коллбек уведомления об обновлении модели
    * @param  {String} updateMode - Режим обновления согласно перечислению
    *                               UpdateMode.
-   * @param  {Object} pointData  - Объект с обновленной информацией о точке.
    */
-  _updatePresenter(updateMode, pointData) {
+  _updatePresenter(updateMode) {
     switch (updateMode) {
-      case UpdateMode.PATCH:
-        this._pointPresenterMap.get(pointData.id).refresh(pointData);
-        break;
       case UpdateMode.MINOR:
         this._clearPoints();
         this._renderPoints();

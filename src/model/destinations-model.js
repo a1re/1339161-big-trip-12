@@ -20,19 +20,15 @@ export default class DestinationsModel {
   /**
    * Загрузка данных с сервера.
    *
-   * @param {Function} [callback] - Колбек после загрузки данных.
+   * @return {Promise} - Объект Promise после запроса через fetch.
    */
-  loadData(callback = null) {
+  loadData() {
     this._isLoading = true;
-    this._api.get(Datatype.DESTINATIONS).
+    return this._api.get(Datatype.DESTINATIONS).
       then((destinationList) => {
         this._destinationList = destinationList;
         this._isLoading = false;
         this._isDelivered = true;
-
-        if (callback) {
-          callback();
-        }
       });
   }
 

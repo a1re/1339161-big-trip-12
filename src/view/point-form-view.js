@@ -1,5 +1,5 @@
 import {DATETIME_FORMAT, DEFAULT_FLATPICKR_SETTINGS} from "../const.js";
-import {getRandomInt, generateId, formatDate, isValidDate, parseDate} from "../utils/common.js";
+import {getRandomInt, formatDate, isValidDate, parseDate} from "../utils/common.js";
 import UpdatableView from "./updatable-view.js";
 
 import he from "he";
@@ -30,7 +30,7 @@ export default class PointFormView extends UpdatableView {
     if (!point) {
       const randomType = typeList[getRandomInt(0, typeList.length - 1)];
       this._point = {
-        id: generateId(),
+        id: `new`,
         destination: {name: ``},
         type: randomType.id,
         beginTime: moment().startOf(`hour`).toDate(),
@@ -42,11 +42,13 @@ export default class PointFormView extends UpdatableView {
       };
       this._mode = PointFormMode.ADDING;
       this._isSubmitEnabled = false;
+      this._displayOffers = false;
       this._avalibleOfferList = [];
     } else {
       this._point = point;
       this._mode = PointFormMode.EDITING;
       this._isSubmitEnabled = true;
+      this._displayOffers = true;
       this._avalibleOfferList = this._getAvalibleOffers(this._point.type);
 
       this._deleteHandler = this._deleteHandler.bind(this);
@@ -248,7 +250,7 @@ export default class PointFormView extends UpdatableView {
       .addEventListener(`change`, this._selectTypeHandler);
 
     // Обработчик клика на спец. предложения ставим только если они есть
-    if (this._avalibleOfferList.length > 0) {
+    if (this._avalibleOfferList.length > 0 && this._displayOffers === true) {
       this.element.querySelector(`.event__available-offers`)
         .addEventListener(`change`, this._selectOfferHandler);
     }
@@ -477,7 +479,7 @@ export default class PointFormView extends UpdatableView {
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   _makeOffersList() {
-    if (this._avalibleOfferList.length === 0) {
+    if (this._avalibleOfferList.length === 0 || this._displayOffers === false) {
       return ``;
     }
 
@@ -832,6 +834,7 @@ export default class PointFormView extends UpdatableView {
       offers: []
     });
 
+    this._displayOffers = true;
     this._avalibleOfferList = this._getAvalibleOffers(selectedType.id);
 
     this.updateElement();
@@ -852,8 +855,8 @@ export default class PointFormView extends UpdatableView {
     this.disable();
     this._callback.toggleFavorite()
         .then(() => {
-          this.enable();
           this.updateData({isFavorite: !this._point.isFavorite});
+          this.enable();
         })
         .catch(() => {
           this.enable();
@@ -883,7 +886,7 @@ export default class PointFormView extends UpdatableView {
           this.updateData({offers: this._getSelectedOffers()});
         })
         .catch(() => {
-          // this.enable();
+          this.enable();
           this.element.classList.add(`shake`);
         });
   }
@@ -901,11 +904,10 @@ export default class PointFormView extends UpdatableView {
 
     this._callback.delete(this._point)
         .then(() => {
-          this.enable();
-          this.updateData({offers: this._getSelectedOffers()});
+          this.remove();
         })
         .catch(() => {
-          // this.enable();
+          this.enable();
           this.element.classList.add(`shake`);
         });
   }

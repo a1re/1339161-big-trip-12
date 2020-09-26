@@ -41,7 +41,7 @@ export default class StatsPresenter {
       this._isInitialized = true;
     } else {
       this._renderFallback();
-      this._pointsModel.loadData(() => {
+      this._pointsModel.loadData().then(() => {
         this._clearFallback();
         this._renderStats();
         this._isInitialized = true;
