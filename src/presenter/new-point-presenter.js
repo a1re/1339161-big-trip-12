@@ -12,8 +12,8 @@ export default class NewPointPresenter {
    *                                      разместить форму.
    * @param  {Observer} pointsModel     - Модель для работы с cобытиями
    * @param  {Object} destinationsModel - Модель для работы с городами.
-   * @param  {Object} typesModel        - Модель для работы с типами точек.
    * @param  {Object} offersModel       - Модель для работы со спец. предложениями.
+   * @param  {Object} typesModel        - Модель для работы с типами точек.
    * @param  {Function} setNewPointButtonState
    *                                    - Коллбек обновления состояния кнопки новой точки.
    */
@@ -21,8 +21,8 @@ export default class NewPointPresenter {
       dayListElement,
       pointsModel,
       destinationsModel,
-      typesModel,
       offersModel,
+      typesModel,
       setNewPointButtonState
   ) {
     this._pointsModel = pointsModel;
@@ -68,11 +68,10 @@ export default class NewPointPresenter {
    */
   _createElement() {
     this._pointFormComponent = new PointFormView(
-        this._typesModel.list,
-        this._offersModel.list,
-        this._destinationsModel.list
+        this._typesModel.list
     );
 
+    this._setPointFormData();
     this._closeFormByEsc = new EscHandler(this.destroy);
     this._pointFormComponent.closeHandler = this.destroy;
     this._pointFormComponent.submitHandler = this._submitForm;
@@ -81,12 +80,47 @@ export default class NewPointPresenter {
   }
 
   /**
+   * Установка списков спец. предложений и точек назначения для модели.
+   */
+  _setPointFormData() {
+    if (this._offersModel.isDelivered && this._destinationsModel.isDelivered) {
+      this._enablePointForm();
+    }
+
+    if (!this._offersModel.isDelivered && !this._offersModel.isLoading) {
+      this._offersModel.loadData().then(() => this._enablePointForm());
+    }
+
+    if (!this._destinationsModel.isDelivered && !this._destinationsModel.isLoading) {
+      this._destinationsModel.loadData().then(() => this._enablePointForm());
+    }
+  }
+
+  /**
+   * Включение формы с загрузкой данных при необходимости.
+   */
+  _enablePointForm() {
+    if (!this._destinationsModel.isDelivered || !this._offersModel.isDelivered) {
+      return;
+    }
+
+    this._pointFormComponent.offerList = this._offersModel.list;
+    this._pointFormComponent.destinationList = this._destinationsModel.list;
+    this._pointFormComponent.enable();
+  }
+
+  /**
    * Добавление новой точки через сабмит формы.
    *
    * @param  {Object} pointData - Данные формы для сохранения.
+   * @return {Promise}          - Объект Promise после запроса через fetch.
    */
   _submitForm(pointData) {
-    this._pointsModel.add(UpdateMode.MINOR, pointData);
-    this.destroy();
+    const newPointData = Object.assign({}, pointData);
+    delete newPointData.id;
+    return this._pointsModel.add(UpdateMode.MINOR, newPointData)
+      .then(() => {
+        this.destroy();
+      });
   }
 }

@@ -1,5 +1,6 @@
-import Observer from "../utils/observer.js";
 import moment from "moment";
+import Observer from "../utils/observer.js";
+import {UpdateMode, Datatype} from "../const.js";
 
 /**
  * Модель точек. Для инициализации в конструтор класса необходимо передать
@@ -8,15 +9,18 @@ import moment from "moment";
  */
 export default class PointsModel extends Observer {
   /**
-   * Конструктор класса
+   * Конструктор класса.
    *
-   * @param  {Array} pointList - Массив со списком точек.
+   * @param  {Api} api         - Объект API для доступа к данным.
    * @param  {Array} typeList  - Массив со списком типов точек.
    */
-  constructor(pointList = [], typeList) {
+  constructor(api, typeList) {
     super();
+    this._api = api;
     this._typeList = typeList;
-    this._pointList = this._processData(pointList);
+    this._isDelivered = false;
+    this._isLoading = false;
+    this._pointList = [];
   }
 
   /**
@@ -29,6 +33,44 @@ export default class PointsModel extends Observer {
   }
 
   /**
+   * Получение статуса данных.
+   *
+   * @return {Boolean} - True - если данные загружены,
+   *                     False - если не грузились.
+   */
+  get isDelivered() {
+    return this._isDelivered;
+  }
+
+  /**
+   * Получение статуса загрузки данных.
+   *
+   * @return {Boolean} - True - если данные еще грузятся,
+   *                     False - если уже загружены.
+   */
+  get isLoading() {
+    return this._isLoading;
+  }
+
+  /**
+   * Загрузка данных с сервера.
+   *
+   * @return {Promise} - Объект Promise после запроса через fetch.
+   */
+  loadData() {
+    this._isLoading = true;
+    return this._api.get(Datatype.POINTS).
+      then((pointList) => {
+        this._pointList = this._addLocalValues(
+            pointList.map((point) => this._adaptPointToClient(point))
+        );
+        this._isLoading = false;
+        this._isDelivered = true;
+        this._notify(UpdateMode.MAJOR);
+      });
+  }
+
+  /**
    * Обновление точки маршрута. Объект с данными для обновления должен
    * содержать свойство id, которое соответствует id одной из существующих
    * точек в маршруте.
@@ -36,6 +78,7 @@ export default class PointsModel extends Observer {
    * @param  {String} updateMode - Режим обновления. Должен соответствовать
    *                               константе из перечисления UpdateMode.
    * @param  {Object} pointData  - Объект с обновленными данными.
+   * @return {Promise}           - Объект Promise после запроса через fetch.
    */
   update(updateMode, pointData) {
     const index = this._pointList.findIndex((point) => point.id === pointData.id);
@@ -44,12 +87,15 @@ export default class PointsModel extends Observer {
       throw new Error(`Can't update unexisting point`);
     }
 
-    const updatedPointList = this._pointList.slice();
-    updatedPointList[index] = pointData;
+    const adaptedPointData = this._adaptPointToServer(pointData);
+    return this._api.put(Datatype.POINTS, pointData.id, adaptedPointData)
+      .then(() => {
+        const updatedPointList = this._pointList.slice();
+        updatedPointList[index] = pointData;
 
-    this._pointList = this._processData(updatedPointList);
-
-    this._notify(updateMode, pointData);
+        this._pointList = this._addLocalValues(updatedPointList);
+        this._notify(updateMode, pointData);
+      });
   }
 
   /**
@@ -58,12 +104,19 @@ export default class PointsModel extends Observer {
    * @param  {String} updateMode - Режим обновления. Должен соответствовать
    *                               константе из перечисления UpdateMode.
    * @param  {Object} pointData  - Объект с новой точкой маршрута.
-   * @return {void}
+   * @return {Promise}           - Объект Promise после запроса через fetch.
    */
   add(updateMode, pointData) {
-    this._pointList = this._processData([pointData, ...this._pointList]);
+    const adaptedPointData = this._adaptPointToServer(pointData);
 
-    this._notify(updateMode);
+    return this._api.post(Datatype.POINTS, adaptedPointData)
+      .then((newPointData) => {
+        this._pointList = this._addLocalValues([
+          this._adaptPointToClient(newPointData),
+          ...this._pointList
+        ]);
+        this._notify(updateMode);
+      });
   }
 
   /**
@@ -73,8 +126,8 @@ export default class PointsModel extends Observer {
    *
    * @param  {String} updateMode - Режим обновления. Должен соответствовать
    *                               константе из перечисления UpdateMode.
-   * @param  {Object} pointData  - Объект с обновленными данными.
-   * @return {void}
+   * @param  {Object} pointData  - Объект с данными точки для удаления
+   * @return {Promise}           - Объект Promise после запроса через fetch.
    */
   delete(updateMode, pointData) {
     const index = this._pointList.findIndex((point) => point.id === pointData.id);
@@ -83,12 +136,15 @@ export default class PointsModel extends Observer {
       throw new Error(`Can't delete unexisting point`);
     }
 
-    this._pointList = [
-      ...this._pointList.slice(0, index),
-      ...this._pointList.slice(index + 1)
-    ];
+    return this._api.delete(Datatype.POINTS, pointData.id)
+      .then(() => {
+        this._pointList = [
+          ...this._pointList.slice(0, index),
+          ...this._pointList.slice(index + 1)
+        ];
 
-    this._notify(updateMode);
+        this._notify(updateMode);
+      });
   }
 
   /**
@@ -98,7 +154,7 @@ export default class PointsModel extends Observer {
    * @param  {Array} pointList - Список точек в исходном виде.
    * @return {Array}           - Список точек в подготовленном для работы виде.
    */
-  _processData(pointList) {
+  _addLocalValues(pointList) {
     if (pointList.length === 0) {
       return [];
     }
@@ -109,7 +165,7 @@ export default class PointsModel extends Observer {
     const beginDate = moment(pointList[0].beginTime).startOf(`day`);
 
     pointList.forEach((point) => {
-      const pointDate = moment(point.beginTime, `YYYY-MM-DD`);
+      const pointDate = moment(point.beginTime).format(`YYYY-MM-DD`);
       if (pointDate !== lastDate) {
         lastDate = pointDate;
       }
@@ -124,5 +180,52 @@ export default class PointsModel extends Observer {
     });
 
     return processedData;
+  }
+
+  /**
+   * Адаптация точки под формат клиента.
+   *
+   * @param  {Object} serverPoint - Объект точки в формате, предоставленном
+   *                                сервером.
+   * @return {Object}             - Объект в формате клиентской модели.
+   */
+  _adaptPointToClient(serverPoint) {
+    const adaptedPoint = Object.assign({}, serverPoint, {
+      beginTime: new Date(serverPoint[`date_from`]),
+      endTime: new Date(serverPoint[`date_to`]),
+      price: parseInt(serverPoint[`base_price`], 10),
+      isFavorite: serverPoint[`is_favorite`]
+    });
+
+    delete adaptedPoint.date_from;
+    delete adaptedPoint.date_to;
+    delete adaptedPoint.is_favorite;
+
+    return adaptedPoint;
+  }
+
+  /**
+   * Адаптация точки под формат сервера.
+   *
+   * @param  {Object} clientPoint - Объект точки из клиентской модели.
+   * @return {Object}             - Объект в соответствие с протоколом сервера.
+   */
+  _adaptPointToServer(clientPoint) {
+    const adaptedPoint = Object.assign({}, clientPoint, {
+      "date_from": clientPoint.beginTime.toISOString(),
+      "date_to": clientPoint.endTime.toISOString(),
+      "base_price": clientPoint.price,
+      "is_favorite": clientPoint.isFavorite
+    });
+
+    delete adaptedPoint.beginTime;
+    delete adaptedPoint.endTime;
+    delete adaptedPoint.isFavorite;
+    delete adaptedPoint.price;
+    delete adaptedPoint.isTransport;
+    delete adaptedPoint.dayNumber;
+    delete adaptedPoint.dayDate;
+
+    return adaptedPoint;
   }
 }

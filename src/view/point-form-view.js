@@ -1,5 +1,5 @@
 import {DATETIME_FORMAT, DEFAULT_FLATPICKR_SETTINGS} from "../const.js";
-import {getRandomInt, generateId, formatDate, isValidDate, parseDate} from "../utils/common.js";
+import {getRandomInt, formatDate, isValidDate, parseDate} from "../utils/common.js";
 import UpdatableView from "./updatable-view.js";
 
 import he from "he";
@@ -17,23 +17,21 @@ export default class PointFormView extends UpdatableView {
    * Конструктор класса отображения формы добавления/редактирования точки.
    *
    * @param  {Array} typeList         - Массив со списком типов точек.
-   * @param  {Array} offerList        - Массив со списком спец. предложений.
-   * @param  {Array} destinationList  - Массив со списком типов гороодв.
    * @param  {Object} [point]         - Объект с информацие о точке, если это
    *                                    форма редактирования, а не добавления.
    */
-  constructor(typeList, offerList, destinationList, point = null) {
+  constructor(typeList, point = null) {
     super();
 
     this._typeList = typeList;
-    this._offerList = offerList;
-    this._destinationList = destinationList;
+    this._offerList = [];
+    this._destinationList = [];
 
     if (!point) {
       const randomType = typeList[getRandomInt(0, typeList.length - 1)];
       this._point = {
-        id: generateId(),
-        destination: ``,
+        id: `new`,
+        destination: {name: ``},
         type: randomType.id,
         beginTime: moment().startOf(`hour`).toDate(),
         endTime: moment().startOf(`hour`).add(2, `hours`).toDate(),
@@ -44,16 +42,21 @@ export default class PointFormView extends UpdatableView {
       };
       this._mode = PointFormMode.ADDING;
       this._isSubmitEnabled = false;
+      this._displayOffers = false;
       this._avalibleOfferList = [];
     } else {
       this._point = point;
       this._mode = PointFormMode.EDITING;
       this._isSubmitEnabled = true;
+      this._displayOffers = true;
       this._avalibleOfferList = this._getAvalibleOffers(this._point.type);
 
       this._deleteHandler = this._deleteHandler.bind(this);
       this._toggleFavoriteHandler = this._toggleFavoriteHandler.bind(this);
     }
+
+    this._displayDestinationDescription = false;
+    this._isDisabled = true;
 
     this._beginTimePicker = null;
     this._endTimePicker = null;
@@ -80,8 +83,8 @@ export default class PointFormView extends UpdatableView {
     const destinationSelector = this._makeDestinationSelector();
     const timeInput = this._makeTimeInput();
     const priceInput = this._makePriceInput();
-    const offersList = this._makeOffersList();
     const favoriteButton = this._makeFavoriteButton();
+    const pointDetails = this._makePointDetails();
 
     return `<form class="trip-events__item  event  event--edit" action="#" method="post">
         <header class="event__header">
@@ -93,8 +96,16 @@ export default class PointFormView extends UpdatableView {
 
           ${priceInput}
 
-          <button class="event__save-btn  btn  btn--blue" type="submit" ${this._isSubmitEnabled ? `` : `disabled`}>Save</button>
-          <button class="event__reset-btn" type="reset">${this._mode === PointFormMode.ADDING ? `Cancel` : `Delete`}</button>
+          <button
+              class="event__save-btn  btn  btn--blue"
+              type="submit" ${!this._isSubmitEnabled || this._isDisabled ? `disabled` : ``}>
+            Save
+          </button>
+          <button
+              class="event__reset-btn"
+              type="reset" ${this._isDisabled ? `disabled` : ``}>
+            ${this._mode === PointFormMode.ADDING ? `Cancel` : `Delete`}
+          </button>
 
           ${this._mode === PointFormMode.EDITING ? favoriteButton : ``}
 
@@ -102,8 +113,26 @@ export default class PointFormView extends UpdatableView {
             <span class="visually-hidden">Open event</span>
           </button>` : ``}
         </header>
-        ${offersList}
+        ${pointDetails}
       </form>`;
+  }
+
+  /**
+   * Установка списка спец. предложений.
+   *
+   * @param  {Array} offerList - Список спец. предложений.
+   */
+  set offerList(offerList) {
+    this._offerList = offerList;
+  }
+
+  /**
+   * Установка списка возможных точек назначения.
+   *
+   * @param  {Array} destinationList - Список возможных точек назначения.
+   */
+  set destinationList(destinationList) {
+    this._destinationList = destinationList;
   }
 
   /**
@@ -145,8 +174,8 @@ export default class PointFormView extends UpdatableView {
   set toggleFavoriteHandler(callback) {
     this._callback.toggleFavorite = callback;
 
-    this.element.querySelector(`.event__favorite-btn`)
-      .addEventListener(`click`, this._toggleFavoriteHandler);
+    this.element.querySelector(`.event__favorite-checkbox`)
+      .addEventListener(`change`, this._toggleFavoriteHandler);
   }
 
   /**
@@ -158,6 +187,31 @@ export default class PointFormView extends UpdatableView {
     this._callback.submit = callback;
 
     this.element.addEventListener(`submit`, this._submitHandler);
+  }
+
+  /**
+   * Включение формы для редактирования.
+   */
+  enable() {
+    if (!this._isDisabled) {
+      return;
+    }
+
+    this._avalibleOfferList = this._getAvalibleOffers(this._point.type);
+    this._isDisabled = false;
+    this.updateElement();
+  }
+
+  /**
+   * Выключение формы для редактирования.
+   */
+  disable() {
+    if (this._isDisabled) {
+      return;
+    }
+
+    this._isDisabled = true;
+    this.updateElement();
   }
 
   /**
@@ -196,7 +250,7 @@ export default class PointFormView extends UpdatableView {
       .addEventListener(`change`, this._selectTypeHandler);
 
     // Обработчик клика на спец. предложения ставим только если они есть
-    if (this._avalibleOfferList.length > 0) {
+    if (this._avalibleOfferList.length > 0 && this._displayOffers === true) {
       this.element.querySelector(`.event__available-offers`)
         .addEventListener(`change`, this._selectOfferHandler);
     }
@@ -278,9 +332,9 @@ export default class PointFormView extends UpdatableView {
         <input
           class="event__type-toggle  visually-hidden"
           id="event-type-toggle-${this._point.id}"
-          type="checkbox">
+          type="checkbox" ${this._isDisabled ? `disabled` : ``}>
         <div class="event__type-list">
-          <fieldset class="event__type-group">
+          <fieldset class="event__type-group" ${this._isDisabled ? `disabled` : ``}>
             <legend class="visually-hidden">Transfer</legend>`;
 
     for (const type of transportTypeList) {
@@ -347,8 +401,9 @@ export default class PointFormView extends UpdatableView {
             id="event-destination-${this._point.id}"
             type="text"
             name="event-destination"
-            value="${he.encode(this._point.destination)}"
-            list="destination-list-${this._point.id}">
+            value="${he.encode(this._point.destination.name)}"
+            list="destination-list-${this._point.id}"
+            ${this._isDisabled ? `disabled` : ``}>
         <datalist id="destination-list-${this._point.id}">`;
 
     this._destinationList.forEach((destination) => {
@@ -381,7 +436,8 @@ export default class PointFormView extends UpdatableView {
             id="event-start-time-${id}"
             type="text"
             name="event-start-time"
-            value="${beginTime}">
+            value="${beginTime}"
+            ${this._isDisabled ? `disabled` : ``}>
         &mdash;
         <label class="visually-hidden" for="event-end-time-${id}">To</label>
         <input
@@ -389,7 +445,8 @@ export default class PointFormView extends UpdatableView {
             id="event-end-time-${id}"
             type="text"
             name="event-end-time"
-            value="${endTime}">
+            value="${endTime}"
+            ${this._isDisabled ? `disabled` : ``}>
       </div>`;
   }
 
@@ -411,7 +468,8 @@ export default class PointFormView extends UpdatableView {
             id="event-price-${id}"
             type="text"
             name="event-price"
-            value="${price}">
+            value="${price}"
+            ${this._isDisabled ? `disabled` : ``}>
       </div>`;
   }
 
@@ -421,13 +479,11 @@ export default class PointFormView extends UpdatableView {
    * @return {String} - Шаблон в виде строки с HTML-кодом.
    */
   _makeOffersList() {
-    if (this._avalibleOfferList.length === 0) {
+    if (this._avalibleOfferList.length === 0 || this._displayOffers === false) {
       return ``;
     }
 
-    let template = `
-        <section class="event__details">
-          <section class="event__section  event__section--offers">
+    let template = `<section class="event__section  event__section--offers">
             <h3 class="event__section-title  event__section-title--offers">Offers</h3>
             <div class="event__available-offers">`;
 
@@ -444,7 +500,8 @@ export default class PointFormView extends UpdatableView {
                     id="event-${this._point.id}-offer-${i}"
                     type="checkbox"
                     name="event-${this._point.id}-offer"
-                    value="${this._avalibleOfferList[i].title}" ${isChecked ? `checked` : ``}>
+                    value="${this._avalibleOfferList[i].title}" ${isChecked ? `checked` : ``}
+                    ${this._isDisabled ? `disabled` : ``}>
                 <label class="event__offer-label" for="event-${this._point.id}-offer-${i}">
                   <span class="event__offer-title">${this._avalibleOfferList[i].title}</span>
                   &plus;
@@ -455,10 +512,55 @@ export default class PointFormView extends UpdatableView {
 
     template += `
             </div>
-          </section>
-        </section>`;
+          </section>`;
 
     return template;
+  }
+
+  /**
+   * Создание шаблона подбробной информации о точке назначения.
+   *
+   * @return {String} - Шаблон в виде строки с HTML-кодом.
+   */
+  _makeDestinationDescription() {
+    if (!this._displayDestinationDescription) {
+      return ``;
+    }
+
+    let template = `<section class="event__section  event__section--destination">
+          <h3 class="event__section-title  event__section-title--destination">Destination</h3>
+          <p class="event__destination-description">${this._point.destination.description}</p>`;
+
+    if (this._point.destination.pictures.length > 0) {
+      template += `<div class="event__photos-container"><div class="event__photos-tape">`;
+      this._point.destination.pictures.forEach((photo) => {
+        template += `<img class="event__photo" src="${photo.src}" alt="${photo.description}">`;
+      });
+      template += `</div></div>`;
+    }
+
+    template += `</section>`;
+
+    return template;
+  }
+
+  /**
+   * Создание шаблона дополнительноый информации о точке назначения.
+   *
+   * @return {String} - Шаблон в виде строки с HTML-кодом.
+   */
+  _makePointDetails() {
+    const offersList = this._makeOffersList();
+    const destinationDescription = this._makeDestinationDescription();
+
+    if (offersList.length === 0 && destinationDescription.length === 0) {
+      return ``;
+    }
+
+    return `<section class="event__details">
+              ${offersList}
+              ${destinationDescription}
+            </section>`;
   }
 
   /**
@@ -474,7 +576,8 @@ export default class PointFormView extends UpdatableView {
           id="event-favorite-${id}"
           class="event__favorite-checkbox  visually-hidden"
           type="checkbox"
-          name="event-favorite" ${(isFavorite) ? `checked` : ``}>
+          name="event-favorite" ${(isFavorite) ? `checked` : ``}
+          ${this._isDisabled ? `disabled` : ``}>
       <label class="event__favorite-btn" for="event-favorite-${id}">
       <span class="visually-hidden">Add to favorite</span>
         <svg class="event__favorite-icon" width="28" height="28" viewBox="0 0 28 28">
@@ -559,7 +662,7 @@ export default class PointFormView extends UpdatableView {
       return false;
     }
 
-    if (this._destinationList.find((destinationObject) => {
+    if (this._destinationList.some((destinationObject) => {
       return destinationObject.name === destination;
     })) {
       return true;
@@ -648,34 +751,25 @@ export default class PointFormView extends UpdatableView {
   }
 
   /**
-   * Обработчик сабмита формы.
-   *
-   * @param  {Event} evt - Объект события в DOM.
-   */
-  _submitHandler(evt) {
-    evt.preventDefault();
-
-    if (!this._isSubmitEnabled) {
-      return;
-    }
-
-    this.updateData({offers: this._getSelectedOffers()});
-    this._callback.submit(this._point);
-  }
-
-  /**
    * Обработчик ввода места назначения
    *
    * @param  {Event} evt - Объект события в DOM.
    */
   _inputDestinationHandler(evt) {
     if (!this._validateDestination(evt.target.value)) {
+      this.updateData({destination: {name: evt.target.value}});
       this._updateSubmitStatus(false);
+      this._displayDestinationDescription = false;
       return;
     }
 
-    this.updateData({destination: evt.target.value});
+    this._displayDestinationDescription = true;
+    const destinationObject = this._destinationList
+        .find((destination) => destination.name === evt.target.value);
+
+    this.updateData({destination: destinationObject});
     this._updateSubmitStatus(this._validateForm());
+    this.updateElement();
   }
 
   /**
@@ -736,9 +830,11 @@ export default class PointFormView extends UpdatableView {
     typeIcon.setAttribute(`src`, selectedType.icon);
     this.updateData({
       type: selectedType.id,
-      isTransport: selectedType.isTransport
+      isTransport: selectedType.isTransport,
+      offers: []
     });
 
+    this._displayOffers = true;
     this._avalibleOfferList = this._getAvalibleOffers(selectedType.id);
 
     this.updateElement();
@@ -753,19 +849,66 @@ export default class PointFormView extends UpdatableView {
   }
 
   /**
+   * Обработчик добавления/удаления из избранного.
+   */
+  _toggleFavoriteHandler() {
+    this.disable();
+    this._callback.toggleFavorite()
+        .then(() => {
+          this.updateData({isFavorite: !this._point.isFavorite});
+          this.enable();
+        })
+        .catch(() => {
+          this.enable();
+          this.element.classList.add(`shake`);
+        });
+  }
+
+  /**
+   * Обработчик сабмита формы.
+   *
+   * @param  {Event} evt - Объект события в DOM.
+   */
+  _submitHandler(evt) {
+    evt.preventDefault();
+    if (!this._isSubmitEnabled) {
+      return;
+    }
+
+    this.disable();
+
+    const saveButton = this.element.querySelector(`.event__save-btn`);
+    saveButton.textContent = `Saving...`;
+
+    this._callback.submit(this._point)
+        .then(() => {
+          this.enable();
+          this.updateData({offers: this._getSelectedOffers()});
+        })
+        .catch(() => {
+          this.enable();
+          this.element.classList.add(`shake`);
+        });
+  }
+
+  /**
    * Обработчик нажатия на кнопку удаления.
    *
    * @param  {Event} evt - Объект события в DOM.
    */
   _deleteHandler() {
-    this._callback.delete(this._point);
-  }
+    this.disable();
 
-  /**
-   * Обработчик добавления/удаления из избранного.
-   */
-  _toggleFavoriteHandler() {
-    this.updateData({isFavorite: !this._point.isFavorite});
-    this._callback.toggleFavorite();
+    const deleteButton = this.element.querySelector(`.event__reset-btn`);
+    deleteButton.textContent = `Deleting...`;
+
+    this._callback.delete(this._point)
+        .then(() => {
+          this.remove();
+        })
+        .catch(() => {
+          this.enable();
+          this.element.classList.add(`shake`);
+        });
   }
 }
