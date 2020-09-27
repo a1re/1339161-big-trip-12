@@ -127,6 +127,7 @@ export default class TripPresenter {
     this._sortingsModel.reset();
     this._filtersModel.reset();
     this.init();
+    this._setNewPointButtonState(ButtonState.DISABLED);
 
     let placementElement;
     if (this._fallbackComponent) {

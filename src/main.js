@@ -2,7 +2,7 @@ import {getAuthString} from "./utils/common.js";
 import {sortings} from "./utils/sortings.js";
 import {filters} from "./utils/filters.js";
 import {types} from "./utils/types.js";
-import {API_END_POINT, ButtonState} from "./const.js";
+import {API_END_POINT} from "./const.js";
 
 import Api from "./utils/api.js";
 
@@ -78,6 +78,5 @@ pointsModel.loadData();
 newPointElement.addEventListener(`click`, (evt) => {
   evt.preventDefault();
   displayTable();
-  setNewPointButtonState(ButtonState.DISABLED);
   tripPresenter.createNewPoint();
 });
