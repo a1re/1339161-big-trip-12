@@ -50,7 +50,7 @@ export default class TripPresenter {
     this._sortingsModel = sortingsModel;
     this._filtersModel = filtersModel;
 
-    this._noPointsComponent = null;
+    this._fallbackComponent = null;
     this._sortingComponent = null;
     this._dayListComponent = null;
     this._tripPointsComponent = null;
@@ -93,7 +93,6 @@ export default class TripPresenter {
 
     this._setNewPointButtonState(ButtonState.ENABLED);
     this._clearFallback();
-    this._renderCaption();
     this._renderPoints();
     this._isInitialized = true;
   }
@@ -129,8 +128,16 @@ export default class TripPresenter {
     this._filtersModel.reset();
     this.init();
 
+    let placementElement;
+    if (this._fallbackComponent) {
+      this._clearFallback();
+      placementElement = this._tripPointsComponent.element;
+    } else {
+      placementElement = this._dayListComponent.element;
+    }
+
     this._newPointPresenter = new NewPointPresenter(
-        this._dayListComponent.element,
+        placementElement,
         this._pointsModel,
         this._destinationsModel,
         this._offersModel,
@@ -191,12 +198,16 @@ export default class TripPresenter {
    * Рендеринг заголовка таблицы.
    */
   _renderCaption() {
-    this._sortingComponent = new SortingView(this._sortingsModel.list, this._sortingsModel.isGrouped);
-    this._sortingComponent.sortPointsHandler = this._sortPoints;
-    render(this._tripPointsComponent, this._sortingComponent, RenderPosition.BEFOREEND);
+    if (!this._sortingComponent) {
+      this._sortingComponent = new SortingView(this._sortingsModel.list, this._sortingsModel.isGrouped);
+      this._sortingComponent.sortPointsHandler = this._sortPoints;
+      render(this._tripPointsComponent, this._sortingComponent, RenderPosition.BEFOREEND);
+    }
 
-    this._dayListComponent = new DayListView();
-    render(this._tripPointsComponent, this._dayListComponent, RenderPosition.BEFOREEND);
+    if (!this._dayListComponent) {
+      this._dayListComponent = new DayListView();
+      render(this._tripPointsComponent, this._dayListComponent, RenderPosition.BEFOREEND);
+    }
   }
 
   /**
@@ -208,8 +219,12 @@ export default class TripPresenter {
     let dayComponent;
 
     if (pointList.length === 0) {
+      this._clearCaption();
       this._renderFallback(FallbackType.NOPOINTS);
+      return;
     }
+
+    this._renderCaption();
 
     pointList.forEach((point) => {
       let dayNumber = point.dayNumber;
