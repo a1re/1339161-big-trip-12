@@ -1,3 +1,4 @@
+import {MAX_ITINERARY_POINTS} from "../const.js";
 import AbstractView from "./abstract-view.js";
 
 import he from "he";
@@ -72,16 +73,16 @@ export default class TripInfoView extends AbstractView {
       return he.encode(uniquePoints[0].destination.name);
     }
 
-    const route = [];
-    route.push(he.encode(uniquePoints[0].destination.name));
-    if (uniquePoints.length === 3) {
-      route.push(he.encode(uniquePoints[1].destination.name));
-    } else if (uniquePoints.length > 3) {
-      route.push(`...`);
+    const itinerary = [];
+    itinerary.push(he.encode(uniquePoints[0].destination.name));
+    if (uniquePoints.length === MAX_ITINERARY_POINTS) {
+      itinerary.push(he.encode(uniquePoints[1].destination.name));
+    } else if (uniquePoints.length > MAX_ITINERARY_POINTS) {
+      itinerary.push(`...`);
     }
-    route.push(uniquePoints[uniquePoints.length - 1].destination.name);
+    itinerary.push(uniquePoints[uniquePoints.length - 1].destination.name);
 
-    return route.join(` &mdash; `);
+    return itinerary.join(` &mdash; `);
   }
 
   /**

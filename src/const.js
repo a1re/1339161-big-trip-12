@@ -1,4 +1,5 @@
 export const MAX_OFFERS_TO_SHOW = 3;
+export const MAX_ITINERARY_POINTS = 3;
 
 export const AUTH_STRING_LENGTH = 16;
 export const API_END_POINT = `https://12.ecmascript.pages.academy/big-trip`;

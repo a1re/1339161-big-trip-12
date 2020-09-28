@@ -74,12 +74,7 @@ export default class SortingView extends AbstractView {
     this._callback.sortPoints(evt.target.getAttribute(`for`));
 
     const dayColumn = this.element.querySelector(`.trip-sort__item--day`);
-
-    if (this._isDayColumnShown(evt.target.getAttribute(`for`))) {
-      dayColumn.innerText = `Day`;
-    } else {
-      dayColumn.innerText = ``;
-    }
+    dayColumn.innerText = this._isDayColumnShown(evt.target.getAttribute(`for`)) ? `Day` : ``;
   }
 
   /**
