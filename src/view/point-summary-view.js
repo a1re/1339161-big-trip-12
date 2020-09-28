@@ -1,8 +1,6 @@
-import {TIME_FORMAT} from "../const.js";
+import {TIME_FORMAT, MAX_OFFERS_TO_SHOW} from "../const.js";
 import {formatDate} from "../utils/common.js";
 import AbstractView from "./abstract-view.js";
-
-import {MAX_OFFERS_TO_SHOW} from "../const.js";
 
 import moment from "moment";
 import he from "he";
@@ -33,7 +31,7 @@ export default class PointSummaryView extends AbstractView {
     const offerList = this._makeOffersList();
     const scheduleElement = this._makeScheduleElement();
 
-    let template = `<div class="event">
+    return `<div class="event">
             <div class="event__type">
               <img
                   class="event__type-icon"
@@ -57,8 +55,6 @@ export default class PointSummaryView extends AbstractView {
               <span class="visually-hidden">Open event</span>
             </button>
           </div>`;
-
-    return template;
   }
 
   /**
