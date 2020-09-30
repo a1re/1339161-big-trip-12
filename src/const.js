@@ -4,6 +4,9 @@ export const MAX_ITINERARY_POINTS = 3;
 export const AUTH_STRING_LENGTH = 16;
 export const API_END_POINT = `https://12.ecmascript.pages.academy/big-trip`;
 
+export const STORAGE_PREFIX = `big-trip`;
+export const STORAGE_VER = `v1`;
+
 export const UpdateMode = {
   PATCH: `PATCH`,
   MINOR: `MINOR`,
