@@ -17,7 +17,7 @@ import TripPresenter from "./presenter/trip-presenter.js";
 import HeaderPresenter from "./presenter/header-presenter.js";
 import StatsPresenter from "./presenter/stats-presenter.js";
 
-const api = new Api(API_END_POINT, getAuthString());
+const api = new Api(API_END_POINT, getAuthString(), window.localStorage);
 
 const destinationsModel = new DestinationsModel(api);
 const typesModel = new TypesModel(types);
@@ -74,9 +74,24 @@ const statsPresenter = new StatsPresenter(
 tripPresenter.init();
 headerPresenter.init();
 pointsModel.loadData();
+destinationsModel.loadData();
+offersModel.loadData();
 
 newPointElement.addEventListener(`click`, (evt) => {
   evt.preventDefault();
   displayTable();
   tripPresenter.createNewPoint();
+});
+
+window.addEventListener(`load`, () => {
+  navigator.serviceWorker.register(`/sw.js`);
+});
+
+window.addEventListener(`online`, () => {
+  document.title = document.title.replace(`  [offline]`, ``);
+  pointsModel.sync();
+});
+
+window.addEventListener(`offline`, () => {
+  document.title += `  [offline]`;
 });

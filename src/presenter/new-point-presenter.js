@@ -117,7 +117,6 @@ export default class NewPointPresenter {
    */
   _submitForm(pointData) {
     const newPointData = Object.assign({}, pointData);
-    delete newPointData.id;
     return this._pointsModel.add(UpdateMode.MINOR, newPointData)
       .then(() => {
         this.destroy();

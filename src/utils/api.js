@@ -1,3 +1,6 @@
+import Storage from "./storage.js";
+import {nanoid} from "nanoid";
+
 const Method = {
   GET: `GET`,
   POST: `POST`,
@@ -14,23 +17,38 @@ export default class Api {
   /**
    * Конструктор класса Api для обмена информацией с удаленным сервером.
    *
-   * @param  {string} endPoint      - Адрес удаленного сервера.
-   * @param  {string} authorization - Строка авторизации.
+   * @param  {String} endPoint      - Адрес удаленного сервера.
+   * @param  {String} authorization - Строка авторизации.
+   * @param  {Storage} [storage]    - Интерфейс доступа к локальному хранилищу.
    */
-  constructor(endPoint, authorization) {
+  constructor(endPoint, authorization, storage = null) {
     this._endPoint = endPoint;
     this._authorization = authorization;
+    this._storage = storage ? new Storage(storage) : null;
   }
 
   /**
    * Получения данных с удаленного сервере методом GET.
    *
    * @param  {String} url - Часть адреса для запроса после endPoint.
-   * @return {Object}     - Ответ сервера в формате JSON.
+   * @return {Promise}    - Promise с ответотом сервера в формате JSON.
    */
   get(url) {
-    return this._load({url})
-      .then(Api.toJSON);
+    if (window.navigator.onLine) {
+      return this._load({url})
+        .then(Api.toJSON)
+        .then((result) => {
+          if (this._storage) {
+            this._storage.writeAll(url, Storage.convertArray(result, `id`));
+          }
+
+          return result;
+        });
+    }
+
+    return new Promise((resolve) => {
+      resolve(this._storage ? Object.values(this._storage.readAll(url)) : []);
+    });
   }
 
   /**
@@ -40,44 +58,110 @@ export default class Api {
    * @param  {Number} id          - Id ресурса, добавляется в адрес для запроса
    *                                после endPoint и url.
    * @param  {Object} updatedData - Данные в теле запроса.
-   * @return {Object}             - Ответ сервера в формате JSON.
+   * @return {Promise}            - Promise с ответотом сервера в формате JSON.
    */
   put(url, id, updatedData) {
-    return this._load({
-      url: url + `/` + id,
-      method: Method.PUT,
-      body: JSON.stringify(updatedData)
-    }).then(Api.toJSON);
+    if (window.navigator.onLine) {
+      return this._load({
+        url: `${url}/${id}`,
+        method: Method.PUT,
+        body: JSON.stringify(updatedData)
+      })
+        .then(Api.toJSON)
+        .then(() => {
+          if (this._storage) {
+            this._storage.set(url, id, updatedData);
+          }
+        });
+    }
+
+    return new Promise((resolve) => {
+      this._storage.set(url, id, updatedData);
+      resolve(updatedData);
+    });
   }
 
   /**
    * Отправка данных на удаленный сервер методом DELETE.
    *
-   * @param  {String} url         - Часть адреса для запроса после endPoint.
-   * @param  {Number} id          - Id ресурса, добавляется в адрес для запроса
-   *                                после endPoint и url.
-   * @return {Object}             - Ответ сервера в формате JSON.
+   * @param  {String} url - Часть адреса для запроса после endPoint.
+   * @param  {Number} id  - Id ресурса, добавляется в адрес для запроса
+   *                        после endPoint и url.
+   * @return {Promise}    - Promise с ответотом сервера в формате JSON.
    */
   delete(url, id) {
-    return this._load({
-      url: url + `/` + id,
-      method: Method.DELETE
+    if (window.navigator.onLine) {
+      return this._load({
+        url: `${url}/${id}`,
+        method: Method.DELETE
+      })
+        .then(() => {
+          if (this._storage) {
+            this._storage.delete(url, id);
+          }
+        });
+    }
+
+    return new Promise((resolve) => {
+      this._storage.delete(url, id);
+      resolve();
     });
   }
 
   /**
    * Отправка данных на удаленный сервер методом POST.
    *
-   * @param  {String} url         - Часть адреса для запроса после endPoint.
-   * @param  {Object} updatedData - Данные в теле запроса.
-   * @return {Object}             - Ответ сервера в формате JSON.
+   * @param  {String} url     - Часть адреса для запроса после endPoint.
+   * @param  {Object} newData - Данные в теле запроса.
+   * @return {Promise}        - Promise с ответотом сервера в формате JSON.
    */
-  post(url, updatedData) {
-    return this._load({
-      url,
-      method: Method.POST,
-      body: JSON.stringify(updatedData)
-    }).then(Api.toJSON);
+  post(url, newData) {
+    if (window.navigator.onLine) {
+      return this._load({
+        url,
+        method: Method.POST,
+        body: JSON.stringify(newData)
+      })
+        .then(Api.toJSON)
+        .then((result) => {
+          if (this._storage) {
+            const id = result.id ? result.id : nanoid();
+            this._storage.set(url, id, result);
+          }
+          return result;
+        });
+    }
+
+    return new Promise((resolve) => {
+      const id = newData.id ? newData.id : nanoid();
+      this._storage.set(url, id, newData);
+      resolve(Object.assign({}, newData, {id}));
+    });
+  }
+
+  sync(url) {
+    if (window.navigator.onLine) {
+      const points = Object.values(this._storage.readAll(url));
+      return this._load({
+        url: `${url}/sync`,
+        method: Method.POST,
+        body: JSON.stringify(points)
+      })
+        .then(Api.toJSON)
+        .then((response) => {
+          const syncedPoints = [];
+          response.updated.forEach((point) => {
+            syncedPoints.push(point.payload.point);
+          });
+          response.created.forEach((point) => {
+            syncedPoints.push(point);
+          });
+
+          this._storage.writeAll(url, Storage.convertArray(syncedPoints, `id`));
+        });
+    }
+
+    return Promise.reject(new Error(`Sync data failed`));
   }
 
   /**

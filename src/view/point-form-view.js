@@ -2,6 +2,7 @@ import {DATETIME_FORMAT, DEFAULT_FLATPICKR_SETTINGS} from "../const.js";
 import {getRandomInt, formatDate, isValidDate, parseDate} from "../utils/common.js";
 import UpdatableView from "./updatable-view.js";
 
+import {nanoid} from "nanoid";
 import he from "he";
 import moment from "moment";
 import flatpickr from "flatpickr";
@@ -30,7 +31,7 @@ export default class PointFormView extends UpdatableView {
     if (!point) {
       const randomType = typeList[getRandomInt(0, typeList.length - 1)];
       this._point = {
-        id: `new`,
+        id: nanoid(),
         destination: {name: ``},
         type: randomType.id,
         beginTime: moment().startOf(`hour`).toDate(),
@@ -219,8 +220,8 @@ export default class PointFormView extends UpdatableView {
    * вместе с удалением обнулять и удалять дейтпикеры.
    */
   remove() {
-    super.remove();
     this._destroyTimePicking();
+    super.remove();
   }
 
   /**
@@ -882,8 +883,8 @@ export default class PointFormView extends UpdatableView {
 
     this._callback.submit(this._point)
         .then(() => {
-          this.enable();
           this.updateData({offers: this._getSelectedOffers()});
+          this.remove();
         })
         .catch(() => {
           this.enable();

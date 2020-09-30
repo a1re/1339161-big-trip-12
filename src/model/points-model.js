@@ -148,6 +148,19 @@ export default class PointsModel extends Observer {
   }
 
   /**
+   * Синхронизация между локальными данными и данными сервера. Шорткат для
+   * метода API с указанием url.
+   */
+  sync() {
+    this._api.sync(Datatype.POINTS)
+      .then(() => {
+        this._notify(UpdateMode.MINOR);
+      }).catch((err) => {
+        console.log(err); //eslint-disable-line
+      });
+  }
+
+  /**
    * Обработка исходных данных и добавление необходимых для работы
    * дополнительных флагов и значений.
    *
