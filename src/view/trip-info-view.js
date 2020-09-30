@@ -106,6 +106,6 @@ export default class TripInfoView extends AbstractView {
     const dayFinish = pointList[pointList.length - 1].endTime.toLocaleString(`en-US`, {day: `numeric`});
     const monthFinish = pointList[pointList.length - 1].endTime.toLocaleString(`en-US`, {month: `short`});
 
-    return `${dayStart}${(monthFinish !== monthStart) ? monthStart : ``}&nbsp;&mdash;&nbsp;${dayFinish} ${monthFinish}`;
+    return `${dayStart} ${(monthFinish !== monthStart) ? monthStart : ``}&nbsp;&mdash;&nbsp;${dayFinish} ${monthFinish}`;
   }
 }
